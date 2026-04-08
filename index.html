@@ -799,8 +799,14 @@ async function loadStation(id, name) {
 
     document.getElementById('boardContent').innerHTML = renderDepartureTable(deps, currentTab);
   } catch(err) {
+    const isCors = location.protocol === 'file:';
+    const hint = isCors
+      ? `<br><br><strong>Fix:</strong> You opened this file directly from disk. Run a local server instead:<br>
+         <code style="background:var(--surface2);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:6px">python3 -m http.server 8080</code><br>
+         Then open <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">http://localhost:8080</code> in your browser.`
+      : `<br><small>The VBB API may be temporarily unavailable. Retrying in 30s…</small>`;
     document.getElementById('boardContent').innerHTML =
-      `<div class="error-state">⚠ Could not load live data: ${err.message}<br><small>The VBB API may be temporarily unavailable. Retrying in 30s…</small></div>`;
+      `<div class="error-state">⚠ Could not load live data: ${err.message}${hint}</div>`;
   }
 
   // Auto-refresh every 30 seconds
