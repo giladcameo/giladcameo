@@ -133,6 +133,59 @@
       background:var(--surface);border:1px solid var(--border);border-radius:8px;
       padding:6px 10px;font-size:10px;color:var(--muted);line-height:1.6;
       max-width:200px;backdrop-filter:blur(8px)}
+
+    /* ── MOBILE ── */
+    @media(max-width:768px){
+      /* Header compact */
+      header{height:44px;padding:0 12px}
+      .logo-text{font-size:13px}
+      .clock{font-size:16px}
+
+      /* Filters: full-width strip under header, horizontal scroll */
+      .filter-bar{
+        top:44px;left:0;right:0;max-width:100%;
+        padding:6px 10px;gap:6px;flex-wrap:nowrap;
+        overflow-x:auto;justify-content:flex-start;
+        background:var(--bg);backdrop-filter:blur(12px);
+        border-bottom:1px solid var(--border);
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+      }
+      .filter-bar::-webkit-scrollbar{display:none}
+      .fc{font-size:12px;padding:5px 14px;flex-shrink:0}
+
+      /* Panel: bottom sheet */
+      .panel{
+        top:auto;left:0;right:0;width:100%;
+        bottom:0;height:52%;
+        border-radius:16px 16px 0 0;
+        border-left:none;border-right:none;border-bottom:none;
+        transition:height .3s cubic-bezier(.4,0,.2,1);
+      }
+      .panel.collapsed{height:56px}
+      .panel.expanded{height:85%}
+
+      /* Drag handle */
+      .panel-handle{
+        display:flex;justify-content:center;align-items:center;
+        padding:10px 0 6px;cursor:pointer;flex-shrink:0;
+      }
+      .panel-handle-bar{
+        width:36px;height:4px;background:var(--border);border-radius:2px;
+      }
+
+      /* Larger touch targets for favs and tabs */
+      .fav-btn{padding:6px 12px;font-size:12px}
+      .tab-btn{padding:6px 14px;font-size:12px}
+      .dep-row{padding:8px 6px}
+      .line-badge{min-width:38px;font-size:12px;padding:3px 6px}
+      .dep-dest{font-size:12px}
+      .dep-time{font-size:13px}
+      .countdown{font-size:11px;padding:2px 8px}
+
+      /* Debug badge: move above panel */
+      #debugBadge{bottom:calc(52% + 8px);right:8px}
+    }
   </style>
 </head>
 <body>
@@ -154,7 +207,11 @@
 <div class="filter-bar" id="filterBar"></div>
 
 <!-- Side panel -->
-<div class="panel">
+<div class="panel" id="panel">
+  <!-- Mobile drag handle -->
+  <div class="panel-handle" id="panelHandle" onclick="togglePanel()">
+    <div class="panel-handle-bar"></div>
+  </div>
 
   <div class="search-wrap">
     <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -450,6 +507,27 @@ function switchTab(t){
   document.querySelectorAll('.tab-btn').forEach((b,i)=>
     b.classList.toggle('active',(i===0&&t==='departures')||(i===1&&t==='arrivals')));
   loadAll();
+}
+
+/* ── MOBILE PANEL TOGGLE ── */
+let panelState = 'half'; // 'collapsed' | 'half' | 'expanded'
+function togglePanel(){
+  const panel = document.getElementById('panel');
+  if(window.innerWidth > 768) return;
+  if(panelState === 'collapsed'){
+    panel.classList.remove('collapsed','expanded');
+    panelState = 'half';
+  } else if(panelState === 'half'){
+    panel.classList.add('expanded');
+    panel.classList.remove('collapsed');
+    panelState = 'expanded';
+  } else {
+    panel.classList.add('collapsed');
+    panel.classList.remove('expanded');
+    panelState = 'collapsed';
+  }
+  // Resize map after panel transition
+  setTimeout(()=> map && map.invalidateSize(), 320);
 }
 
 /* ── INIT ── */
