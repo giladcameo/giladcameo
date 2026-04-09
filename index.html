@@ -191,7 +191,6 @@ const FAVS_LIST = [
 const FILTER_DEFS = [
   {key:'subway',   label:'U-Bahn', bg:'#224f9e', fg:'#fff'},
   {key:'suburban', label:'S-Bahn', bg:'#007734', fg:'#fff'},
-  {key:'bus',      label:'Bus',    bg:'#6e3fa3', fg:'#fff'},
   {key:'tram',     label:'Tram',   bg:'#cc2222', fg:'#fff'},
   {key:'regional', label:'Regio',  bg:'#ef7c00', fg:'#fff'},
   {key:'ferry',    label:'Fähre',  bg:'#0a5f98', fg:'#fff'},
@@ -361,7 +360,7 @@ async function fetchDeps(id,type){
   depAbort=new AbortController();
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const ep=type==='departures'?'departures':'arrivals';
-  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&${qs}`,
+  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&bus=false&${qs}`,
     {signal:depAbort.signal});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   const data=await res.json();
@@ -393,7 +392,7 @@ async function fetchRadar(){
   // before outer S-Bahn trains (S3/S5/S7) are included
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false&${qs}`,
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false&bus=false&${qs}`,
     {signal:radarAbort.signal});
   if(!res.ok) return;
   const data=await res.json();
