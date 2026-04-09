@@ -389,8 +389,11 @@ async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
   const {north,west,south,east}=BBOX;
+  // Pass active filters to the API so buses don't fill the results quota
+  // before outer S-Bahn trains (S3/S5/S7) are included
+  const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false`,
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false&${qs}`,
     {signal:radarAbort.signal});
   if(!res.ok) return;
   const data=await res.json();
