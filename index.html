@@ -175,7 +175,9 @@
 <script>
 const API = 'https://v6.vbb.transport.rest';
 const REFRESH_MS = 10000;
-const BBOX = {north:52.68,west:13.09,south:52.35,east:13.76};
+// Extended bbox to cover all VBB S-Bahn routes outside Berlin:
+// west → Potsdam Hbf (S7), east → Strausberg Nord (S5), north → Oranienburg (S1/S25), south → Blankenfelde (S2/S25)
+const BBOX = {north:52.82,west:12.88,south:52.18,east:14.00};
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -388,7 +390,7 @@ async function fetchRadar(){
   radarAbort=new AbortController();
   const {north,west,south,east}=BBOX;
   const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=256&duration=30&frames=1&polylines=false`,
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false`,
     {signal:radarAbort.signal});
   if(!res.ok) return;
   const data=await res.json();
