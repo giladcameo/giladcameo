@@ -1,892 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Berlin Transit Live Dashboard</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Berlin Transit Live</title>
+  <link rel="preconnect" href="https://unpkg.com"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface2: #21262d;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --green: #3fb950;
-      --yellow: #d29922;
-      --red: #f85149;
-      --orange: #db6d28;
+    :root{
+      --bg:rgba(13,17,23,.93);--surface:rgba(22,27,34,.95);--surface2:rgba(33,38,45,.95);
+      --border:rgba(48,54,61,.8);--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+      --green:#3fb950;--yellow:#d29922;--red:#f85149;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;width:100%;overflow:hidden;
+      font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--text)}
 
-      /* BVG line colors */
-      --u1: #55a822; --u2: #dd6e14; --u3: #16683d; --u4: #f0d722;
-      --u5: #7d4427; --u6: #8b5ca3; --u7: #528dba; --u8: #224f9e;
-      --u9: #f7931e;
-      --s1: #da6ba2; --s2: #007734; --s3: #0a5f98; --s5: #ef7c00;
-      --s7: #775e38; --s8: #55a822; --s9: #990000; --s25: #007734;
-      --s41: #ab2626; --s42: #cb6418; --s45: #c97a2f; --s46: #c97a2f;
-      --s47: #c97a2f;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      font-size: 14px;
-      min-height: 100vh;
-    }
+    /* MAP fills entire viewport */
+    #map{position:fixed;inset:0;z-index:0;background:#0d1117}
 
-    /* ── Header ── */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* HEADER — floating bar at top */
+    header{
+      position:fixed;top:0;left:0;right:0;height:46px;z-index:500;
+      background:var(--bg);backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:10px;padding:0 14px;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text);
+    .logo-mark{background:#f5a800;color:#000;font-weight:900;font-size:13px;
+      width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;flex-shrink:0}
+    .logo-text{font-size:14px;font-weight:700}
+    .spacer{flex:1}
+    .clock{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+    .pulse-wrap{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+    .pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+    /* FILTER BAR — floating top-right */
+    .filter-bar{
+      position:fixed;top:56px;right:10px;z-index:400;
+      display:flex;gap:5px;flex-wrap:wrap;max-width:320px;justify-content:flex-end;
     }
-    .logo-mark {
-      background: #f5a800;
-      color: #000;
-      font-weight: 900;
-      font-size: 18px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .logo-text { font-size: 18px; font-weight: 700; }
-    .logo-sub { font-size: 11px; color: var(--muted); }
-    header .spacer { flex: 1; }
-    .clock {
-      font-size: 22px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      color: var(--accent);
-    }
-    .date-str { font-size: 11px; color: var(--muted); text-align: right; }
-    .refresh-badge {
-      font-size: 11px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .pulse {
-      width: 8px; height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .fc{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+      border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:700;
+      background:var(--surface);color:var(--muted);transition:all .15s;user-select:none;
+      backdrop-filter:blur(8px)}
+    .fc.on{color:#000 !important;border-color:transparent}
+    .fc.off{opacity:.45}
+
+    /* SIDE PANEL — floating left */
+    .panel{
+      position:fixed;top:56px;left:10px;bottom:10px;width:320px;z-index:400;
+      background:var(--surface);backdrop-filter:blur(14px);
+      border:1px solid var(--border);border-radius:12px;
+      display:flex;flex-direction:column;overflow:hidden;
     }
 
-    /* ── Search ── */
-    .search-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .search-wrap {
-      position: relative;
-      flex: 1;
-      max-width: 480px;
-    }
-    .search-wrap input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 12px 8px 36px;
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .search-wrap input:focus { border-color: var(--accent); }
-    .search-wrap .search-icon {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      pointer-events: none;
-    }
-    .search-results {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0; right: 0;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      z-index: 200;
-      max-height: 260px;
-      overflow-y: auto;
-      display: none;
-    }
-    .search-results.open { display: block; }
-    .search-result-item {
-      padding: 10px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .search-result-item:last-child { border-bottom: none; }
-    .search-result-item:hover { background: var(--surface); }
-    .stop-icon {
-      width: 26px; height: 26px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: #000;
-      flex-shrink: 0;
-    }
-    .result-name { font-weight: 600; }
-    .result-sub { font-size: 11px; color: var(--muted); }
-    .fav-stations {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .fav-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 5px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .fav-btn:hover, .fav-btn.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(88,166,255,0.1);
-    }
+    /* Search inside panel */
+    .search-wrap{position:relative;padding:8px 10px;border-bottom:1px solid var(--border)}
+    .search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);
+      color:var(--text);padding:6px 10px 6px 30px;border-radius:7px;font-size:12px;outline:none}
+    .search-wrap input:focus{border-color:var(--accent)}
+    .s-icon{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    .search-results{position:absolute;top:calc(100% - 8px);left:10px;right:10px;
+      background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      z-index:9999;max-height:200px;overflow-y:auto;display:none}
+    .search-results.open{display:block}
+    .sr-item{padding:8px 11px;cursor:pointer;border-bottom:1px solid var(--border)}
+    .sr-item:last-child{border-bottom:none}
+    .sr-item:hover{background:var(--surface)}
+    .sr-name{font-weight:600;font-size:12px}
+    .sr-sub{font-size:10px;color:var(--muted)}
 
-    /* ── Main Layout ── */
-    .main {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 0;
-      height: calc(100vh - 110px);
-    }
-    @media (max-width: 900px) {
-      .main { grid-template-columns: 1fr; height: auto; }
-      .sidebar { display: none; }
-    }
+    /* Favs */
+    .favs{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap}
+    .fav-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+      padding:2px 9px;border-radius:20px;cursor:pointer;font-size:10px;white-space:nowrap}
+    .fav-btn:hover,.fav-btn.active{border-color:var(--accent);color:var(--accent);
+      background:rgba(88,166,255,.12)}
 
-    /* ── Departure Board ── */
-    .board-panel {
-      padding: 16px 20px;
-      overflow-y: auto;
-    }
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .panel-title {
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .station-name-display {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--accent);
-    }
-    .station-meta {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-      margin-bottom: 12px;
-    }
+    /* Station header */
+    .stn-hdr{padding:8px 12px;border-bottom:1px solid var(--border)}
+    .stn-name{font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis}
+    .stn-meta{font-size:10px;color:var(--muted);margin-top:1px}
+    .tabs{display:flex;gap:3px;margin-top:6px}
+    .tab-btn{padding:3px 10px;border-radius:5px;border:1px solid transparent;
+      background:transparent;color:var(--muted);cursor:pointer;font-size:11px}
+    .tab-btn.active{background:var(--surface2);border-color:var(--border);color:var(--text)}
 
-    /* Departures table */
-    .dep-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 4px;
-    }
-    .dep-table thead th {
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      padding: 4px 8px;
-    }
-    .dep-row {
-      background: var(--surface);
-      transition: background 0.15s;
-    }
-    .dep-row:hover { background: var(--surface2); }
-    .dep-row td {
-      padding: 10px 8px;
-      vertical-align: middle;
-    }
-    .dep-row td:first-child { border-radius: 8px 0 0 8px; padding-left: 14px; }
-    .dep-row td:last-child  { border-radius: 0 8px 8px 0; padding-right: 14px; }
+    /* Board */
+    .board{flex:1;overflow-y:auto;padding:6px 8px}
+    .board::-webkit-scrollbar{width:4px}
+    .board::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-    .line-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 40px;
-      padding: 3px 8px;
-      border-radius: 5px;
-      font-weight: 800;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-    .dest-cell { font-weight: 600; max-width: 200px; }
-    .dest-via  { font-size: 11px; color: var(--muted); }
-    .time-cell {
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-      font-size: 16px;
-      text-align: right;
-      white-space: nowrap;
-    }
-    .time-cell .delay {
-      font-size: 11px;
-      font-weight: 500;
-      margin-left: 4px;
-    }
-    .delay.late { color: var(--red); }
-    .delay.ontime { color: var(--green); }
-    .platform-cell {
-      color: var(--muted);
-      font-size: 12px;
-      text-align: center;
-    }
+    /* Compact departure rows */
+    .dep-row{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;
+      cursor:default;transition:background .12s}
+    .dep-row:hover{background:var(--surface2)}
+    .line-badge{display:inline-flex;align-items:center;justify-content:center;
+      min-width:34px;padding:2px 5px;border-radius:4px;font-weight:800;font-size:11px;
+      flex-shrink:0}
+    .dep-dest{flex:1;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dep-time{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right}
+    .dep-delay{font-size:9px;margin-left:2px}
+    .dep-delay.late{color:var(--red)}.dep-delay.ok{color:var(--green)}
+    .countdown{display:inline-block;padding:1px 6px;border-radius:20px;font-size:10px;font-weight:700;flex-shrink:0}
+    .cnt-now{background:var(--red);color:#fff}
+    .cnt-soon{background:var(--yellow);color:#000}
+    .cnt-later{background:rgba(139,148,158,.15);color:var(--muted)}
 
-    /* Loading / error */
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 60px 20px;
-      color: var(--muted);
-    }
-    .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-state {
-      background: rgba(248,81,73,0.1);
-      border: 1px solid var(--red);
-      border-radius: 8px;
-      padding: 16px;
-      color: var(--red);
-      font-size: 13px;
-    }
+    /* States */
+    .state-box{display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:8px;padding:30px 16px;text-align:center;color:var(--muted);font-size:12px}
+    .spinner{width:24px;height:24px;border:2px solid var(--border);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ── Sidebar ── */
-    .sidebar {
-      border-left: 1px solid var(--border);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .sidebar-section {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar-section-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
+    /* Vehicle labels on map */
+    .veh-icon{pointer-events:auto}
+    .veh-icon span{display:inline-block;padding:1px 5px;border-radius:3px;
+      font-size:9px;font-weight:800;white-space:nowrap;cursor:pointer;
+      box-shadow:0 1px 4px rgba(0,0,0,.6)}
 
-    /* Network map mini */
-    .network-svg {
-      width: 100%;
-      height: 200px;
-    }
-
-    /* Line status grid */
-    .line-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-    }
-    .line-status-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .line-status-badge {
-      width: 38px;
-      height: 22px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .status-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-    }
-    .status-ok   { background: var(--green); }
-    .status-warn { background: var(--yellow); }
-    .status-err  { background: var(--red); }
-
-    /* Alerts */
-    .alert-item {
-      background: var(--surface2);
-      border-left: 3px solid var(--yellow);
-      border-radius: 0 6px 6px 0;
-      padding: 8px 10px;
-      margin-bottom: 8px;
-      font-size: 12px;
-    }
-    .alert-item .alert-title { font-weight: 600; color: var(--yellow); margin-bottom: 3px; }
-    .alert-item .alert-body  { color: var(--muted); line-height: 1.4; }
-    .alert-item.info { border-color: var(--accent); }
-    .alert-item.info .alert-title { color: var(--accent); }
-
-    /* Stats row */
-    .stats-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .stat-card {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 10px 12px;
-    }
-    .stat-val {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-    }
-    .stat-label {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 14px;
-    }
-    .tab-btn {
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.15s;
-    }
-    .tab-btn.active {
-      background: var(--surface2);
-      border-color: var(--border);
-      color: var(--text);
-    }
-    .tab-btn:hover:not(.active) { color: var(--text); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    .empty-msg {
-      color: var(--muted);
-      font-size: 13px;
-      text-align: center;
-      padding: 20px;
-    }
-
-    /* Countdown chip */
-    .countdown {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .countdown.now   { background: var(--red);    color: #fff; }
-    .countdown.soon  { background: var(--yellow);  color: #000; }
-    .countdown.later { background: var(--surface2); color: var(--muted); }
+    /* Leaflet override for dark */
+    .leaflet-container{background:#1a1f2e}
+    .leaflet-control-zoom a{background:var(--surface) !important;color:var(--text) !important;
+      border-color:var(--border) !important}
   </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
+<!-- Full-screen map -->
+<div id="map"></div>
+
+<!-- Header -->
 <header>
-  <div class="logo">
-    <div class="logo-mark">BVG</div>
-    <div>
-      <div class="logo-text">Berlin Transit Live</div>
-      <div class="logo-sub">Echtzeit-Abfahrtsmonitor</div>
-    </div>
-  </div>
+  <div class="logo-mark">BVG</div>
+  <div class="logo-text">Berlin Transit Live</div>
   <div class="spacer"></div>
-  <div style="text-align:right">
-    <div class="clock" id="clock">--:--:--</div>
-    <div class="date-str" id="dateStr"></div>
-  </div>
-  <div class="refresh-badge">
-    <div class="pulse" id="pulseDot"></div>
-    <span id="refreshLabel">Live</span>
-  </div>
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="pulse-wrap"><div class="pulse"></div><span>10s</span></div>
 </header>
 
-<!-- ── Search Bar ── -->
-<div class="search-bar">
+<!-- Filter chips (top-right) -->
+<div class="filter-bar" id="filterBar"></div>
+
+<!-- Side panel -->
+<div class="panel">
+
   <div class="search-wrap">
-    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" id="searchInput" placeholder="Search Berlin station…" autocomplete="off" />
+    <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="searchInput" type="text" placeholder="Station suchen…" autocomplete="off"/>
     <div class="search-results" id="searchResults"></div>
   </div>
-  <div class="fav-stations" id="favStations"></div>
-</div>
 
-<!-- ── Main ── -->
-<div class="main">
+  <div class="favs" id="favs"></div>
 
-  <!-- Board -->
-  <div class="board-panel">
-    <div class="panel-header">
-      <div>
-        <div class="station-name-display" id="stationName">Berlin Hauptbahnhof</div>
-        <div class="station-meta" id="stationMeta">Loading…</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div class="tabs" id="boardTabs">
-          <button class="tab-btn active" onclick="switchTab('departures')">Departures</button>
-          <button class="tab-btn" onclick="switchTab('arrivals')">Arrivals</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="boardContent">
-      <div class="loading-state"><div class="spinner"></div><span>Fetching live data…</span></div>
+  <div class="stn-hdr">
+    <div class="stn-name" id="stationName">Berlin Hauptbahnhof</div>
+    <div class="stn-meta" id="stationMeta"></div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('departures')">Abfahrt</button>
+      <button class="tab-btn" onclick="switchTab('arrivals')">Ankunft</button>
     </div>
   </div>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-
-    <!-- Stats -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Network Overview</div>
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-val" id="statDeps">—</div>
-          <div class="stat-label">Departures / 30 min</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" id="statOnTime">—</div>
-          <div class="stat-label">On-time rate</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Line Status -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">U-Bahn Lines</div>
-      <div class="line-grid" id="ubahnGrid"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">S-Bahn Lines</div>
-      <div class="line-grid" id="sbahnGrid"></div>
-    </div>
-
-    <!-- Alerts -->
-    <div class="sidebar-section" style="flex:1">
-      <div class="sidebar-section-title">Service Alerts</div>
-      <div id="alertsContainer">
-        <div class="empty-msg">Loading alerts…</div>
-      </div>
-    </div>
-
+  <div class="board" id="board">
+    <div class="state-box"><div class="spinner"></div>Lade Echtzeit…</div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ─────────────────────────────────────────
-   CONFIG & STATE
-───────────────────────────────────────── */
 const API = 'https://v6.vbb.transport.rest';
+const REFRESH_MS = 10000;
+const BBOX = {north:52.68,west:13.09,south:52.35,east:13.76};
 
-const FAVOURITE_STATIONS = [
-  { name: 'Hauptbahnhof',   id: '900003201' },
-  { name: 'Alexanderplatz', id: '900100003' },
-  { name: 'Zoo',            id: '900023201' },
-  { name: 'Ostbahnhof',     id: '900120005' },
-  { name: 'Südkreuz',       id: '900140004' },
-  { name: 'Gesundbrunnen',  id: '900007102' },
+const FAVS_LIST = [
+  {name:'Hbf',        id:'900003201'},
+  {name:'Alex',       id:'900100003'},
+  {name:'Zoo',        id:'900023201'},
+  {name:'Ostbhf',     id:'900120005'},
+  {name:'Südkreuz',   id:'900140004'},
+  {name:'Gesundbrunnen', id:'900007102'},
 ];
 
-const UBAHN_LINES = ['U1','U2','U3','U4','U5','U6','U7','U8','U9'];
-const SBAHN_LINES = ['S1','S2','S3','S5','S7','S8','S9','S25','S41','S42','S45','S46','S47'];
+const FILTER_DEFS = [
+  {key:'subway',   label:'U-Bahn', bg:'#224f9e', fg:'#fff'},
+  {key:'suburban', label:'S-Bahn', bg:'#007734', fg:'#fff'},
+  {key:'bus',      label:'Bus',    bg:'#6e3fa3', fg:'#fff'},
+  {key:'tram',     label:'Tram',   bg:'#cc2222', fg:'#fff'},
+  {key:'regional', label:'Regio',  bg:'#ef7c00', fg:'#fff'},
+  {key:'ferry',    label:'Fähre',  bg:'#0a5f98', fg:'#fff'},
+];
 
-let currentStationId   = '900003201';
-let currentStationName = 'Berlin Hauptbahnhof';
-let currentTab         = 'departures';
-let refreshTimer       = null;
-let searchTimer        = null;
-
-/* ─────────────────────────────────────────
-   CLOCK
-───────────────────────────────────────── */
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  document.getElementById('dateStr').textContent =
-    now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-/* ─────────────────────────────────────────
-   FAVOURITE BUTTONS
-───────────────────────────────────────── */
-function renderFavs() {
-  const container = document.getElementById('favStations');
-  container.innerHTML = '';
-  FAVOURITE_STATIONS.forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'fav-btn' + (s.id === currentStationId ? ' active' : '');
-    btn.textContent = s.name;
-    btn.onclick = () => loadStation(s.id, s.name);
-    container.appendChild(btn);
-  });
-}
-
-/* ─────────────────────────────────────────
-   SEARCH
-───────────────────────────────────────── */
-const searchInput   = document.getElementById('searchInput');
-const searchResults = document.getElementById('searchResults');
-
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimer);
-  const q = searchInput.value.trim();
-  if (q.length < 2) { searchResults.classList.remove('open'); return; }
-  searchTimer = setTimeout(() => fetchSearch(q), 350);
-});
-
-searchInput.addEventListener('blur', () => {
-  setTimeout(() => searchResults.classList.remove('open'), 200);
-});
-
-async function fetchSearch(query) {
-  try {
-    const res = await fetch(`${API}/locations?query=${encodeURIComponent(query)}&results=8&stops=true&addresses=false&poi=false`);
-    const data = await res.json();
-    renderSearchResults(data.filter(d => d.type === 'stop'));
-  } catch(e) {
-    renderSearchResults([]);
-  }
-}
-
-function renderSearchResults(stops) {
-  searchResults.innerHTML = '';
-  if (!stops.length) {
-    searchResults.innerHTML = '<div class="search-result-item"><span style="color:var(--muted)">No results</span></div>';
-  } else {
-    stops.forEach(s => {
-      const div = document.createElement('div');
-      div.className = 'search-result-item';
-      const products = s.products ? Object.keys(s.products).filter(k => s.products[k]).join(', ') : '';
-      div.innerHTML = `
-        <div class="stop-icon">S</div>
-        <div>
-          <div class="result-name">${s.name}</div>
-          <div class="result-sub">${products}</div>
-        </div>`;
-      div.onclick = () => {
-        loadStation(s.id, s.name);
-        searchInput.value = '';
-        searchResults.classList.remove('open');
-      };
-      searchResults.appendChild(div);
-    });
-  }
-  searchResults.classList.add('open');
-}
-
-/* ─────────────────────────────────────────
-   LINE BADGE COLOURS
-───────────────────────────────────────── */
 const LINE_COLORS = {
   U1:'#55a822',U2:'#dd6e14',U3:'#16683d',U4:'#f0d722',
   U5:'#7d4427',U6:'#8b5ca3',U7:'#528dba',U8:'#224f9e',U9:'#f7931e',
   S1:'#da6ba2',S2:'#007734',S3:'#0a5f98',S5:'#ef7c00',
   S7:'#775e38',S8:'#55a822',S9:'#990000',S25:'#007734',
   S41:'#ab2626',S42:'#cb6418',S45:'#c97a2f',S46:'#c97a2f',S47:'#c97a2f',
-  default:'#444d56'
 };
+const DARK_FG = new Set(['U4','S5','S7','S8','S25']);
 
-const TEXT_DARK = new Set(['U4','S5','S7','S8']);
+// State
+let stationId = '900003201', stationName = 'Berlin Hauptbahnhof';
+let tab = 'departures';
+let filters = Object.fromEntries(FILTER_DEFS.map(f=>[f.key,true]));
+let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
+let map, stationMarker=null, vehicleMarkers={};
 
-function lineBadge(line) {
-  if (!line) return '<span class="line-badge" style="background:#444;color:#fff">?</span>';
-  const name = line.name || line;
-  const bg   = LINE_COLORS[name] || LINE_COLORS.default;
-  const fg   = TEXT_DARK.has(name) ? '#000' : '#fff';
-  return `<span class="line-badge" style="background:${bg};color:${fg}">${name}</span>`;
+/* ── CLOCK ── */
+setInterval(()=>{
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+/* ── MAP ── */
+function initMap(){
+  map = L.map('map',{zoomControl:true}).setView([52.52,13.405],12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
+  }).addTo(map);
 }
 
-/* ─────────────────────────────────────────
-   TIME FORMATTING
-───────────────────────────────────────── */
-function formatTime(isoStr) {
-  if (!isoStr) return '—';
-  return new Date(isoStr).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+function setStationMarker(lat,lon,name){
+  if(stationMarker) stationMarker.remove();
+  stationMarker = L.circleMarker([lat,lon],{
+    radius:9,color:'#58a6ff',fillColor:'#58a6ff',fillOpacity:.4,weight:2,zIndexOffset:1000
+  }).addTo(map).bindTooltip(`<b>${name}</b>`,{direction:'right'});
+  map.setView([lat,lon],Math.max(map.getZoom(),13),{animate:true,duration:.5});
 }
 
-function minutesUntil(isoStr) {
-  if (!isoStr) return null;
-  return Math.round((new Date(isoStr) - Date.now()) / 60000);
+function productBg(p){
+  return {subway:'#224f9e',suburban:'#007734',bus:'#6e3fa3',
+          tram:'#cc2222',regional:'#ef7c00',ferry:'#0a5f98'}[p]||'#444';
 }
 
-function countdownChip(minutes) {
-  if (minutes === null) return '';
-  if (minutes <= 0)  return `<span class="countdown now">Now</span>`;
-  if (minutes <= 5)  return `<span class="countdown soon">${minutes} min</span>`;
-  return `<span class="countdown later">${minutes} min</span>`;
+function updateVehicles(movements){
+  const seen=new Set();
+  (movements||[]).forEach(m=>{
+    if(!m.line||!m.location) return;
+    const prod=m.line.product;
+    if(!filters[prod]) return;
+    const id=m.tripId||(m.line.name+m.direction);
+    const {latitude:lat,longitude:lon}=m.location;
+    const n=m.line.name||'?';
+    const bg=LINE_COLORS[n]||productBg(prod);
+    const fg=DARK_FG.has(n)?'#000':'#fff';
+    seen.add(id);
+    if(vehicleMarkers[id]){
+      vehicleMarkers[id].setLatLng([lat,lon]);
+    } else {
+      const icon=L.divIcon({
+        className:'veh-icon',
+        html:`<span style="background:${bg};color:${fg}">${n}</span>`,
+        iconAnchor:[15,8]
+      });
+      vehicleMarkers[id]=L.marker([lat,lon],{icon,zIndexOffset:0})
+        .addTo(map)
+        .bindTooltip(`${n}${m.direction?' → '+m.direction:''}`,{sticky:true});
+    }
+  });
+  Object.keys(vehicleMarkers).forEach(id=>{
+    if(!seen.has(id)){vehicleMarkers[id].remove();delete vehicleMarkers[id];}
+  });
 }
 
-function delayBadge(planned, actual) {
-  if (!planned || !actual) return '';
-  const diff = Math.round((new Date(actual) - new Date(planned)) / 60000);
-  if (diff > 1)  return `<span class="delay late">+${diff}'</span>`;
-  if (diff <= 0) return `<span class="delay ontime">On time</span>`;
+/* ── FILTERS ── */
+function renderFilters(){
+  document.getElementById('filterBar').innerHTML = FILTER_DEFS.map(f=>{
+    const on=filters[f.key];
+    return `<div class="fc ${on?'on':'off'}"
+      style="${on?`background:${f.bg};color:${f.fg}`:''}"
+      onclick="toggleFilter('${f.key}')">${f.label}</div>`;
+  }).join('');
+}
+function toggleFilter(key){
+  filters[key]=!filters[key];
+  renderFilters();
+  // hide/show existing markers immediately
+  Object.entries(vehicleMarkers).forEach(([id,mk])=>{
+    const el=mk.getElement();
+    if(el) el.style.display='block'; // will be corrected on next radar update
+  });
+  loadAll();
+}
+
+/* ── FAVS ── */
+function renderFavs(){
+  document.getElementById('favs').innerHTML=FAVS_LIST.map(s=>
+    `<button class="fav-btn ${s.id===stationId?'active':''}"
+       onclick="loadStation('${s.id}','${s.name}')">${s.name}</button>`
+  ).join('');
+}
+
+/* ── SEARCH ── */
+const searchInput=document.getElementById('searchInput');
+const searchResults=document.getElementById('searchResults');
+searchInput.addEventListener('input',()=>{
+  clearTimeout(searchTimer);
+  const q=searchInput.value.trim();
+  if(q.length<2){searchResults.classList.remove('open');return;}
+  searchTimer=setTimeout(()=>doSearch(q),300);
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-wrap')) searchResults.classList.remove('open');
+});
+async function doSearch(q){
+  try{
+    const r=await fetch(`${API}/locations?query=${encodeURIComponent(q)}&results=7&stops=true&addresses=false&poi=false`);
+    const data=await r.json();
+    const stops=data.filter(d=>d.type==='stop');
+    searchResults.innerHTML=stops.length
+      ? stops.map(s=>`<div class="sr-item" onclick="loadStation('${s.id}','${s.name}');searchInput.value='';searchResults.classList.remove('open')">
+          <div class="sr-name">${s.name}</div>
+          <div class="sr-sub">${Object.keys(s.products||{}).filter(k=>s.products[k]).join(' · ')}</div>
+        </div>`).join('')
+      : '<div class="sr-item"><span style="color:var(--muted)">Keine Ergebnisse</span></div>';
+    searchResults.classList.add('open');
+  }catch{}
+}
+
+/* ── HELPERS ── */
+function lineBadge(line){
+  if(!line) return '<span class="line-badge" style="background:#333;color:#fff">?</span>';
+  const n=line.name||'?';
+  const bg=LINE_COLORS[n]||productBg(line.product)||'#444';
+  const fg=DARK_FG.has(n)?'#000':'#fff';
+  return `<span class="line-badge" style="background:${bg};color:${fg}">${n}</span>`;
+}
+function fmtTime(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+function minsUntil(iso){
+  if(!iso) return null;
+  return Math.round((new Date(iso)-Date.now())/60000);
+}
+function cdChip(m){
+  if(m===null) return '';
+  if(m<=0)  return `<span class="countdown cnt-now">Jetzt</span>`;
+  if(m<=5)  return `<span class="countdown cnt-soon">${m}'</span>`;
+  return `<span class="countdown cnt-later">${m}'</span>`;
+}
+function delaySpan(pl,ac){
+  if(!pl||!ac) return '';
+  const d=Math.round((new Date(ac)-new Date(pl))/60000);
+  if(d>1)  return `<span class="dep-delay late">+${d}'</span>`;
+  if(d<=0) return `<span class="dep-delay ok">✓</span>`;
   return '';
 }
 
-/* ─────────────────────────────────────────
-   DEPARTURES / ARRIVALS
-───────────────────────────────────────── */
-async function fetchDepartures(stationId, type = 'departures') {
-  const endpoint = type === 'departures' ? 'departures' : 'arrivals';
-  const res = await fetch(
-    `${API}/stops/${stationId}/${endpoint}?duration=60&results=40&linesOfStops=false&remarks=false`
-  );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return data[endpoint] || data;
+/* ── FETCH DEPS ── */
+async function fetchDeps(id,type){
+  if(depAbort) depAbort.abort();
+  depAbort=new AbortController();
+  const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
+  const ep=type==='departures'?'departures':'arrivals';
+  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&${qs}`,
+    {signal:depAbort.signal});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data=await res.json();
+  return data[ep]||data;
 }
 
-function renderDepartureTable(deps, type) {
-  if (!deps || !deps.length) {
-    return '<div class="empty-msg">No departures found in the next hour.</div>';
-  }
-
-  const dirLabel = type === 'departures' ? 'Direction' : 'From';
-
-  let html = `
-    <table class="dep-table">
-      <thead>
-        <tr>
-          <th>Line</th>
-          <th>${dirLabel}</th>
-          <th style="text-align:right">Sched.</th>
-          <th style="text-align:center">In</th>
-          <th style="text-align:center">Track</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-  deps.slice(0, 25).forEach(dep => {
-    const line    = dep.line;
-    const when    = dep.when || dep.plannedWhen;
-    const planned = dep.plannedWhen;
-    const actual  = dep.when;
-    const mins    = minutesUntil(when);
-    const dest    = type === 'departures'
-      ? (dep.direction || '—')
-      : (dep.origin?.name || '—');
-    const platform = dep.plannedPlatform || dep.platform || '—';
-
-    html += `
-      <tr class="dep-row">
-        <td>${lineBadge(line)}</td>
-        <td class="dest-cell">
-          <div>${dest}</div>
-        </td>
-        <td class="time-cell">
-          ${formatTime(planned)}
-          ${delayBadge(planned, actual)}
-        </td>
-        <td style="text-align:center">${countdownChip(mins)}</td>
-        <td class="platform-cell">${platform}</td>
-      </tr>`;
-  });
-
-  html += '</tbody></table>';
-  return html;
+function renderBoard(deps,type){
+  if(!deps.length)
+    return '<div class="state-box">Keine Abfahrten</div>';
+  return deps.slice(0,20).map(d=>{
+    const when=d.when||d.plannedWhen;
+    const dest=type==='departures'?(d.direction||'—'):(d.origin?.name||'—');
+    const mins=minsUntil(when);
+    return `<div class="dep-row">
+      ${lineBadge(d.line)}
+      <span class="dep-dest" title="${dest}">${dest}</span>
+      <span class="dep-time">${fmtTime(d.plannedWhen)}${delaySpan(d.plannedWhen,d.when)}</span>
+      ${cdChip(mins)}
+    </div>`;
+  }).join('');
 }
 
-/* ─────────────────────────────────────────
-   LOAD STATION
-───────────────────────────────────────── */
-async function loadStation(id, name) {
-  currentStationId   = id;
-  currentStationName = name;
+/* ── FETCH RADAR ── */
+async function fetchRadar(){
+  if(radarAbort) radarAbort.abort();
+  radarAbort=new AbortController();
+  const {north,west,south,east}=BBOX;
+  const res=await fetch(
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=256&duration=30&frames=1&polylines=false`,
+    {signal:radarAbort.signal});
+  if(!res.ok) return;
+  const data=await res.json();
+  updateVehicles(data.movements);
+}
 
-  document.getElementById('stationName').textContent = name;
-  document.getElementById('stationMeta').textContent = `Stop ID: ${id}`;
-  document.getElementById('boardContent').innerHTML  =
-    '<div class="loading-state"><div class="spinner"></div><span>Fetching live data…</span></div>';
-
-  renderFavs();
+/* ── LOAD ALL ── */
+async function loadAll(){
   clearTimeout(refreshTimer);
-
-  try {
-    const deps = await fetchDepartures(id, currentTab);
-
-    // Stats
-    const total  = deps.length;
-    const ontime = deps.filter(d => {
-      if (!d.when || !d.plannedWhen) return true;
-      return Math.round((new Date(d.when) - new Date(d.plannedWhen)) / 60000) <= 1;
-    }).length;
-    document.getElementById('statDeps').textContent   = total;
-    document.getElementById('statOnTime').textContent =
-      total ? Math.round((ontime / total) * 100) + '%' : '—';
-
-    document.getElementById('boardContent').innerHTML = renderDepartureTable(deps, currentTab);
-  } catch(err) {
-    const isCors = location.protocol === 'file:';
-    const hint = isCors
-      ? `<br><br><strong>Fix:</strong> You opened this file directly from disk. Run a local server instead:<br>
-         <code style="background:var(--surface2);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:6px">python3 -m http.server 8080</code><br>
-         Then open <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">http://localhost:8080</code> in your browser.`
-      : `<br><small>The VBB API may be temporarily unavailable. Retrying in 30s…</small>`;
-    document.getElementById('boardContent').innerHTML =
-      `<div class="error-state">⚠ Could not load live data: ${err.message}${hint}</div>`;
+  const [depsR]=await Promise.allSettled([fetchDeps(stationId,tab),fetchRadar()]);
+  const board=document.getElementById('board');
+  if(depsR.status==='fulfilled'){
+    board.innerHTML=renderBoard(depsR.value,tab);
+  } else if(depsR.reason?.name!=='AbortError'){
+    const cors=location.protocol==='file:';
+    board.innerHTML=cors
+      ? `<div class="state-box" style="color:var(--red)">CORS-Fehler.<br><small>Starte: <code>python3 -m http.server 8080</code></small></div>`
+      : `<div class="state-box" style="color:var(--red)">${depsR.reason?.message}</div>`;
   }
-
-  // Auto-refresh every 30 seconds
-  refreshTimer = setTimeout(() => loadStation(id, name), 30000);
+  refreshTimer=setTimeout(loadAll,REFRESH_MS);
 }
 
-/* ─────────────────────────────────────────
-   TABS
-───────────────────────────────────────── */
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', (i === 0 && tab === 'departures') || (i === 1 && tab === 'arrivals'));
-  });
-  loadStation(currentStationId, currentStationName);
+/* ── LOAD STATION ── */
+async function loadStation(id,name){
+  stationId=id; stationName=name;
+  document.getElementById('stationName').textContent=name;
+  document.getElementById('stationMeta').textContent=`Stop: ${id}`;
+  document.getElementById('board').innerHTML='<div class="state-box"><div class="spinner"></div>Lade…</div>';
+  renderFavs();
+  try{
+    const r=await fetch(`${API}/stops/${id}`);
+    const s=await r.json();
+    if(s.location) setStationMarker(s.location.latitude,s.location.longitude,name);
+  }catch{}
+  loadAll();
 }
 
-/* ─────────────────────────────────────────
-   LINE STATUS (sidebar)
-───────────────────────────────────────── */
-function renderLineGrid(lineNames, containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  lineNames.forEach(name => {
-    const bg  = LINE_COLORS[name] || LINE_COLORS.default;
-    const fg  = TEXT_DARK.has(name) ? '#000' : '#fff';
-    // Simulated status — in a real app you'd query the alerts API
-    const statusClass = 'status-ok';
-    container.innerHTML += `
-      <div class="line-status-item">
-        <div class="line-status-badge" style="background:${bg};color:${fg}">${name}</div>
-        <div class="status-dot ${statusClass}"></div>
-      </div>`;
-  });
+/* ── TAB ── */
+function switchTab(t){
+  tab=t;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>
+    b.classList.toggle('active',(i===0&&t==='departures')||(i===1&&t==='arrivals')));
+  loadAll();
 }
 
-/* ─────────────────────────────────────────
-   SERVICE ALERTS
-───────────────────────────────────────── */
-async function loadAlerts() {
-  const container = document.getElementById('alertsContainer');
-  try {
-    const res = await fetch(`${API}/remarks?results=10&type=warning`);
-    if (!res.ok) throw new Error('No alerts');
-    const remarks = await res.json();
-
-    if (!remarks || !remarks.length) {
-      container.innerHTML = '<div class="empty-msg" style="color:var(--green)">✓ No current disruptions</div>';
-      return;
-    }
-
-    container.innerHTML = remarks.slice(0, 6).map(r => {
-      const title = r.summary || r.type || 'Service Notice';
-      const body  = r.text ? r.text.replace(/<[^>]+>/g, '').slice(0, 140) + '…' : '';
-      const cls   = r.type === 'warning' ? '' : 'info';
-      return `
-        <div class="alert-item ${cls}">
-          <div class="alert-title">${title}</div>
-          <div class="alert-body">${body}</div>
-        </div>`;
-    }).join('');
-  } catch {
-    // Fallback: show static Berlin-specific info
-    container.innerHTML = `
-      <div class="alert-item info">
-        <div class="alert-title">Live feed active</div>
-        <div class="alert-body">Connecting to VBB real-time data. Alerts will appear here.</div>
-      </div>`;
-  }
-}
-
-/* ─────────────────────────────────────────
-   INIT
-───────────────────────────────────────── */
+/* ── INIT ── */
+initMap();
 renderFavs();
-renderLineGrid(UBAHN_LINES, 'ubahnGrid');
-renderLineGrid(SBAHN_LINES, 'sbahnGrid');
-loadStation(currentStationId, currentStationName);
-loadAlerts();
-setInterval(loadAlerts, 120000);
+renderFilters();
+loadStation(stationId,stationName);
 </script>
 </body>
 </html>
