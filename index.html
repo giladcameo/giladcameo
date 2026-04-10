@@ -253,10 +253,21 @@ const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
 const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
 
-// U-Bahn stays within Berlin
-const BBOX_UBAHN = {north:52.62, west:13.10, south:52.42, east:13.65};
-// S-Bahn extends to Potsdam, Strausberg, Oranienburg, Blankenfelde
-const BBOX_SBAHN = {north:52.82, west:12.88, south:52.18, east:14.00};
+// Main inner-Berlin box for U-Bahn + central S-Bahn
+const BBOX_INNER = {north:52.60, west:13.10, south:52.43, east:13.65, results:256};
+
+// Small terminal-area boxes — few buses here, so trains dominate the results
+const BBOX_TERMINALS = [
+  {north:52.44, west:13.72, south:52.40, east:13.80, results:20},  // S3  Erkner
+  {north:52.62, west:13.84, south:52.56, east:13.96, results:20},  // S5  Strausberg Nord
+  {north:52.42, west:13.02, south:52.36, east:13.12, results:20},  // S7  Potsdam Hbf
+  {north:52.77, west:13.20, south:52.71, east:13.29, results:15},  // S1  Oranienburg
+  {north:52.66, west:13.17, south:52.60, east:13.25, results:15},  // S25 Hennigsdorf
+  {north:52.35, west:13.38, south:52.29, east:13.46, results:15},  // S2  Blankenfelde
+  {north:52.70, west:13.28, south:52.64, east:13.36, results:15},  // S8  Birkenwerder
+  {north:52.58, west:13.67, south:52.52, east:13.77, results:15},  // S3/S5 Köpenick area
+  {north:52.53, west:12.94, south:52.47, east:13.04, results:15},  // S7  Griebnitzsee area
+];
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -491,36 +502,30 @@ function renderBoard(deps,type){
 async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
-  const sig = {signal: radarAbort.signal};
+  const sig={signal:radarAbort.signal};
+  const call=({north,west,south,east,results})=>
+    fetch(`${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=${results}&duration=300&frames=1&polylines=false`,sig)
+      .then(r=>r.ok?r.json():null).catch(()=>null);
 
-  // VBB API → U-Bahn only (subway=true, everything else false)
-  const uCall = fetch(
-    `${API}/radar?north=${BBOX_UBAHN.north}&west=${BBOX_UBAHN.west}&south=${BBOX_UBAHN.south}&east=${BBOX_UBAHN.east}`+
-    `&results=256&duration=300&frames=1&polylines=false`+
-    `&subway=true&suburban=false&bus=false&tram=false&regional=false&express=false&nationalExpress=false&ferry=false`,
-    sig).then(r=>r.ok?r.json():null).catch(()=>null);
+  const results = await Promise.all([BBOX_INNER,...BBOX_TERMINALS].map(call));
 
-  // DB API → S-Bahn only (suburban=true, everything else false)
-  // DB HAFAS has far fewer buses than VBB, so 512 results ≈ all S-Bahn trains
-  const sCall = fetch(
-    `${API_DB}/radar?north=${BBOX_SBAHN.north}&west=${BBOX_SBAHN.west}&south=${BBOX_SBAHN.south}&east=${BBOX_SBAHN.east}`+
-    `&results=512&duration=300&frames=1&polylines=false`+
-    `&suburban=true&subway=false&bus=false&tram=false&regional=false&regionalExp=false&national=false&nationalExpress=false&ferry=false`,
-    sig).then(r=>r.ok?r.json():null).catch(()=>null);
+  // Merge & deduplicate by tripId
+  const seen=new Set();
+  const movements=[];
+  for(const d of results){
+    for(const m of (d?.movements||[])){
+      const id=m.tripId||(m.line?.name+m.direction);
+      if(!seen.has(id)){seen.add(id);movements.push(m);}
+    }
+  }
 
-  const [uData, sData] = await Promise.all([uCall, sCall]);
-  // Debug: log exactly what each API returned
-  const uMov = uData?.movements || [];
-  const sMov = sData?.movements || [];
-  const dbgU = {}; uMov.forEach(m=>{const p=m.line?.product||'?';dbgU[p]=(dbgU[p]||0)+1;});
-  const dbgS = {}; sMov.forEach(m=>{const p=m.line?.product||'?';dbgS[p]=(dbgS[p]||0)+1;});
-  const sLines = [...new Set(sMov.map(m=>m.line?.name).filter(Boolean))].sort().join(' ');
-  document.getElementById('debugBadge').innerHTML =
-    `<b>VBB:</b> ${JSON.stringify(dbgU)}<br>`+
-    `<b>DB:</b> ${JSON.stringify(dbgS)}<br>`+
-    `<small>${sLines}</small>`;
+  // Debug badge
+  const sLines=[...new Set(
+    movements.filter(m=>m.line?.product==='suburban').map(m=>m.line?.name).filter(Boolean)
+  )].sort().join(' ');
+  const displayed=movements.filter(m=>filters[m.line?.product]).length;
+  document.getElementById('debugBadge').innerHTML=`<b>On map: ${displayed}</b> (S: ${sLines||'—'})`;
 
-  const movements = [...uMov, ...sMov];
   updateVehicles(movements);
 }
 
