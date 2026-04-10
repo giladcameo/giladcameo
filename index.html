@@ -334,16 +334,13 @@ function updateVehicles(movements){
     const p=m.line?.product||'?'; dbg[p]=(dbg[p]||0)+1;
   });
   const displayed = (movements||[]).filter(m=>filters[m.line?.product]).length;
-  // Show S-Bahn line breakdown to diagnose missing lines
   const sLines={};
   (movements||[]).filter(m=>m.line?.product==='suburban').forEach(m=>{
     const n=m.line.name||'?'; sLines[n]=(sLines[n]||0)+1;
   });
   const sDetail = Object.keys(sLines).sort().join(' ') || '—';
   document.getElementById('debugBadge').innerHTML =
-    `<b>${displayed} shown / ${movements?.length||0} total</b><br>`+
-    Object.entries(dbg).map(([p,c])=>`${p}: ${c}`).join('<br>')+
-    `<br><small>S: ${sDetail}</small>`;
+    `<b>On map: ${displayed}</b> (S: ${sDetail})`;
 
   (movements||[]).forEach(m=>{
     if(!m.line||!m.location) return;
