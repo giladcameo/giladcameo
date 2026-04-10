@@ -249,11 +249,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API = 'https://v6.vbb.transport.rest';
+const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
+const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
-// Extended bbox to cover all VBB S-Bahn routes outside Berlin:
-// west → Potsdam Hbf (S7), east → Strausberg Nord (S5), north → Oranienburg (S1/S25), south → Blankenfelde (S2/S25)
-const BBOX = {north:52.82,west:12.88,south:52.18,east:14.00};
+
+// U-Bahn stays within Berlin
+const BBOX_UBAHN = {north:52.62, west:13.10, south:52.42, east:13.65};
+// S-Bahn extends to Potsdam, Strausberg, Oranienburg, Blankenfelde
+const BBOX_SBAHN = {north:52.82, west:12.88, south:52.18, east:14.00};
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -488,13 +491,29 @@ function renderBoard(deps,type){
 async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
-  const {north,west,south,east}=BBOX;
-  const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false`,
-    {signal:radarAbort.signal});
-  if(!res.ok) return;
-  const data=await res.json();
-  updateVehicles(data.movements);
+  const sig = {signal: radarAbort.signal};
+
+  // VBB API → U-Bahn only (subway=true, everything else false)
+  const uCall = fetch(
+    `${API}/radar?north=${BBOX_UBAHN.north}&west=${BBOX_UBAHN.west}&south=${BBOX_UBAHN.south}&east=${BBOX_UBAHN.east}`+
+    `&results=256&duration=300&frames=1&polylines=false`+
+    `&subway=true&suburban=false&bus=false&tram=false&regional=false&express=false&nationalExpress=false&ferry=false`,
+    sig).then(r=>r.ok?r.json():null).catch(()=>null);
+
+  // DB API → S-Bahn only (suburban=true, everything else false)
+  // DB HAFAS has far fewer buses than VBB, so 512 results ≈ all S-Bahn trains
+  const sCall = fetch(
+    `${API_DB}/radar?north=${BBOX_SBAHN.north}&west=${BBOX_SBAHN.west}&south=${BBOX_SBAHN.south}&east=${BBOX_SBAHN.east}`+
+    `&results=512&duration=300&frames=1&polylines=false`+
+    `&suburban=true&subway=false&bus=false&tram=false&regional=false&regionalExp=false&national=false&nationalExpress=false&ferry=false`,
+    sig).then(r=>r.ok?r.json():null).catch(()=>null);
+
+  const [uData, sData] = await Promise.all([uCall, sCall]);
+  const movements = [
+    ...(uData?.movements || []),
+    ...(sData?.movements || []),
+  ];
+  updateVehicles(movements);
 }
 
 /* ── LOAD ALL ── */
