@@ -509,10 +509,18 @@ async function fetchRadar(){
     sig).then(r=>r.ok?r.json():null).catch(()=>null);
 
   const [uData, sData] = await Promise.all([uCall, sCall]);
-  const movements = [
-    ...(uData?.movements || []),
-    ...(sData?.movements || []),
-  ];
+  // Debug: log exactly what each API returned
+  const uMov = uData?.movements || [];
+  const sMov = sData?.movements || [];
+  const dbgU = {}; uMov.forEach(m=>{const p=m.line?.product||'?';dbgU[p]=(dbgU[p]||0)+1;});
+  const dbgS = {}; sMov.forEach(m=>{const p=m.line?.product||'?';dbgS[p]=(dbgS[p]||0)+1;});
+  const sLines = [...new Set(sMov.map(m=>m.line?.name).filter(Boolean))].sort().join(' ');
+  document.getElementById('debugBadge').innerHTML =
+    `<b>VBB:</b> ${JSON.stringify(dbgU)}<br>`+
+    `<b>DB:</b> ${JSON.stringify(dbgS)}<br>`+
+    `<small>${sLines}</small>`;
+
+  const movements = [...uMov, ...sMov];
   updateVehicles(movements);
 }
 
