@@ -253,11 +253,14 @@ const API = 'https://v6.vbb.transport.rest';
 const REFRESH_MS = 10000;
 // Extended bbox to cover all VBB S-Bahn routes outside Berlin:
 // west → Potsdam Hbf (S7), east → Strausberg Nord (S5), north → Oranienburg (S1/S25), south → Blankenfelde (S2/S25)
-// Split into two smaller bboxes so each gets 512 results independently.
-// Fewer buses per box → more room for outer S-Bahn trains (S3/S5/S7).
+// 5 targeted bboxes — each corridor gets its own result quota.
+// This prevents central Berlin buses from crowding out outer S-Bahn trains.
 const BBOXES = [
-  {north:52.62, west:13.09, south:52.38, east:13.76}, // inner Berlin
-  {north:52.82, west:12.88, south:52.38, east:14.00}, // outer ring (Potsdam, Strausberg, Oranienburg)
+  {north:52.60,west:13.20,south:52.44,east:13.62,results:128}, // core Berlin (U+S inner)
+  {north:52.55,west:12.88,south:52.36,east:13.22,results:96},  // west: S7 Wannsee→Potsdam
+  {north:52.62,west:13.60,south:52.38,east:14.00,results:96},  // east: S3/S5 →Erkner/Strausberg
+  {north:52.82,west:13.10,south:52.58,east:13.50,results:64},  // north: S1/S25 →Oranienburg
+  {north:52.46,west:13.15,south:52.18,east:13.65,results:64},  // south: S2/S25/S45 →Blankenfelde
 ];
 
 const FAVS_LIST = [
@@ -493,8 +496,8 @@ async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
 
-  const calls = BBOXES.map(({north,west,south,east}) =>
-    fetch(`${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=256&duration=300&frames=1&polylines=false`,
+  const calls = BBOXES.map(({north,west,south,east,results}) =>
+    fetch(`${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=${results}&duration=300&frames=1&polylines=false`,
       {signal:radarAbort.signal})
       .then(r=>r.ok?r.json():null)
       .catch(()=>null)
