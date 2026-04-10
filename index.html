@@ -456,7 +456,7 @@ async function fetchDeps(id,type){
   depAbort=new AbortController();
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const ep=type==='departures'?'departures':'arrivals';
-  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&bus=false&tram=false&regional=false&${qs}`,
+  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
     {signal:depAbort.signal});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   const data=await res.json();
@@ -488,7 +488,7 @@ async function fetchRadar(){
   // before outer S-Bahn trains (S3/S5/S7) are included
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false&bus=false&tram=false&regional=false&express=false&nationalExpress=false&${qs}`,
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
     {signal:radarAbort.signal});
   if(!res.ok) return;
   const data=await res.json();
