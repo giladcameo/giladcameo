@@ -253,7 +253,12 @@ const API = 'https://v6.vbb.transport.rest';
 const REFRESH_MS = 10000;
 // Extended bbox to cover all VBB S-Bahn routes outside Berlin:
 // west → Potsdam Hbf (S7), east → Strausberg Nord (S5), north → Oranienburg (S1/S25), south → Blankenfelde (S2/S25)
-const BBOX = {north:52.82,west:12.88,south:52.18,east:14.00};
+// Split into two smaller bboxes so each gets 512 results independently.
+// Fewer buses per box → more room for outer S-Bahn trains (S3/S5/S7).
+const BBOXES = [
+  {north:52.62, west:13.09, south:52.38, east:13.76}, // inner Berlin
+  {north:52.82, west:12.88, south:52.38, east:14.00}, // outer ring (Potsdam, Strausberg, Oranienburg)
+];
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -333,8 +338,9 @@ function updateVehicles(movements){
   (movements||[]).forEach(m=>{
     const p=m.line?.product||'?'; dbg[p]=(dbg[p]||0)+1;
   });
+  const displayed = (movements||[]).filter(m=>filters[m.line?.product]).length;
   document.getElementById('debugBadge').innerHTML =
-    `<b>Radar: ${movements?.length||0} Fzg.</b><br>`+
+    `<b>Radar: ${displayed} angezeigt / ${movements?.length||0} gesamt</b><br>`+
     Object.entries(dbg).map(([p,c])=>`${p}: ${c}`).join('<br>');
 
   (movements||[]).forEach(m=>{
@@ -480,19 +486,23 @@ function renderBoard(deps,type){
 }
 
 /* ── FETCH RADAR ── */
+// The VBB radar API ignores product filters — it always returns all types.
+// Workaround: two parallel calls with smaller bboxes so buses don't fill
+// all 512 slots before outer S-Bahn trains (S3/S5/S7) are included.
 async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
-  const {north,west,south,east}=BBOX;
-  // Pass active filters to the API so buses don't fill the results quota
-  // before outer S-Bahn trains (S3/S5/S7) are included
-  const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
-  const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
-    {signal:radarAbort.signal});
-  if(!res.ok) return;
-  const data=await res.json();
-  updateVehicles(data.movements);
+
+  const calls = BBOXES.map(({north,west,south,east}) =>
+    fetch(`${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=256&duration=300&frames=1&polylines=false`,
+      {signal:radarAbort.signal})
+      .then(r=>r.ok?r.json():null)
+      .catch(()=>null)
+  );
+
+  const results = await Promise.all(calls);
+  const all = results.flatMap(d => d?.movements || []);
+  updateVehicles(all);
 }
 
 /* ── LOAD ALL ── */
