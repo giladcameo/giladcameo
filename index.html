@@ -253,21 +253,8 @@ const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
 const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
 
-// Main inner-Berlin box for U-Bahn + central S-Bahn
-const BBOX_INNER = {north:52.60, west:13.10, south:52.43, east:13.65, results:256};
-
-// Small terminal-area boxes — few buses here, so trains dominate the results
-const BBOX_TERMINALS = [
-  {north:52.44, west:13.72, south:52.40, east:13.80, results:20},  // S3  Erkner
-  {north:52.62, west:13.84, south:52.56, east:13.96, results:20},  // S5  Strausberg Nord
-  {north:52.42, west:13.02, south:52.36, east:13.12, results:20},  // S7  Potsdam Hbf
-  {north:52.77, west:13.20, south:52.71, east:13.29, results:15},  // S1  Oranienburg
-  {north:52.66, west:13.17, south:52.60, east:13.25, results:15},  // S25 Hennigsdorf
-  {north:52.35, west:13.38, south:52.29, east:13.46, results:15},  // S2  Blankenfelde
-  {north:52.70, west:13.28, south:52.64, east:13.36, results:15},  // S8  Birkenwerder
-  {north:52.58, west:13.67, south:52.52, east:13.77, results:15},  // S3/S5 Köpenick area
-  {north:52.53, west:12.94, south:52.47, east:13.04, results:15},  // S7  Griebnitzsee area
-];
+// Radar search radius in degrees (≈ 55 km) — covers all S-Bahn lines from any station
+const RADAR_RADIUS = 0.5;
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -295,8 +282,10 @@ const DARK_FG = new Set(['U4','S5','S7','S8','S25']);
 
 // State
 let stationId = '900003201', stationName = 'Berlin Hauptbahnhof';
+let stationLat = 52.5250839, stationLon = 13.3694354; // updated on each station load
 let tab = 'departures';
 let filters = Object.fromEntries(FILTER_DEFS.map(f=>[f.key,true]));
+let activeTripIds = new Set(); // trip IDs from latest departures/arrivals fetch
 let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
 let map, tileLayer, stationMarker=null, vehicleMarkers={};
 let isDark = true;
@@ -479,7 +468,10 @@ async function fetchDeps(id,type){
     {signal:depAbort.signal});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   const data=await res.json();
-  return data[ep]||data;
+  const deps=data[ep]||data;
+  // Save trip IDs so the radar can filter to only these vehicles
+  activeTripIds=new Set(deps.map(d=>d.tripId).filter(Boolean));
+  return deps;
 }
 
 function renderBoard(deps,type){
@@ -503,28 +495,30 @@ async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
   const sig={signal:radarAbort.signal};
-  const call=({north,west,south,east,results})=>
-    fetch(`${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=${results}&duration=300&frames=1&polylines=false`,sig)
-      .then(r=>r.ok?r.json():null).catch(()=>null);
 
-  const results = await Promise.all([BBOX_INNER,...BBOX_TERMINALS].map(call));
+  // Dynamic bbox centered on selected station (RADAR_RADIUS ≈ 55 km)
+  const north=(stationLat+RADAR_RADIUS).toFixed(4);
+  const south=(stationLat-RADAR_RADIUS).toFixed(4);
+  const west =(stationLon-RADAR_RADIUS).toFixed(4);
+  const east =(stationLon+RADAR_RADIUS).toFixed(4);
 
-  // Merge & deduplicate by tripId
-  const seen=new Set();
-  const movements=[];
-  for(const d of results){
-    for(const m of (d?.movements||[])){
-      const id=m.tripId||(m.line?.name+m.direction);
-      if(!seen.has(id)){seen.add(id);movements.push(m);}
-    }
-  }
+  const d=await fetch(
+    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false`,
+    sig
+  ).then(r=>r.ok?r.json():null).catch(()=>null);
+
+  // Keep only vehicles whose tripId appears in this station's departures/arrivals
+  const movements=(d?.movements||[]).filter(m=>
+    activeTripIds.size===0 || activeTripIds.has(m.tripId)
+  );
 
   // Debug badge
   const sLines=[...new Set(
     movements.filter(m=>m.line?.product==='suburban').map(m=>m.line?.name).filter(Boolean)
   )].sort().join(' ');
   const displayed=movements.filter(m=>filters[m.line?.product]).length;
-  document.getElementById('debugBadge').innerHTML=`<b>On map: ${displayed}</b> (S: ${sLines||'—'})`;
+  document.getElementById('debugBadge').innerHTML=
+    `<b>On map: ${displayed}</b> (S: ${sLines||'—'})`;
 
   updateVehicles(movements);
 }
@@ -532,16 +526,20 @@ async function fetchRadar(){
 /* ── LOAD ALL ── */
 async function loadAll(){
   clearTimeout(refreshTimer);
-  const [depsR]=await Promise.allSettled([fetchDeps(stationId,tab),fetchRadar()]);
   const board=document.getElementById('board');
-  if(depsR.status==='fulfilled'){
-    board.innerHTML=renderBoard(depsR.value,tab);
-  } else if(depsR.reason?.name!=='AbortError'){
-    const cors=location.protocol==='file:';
-    board.innerHTML=cors
-      ? `<div class="state-box" style="color:var(--red)">CORS-Fehler.<br><small>Starte: <code>python3 -m http.server 8080</code></small></div>`
-      : `<div class="state-box" style="color:var(--red)">${depsR.reason?.message}</div>`;
+  // Deps first — populates activeTripIds used by radar
+  try{
+    const deps=await fetchDeps(stationId,tab);
+    board.innerHTML=renderBoard(deps,tab);
+  }catch(e){
+    if(e.name!=='AbortError'){
+      const cors=location.protocol==='file:';
+      board.innerHTML=cors
+        ?`<div class="state-box" style="color:var(--red)">CORS-Fehler.<br><small>Starte: <code>python3 -m http.server 8080</code></small></div>`
+        :`<div class="state-box" style="color:var(--red)">${e.message}</div>`;
+    }
   }
+  await fetchRadar();
   refreshTimer=setTimeout(loadAll,REFRESH_MS);
 }
 
@@ -555,7 +553,11 @@ async function loadStation(id,name){
   try{
     const r=await fetch(`${API}/stops/${id}`);
     const s=await r.json();
-    if(s.location) setStationMarker(s.location.latitude,s.location.longitude,name);
+    if(s.location){
+      stationLat=s.location.latitude;
+      stationLon=s.location.longitude;
+      setStationMarker(stationLat,stationLon,name);
+    }
   }catch{}
   loadAll();
 }
