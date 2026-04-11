@@ -253,8 +253,6 @@ const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
 const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
 
-// Radar search radius in degrees (≈ 55 km) — covers all S-Bahn lines from any station
-const RADAR_RADIUS = 0.5;
 
 const FAVS_LIST = [
   {name:'Hbf',        id:'900003201'},
@@ -282,7 +280,6 @@ const DARK_FG = new Set(['U4','S5','S7','S8','S25']);
 
 // State
 let stationId = '900003201', stationName = 'Berlin Hauptbahnhof';
-let stationLat = 52.5250839, stationLon = 13.3694354; // updated on each station load
 let tab = 'departures';
 let filters = Object.fromEntries(FILTER_DEFS.map(f=>[f.key,true]));
 let activeTripIds = new Set(); // trip IDs from latest departures/arrivals fetch
@@ -464,7 +461,7 @@ async function fetchDeps(id,type){
   depAbort=new AbortController();
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const ep=type==='departures'?'departures':'arrivals';
-  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
+  const res=await fetch(`${API}/stops/${id}/${ep}?duration=90&results=40&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
     {signal:depAbort.signal});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   const data=await res.json();
@@ -490,35 +487,48 @@ function renderBoard(deps,type){
   }).join('');
 }
 
-/* ── FETCH RADAR ── */
+/* ── FETCH VEHICLE POSITIONS via /trips/{id} ── */
 async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
   const sig={signal:radarAbort.signal};
 
-  // Dynamic bbox centered on selected station (RADAR_RADIUS ≈ 55 km)
-  const north=(stationLat+RADAR_RADIUS).toFixed(4);
-  const south=(stationLat-RADAR_RADIUS).toFixed(4);
-  const west =(stationLon-RADAR_RADIUS).toFixed(4);
-  const east =(stationLon+RADAR_RADIUS).toFixed(4);
+  const ids=[...activeTripIds].slice(0,40);
+  if(!ids.length){updateVehicles([]);return;}
 
-  const d=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=300&frames=1&polylines=false`,
-    sig
-  ).then(r=>r.ok?r.json():null).catch(()=>null);
-
-  // Keep only vehicles whose tripId appears in this station's departures/arrivals
-  const movements=(d?.movements||[]).filter(m=>
-    activeTripIds.size===0 || activeTripIds.has(m.tripId)
+  // One request per trip — avoids bbox/bus-crowding entirely
+  const settled=await Promise.allSettled(
+    ids.map(id=>
+      fetch(`${API}/trips/${encodeURIComponent(id)}?stopovers=true&remarks=false`,sig)
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+    )
   );
 
-  // Debug badge
+  const movements=settled.flatMap(r=>{
+    if(r.status!=='fulfilled'||!r.value) return [];
+    const t=r.value.trip||r.value;
+    // Prefer live GPS; fall back to interpolated position from stopovers
+    let loc=t?.currentLocation;
+    if(!loc?.latitude && t?.stopovers?.length){
+      const now=Date.now();
+      // Find the stopover the train just passed or is currently at
+      const past=t.stopovers.filter(s=>{
+        const dep=s.departure||s.plannedDeparture;
+        return dep && new Date(dep)<=now;
+      });
+      const ref=past.length?past[past.length-1]:t.stopovers[0];
+      if(ref?.stop?.location) loc=ref.stop.location;
+    }
+    if(!loc?.latitude) return [];
+    return [{tripId:t.id,line:t.line,direction:t.direction,location:loc}];
+  });
+
   const sLines=[...new Set(
     movements.filter(m=>m.line?.product==='suburban').map(m=>m.line?.name).filter(Boolean)
   )].sort().join(' ');
   const displayed=movements.filter(m=>filters[m.line?.product]).length;
   document.getElementById('debugBadge').innerHTML=
-    `<b>On map: ${displayed}</b> (S: ${sLines||'—'})`;
+    `<b>${displayed}/${ids.length} located</b> (S: ${sLines||'—'})`;
 
   updateVehicles(movements);
 }
@@ -553,11 +563,7 @@ async function loadStation(id,name){
   try{
     const r=await fetch(`${API}/stops/${id}`);
     const s=await r.json();
-    if(s.location){
-      stationLat=s.location.latitude;
-      stationLon=s.location.longitude;
-      setStationMarker(stationLat,stationLon,name);
-    }
+    if(s.location) setStationMarker(s.location.latitude,s.location.longitude,name);
   }catch{}
   loadAll();
 }
