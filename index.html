@@ -84,13 +84,6 @@
     .sr-name{font-weight:600;font-size:12px}
     .sr-sub{font-size:10px;color:var(--muted)}
 
-    /* Favs */
-    .favs{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap}
-    .fav-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
-      padding:2px 9px;border-radius:20px;cursor:pointer;font-size:10px;white-space:nowrap}
-    .fav-btn:hover,.fav-btn.active{border-color:var(--accent);color:var(--accent);
-      background:rgba(88,166,255,.12)}
-
     /* Station header */
     .stn-hdr{padding:8px 12px;border-bottom:1px solid var(--border)}
     .stn-name{font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap;
@@ -190,8 +183,7 @@
         width:36px;height:4px;background:var(--border);border-radius:2px;
       }
 
-      /* Larger touch targets for favs and tabs */
-      .fav-btn{padding:6px 12px;font-size:12px}
+      /* Larger touch targets for tabs */
       .tab-btn{padding:6px 14px;font-size:12px}
       .dep-row{padding:8px 6px}
       .line-badge{min-width:38px;font-size:12px;padding:3px 6px}
@@ -242,8 +234,6 @@
     <div class="search-results" id="searchResults"></div>
   </div>
 
-  <div class="favs" id="favs"></div>
-
   <div class="stn-hdr">
     <div class="stn-name" id="stationName">Berlin Hauptbahnhof</div>
     <div class="stn-meta" id="stationMeta"></div>
@@ -264,15 +254,6 @@ const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
 const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
 
-
-const FAVS_LIST = [
-  {name:'Hbf',        id:'900003201'},
-  {name:'Alex',       id:'900100003'},
-  {name:'Zoo',        id:'900023201'},
-  {name:'Ostbhf',     id:'900120005'},
-  {name:'Südkreuz',   id:'900140004'},
-  {name:'Gesundbrunnen', id:'900007102'},
-];
 
 const FILTER_DEFS = [
   {key:'subway',   label:'U-Bahn', bg:'#224f9e', fg:'#fff'},
@@ -401,13 +382,6 @@ function toggleFilter(key){
   loadAll();
 }
 
-/* ── FAVS ── */
-function renderFavs(){
-  document.getElementById('favs').innerHTML=FAVS_LIST.map(s=>
-    `<button class="fav-btn ${s.id===stationId?'active':''}"
-       onclick="loadStation('${s.id}','${s.name}')">${s.name}</button>`
-  ).join('');
-}
 
 /* ── SEARCH ── */
 const searchInput=document.getElementById('searchInput');
@@ -606,7 +580,6 @@ async function loadStation(id,name){
   document.getElementById('stationName').textContent=name;
   document.getElementById('stationMeta').textContent=`Stop: ${id}`;
   document.getElementById('board').innerHTML='<div class="state-box"><div class="spinner"></div>Lade…</div>';
-  renderFavs();
   try{
     const r=await fetch(`${API}/stops/${id}`);
     const s=await r.json();
@@ -646,7 +619,6 @@ function togglePanel(){
 
 /* ── INIT ── */
 initMap();
-renderFavs();
 renderFilters();
 loadStation(stationId,stationName);
 </script>
