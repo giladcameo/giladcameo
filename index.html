@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Transit Board</title>
+  <title>Berlin Transit Board</title>
   <style>
 :root {
   --bg:       #001030;
@@ -205,7 +205,7 @@ footer span:first-child { flex: 1; }
   <!-- BOARD -->
   <div class="b-scroll">
     <div id="board">
-      <div class="state">🔍<br>Search for a station above<br>to see live departures</div>
+      <div class="state">🔍<br>Search for a Berlin station<br>to see live departures</div>
     </div>
   </div>
 
@@ -269,70 +269,22 @@ function closeDropdown() {
   dropdown.innerHTML = '';
 }
 
-/* ── Search: query all APIs ── */
+/* ── Search: VBB (Berlin & Brandenburg) ── */
 async function doSearch(query) {
   dropdown.innerHTML = '<div class="d-msg">Searching…</div>';
   dropdown.classList.add('open');
-
-  const isHebrew = /[\u05D0-\u05EA]/.test(query);
-
   try {
-    let results = [];
-
-    if (isHebrew) {
-      results = await searchIsrael(query);
-    } else {
-      const [dbRes, chRes] = await Promise.allSettled([
-        searchDB(query),
-        searchSwiss(query),
-      ]);
-      if (dbRes.status === 'fulfilled') results.push(...dbRes.value);
-      if (chRes.status === 'fulfilled') results.push(...chRes.value);
-
-      // Deduplicate by name (case-insensitive)
-      const seen = new Set();
-      results = results.filter(r => {
-        const k = r.name.toLowerCase();
-        if (seen.has(k)) return false;
-        seen.add(k); return true;
-      });
-    }
-
+    const r = await fetch(
+      `https://v6.vbb.transport.rest/locations?query=${encodeURIComponent(query)}&results=10&stops=true&addresses=false&poi=false`
+    );
+    const data = await r.json();
+    const results = (Array.isArray(data) ? data : [])
+      .filter(s => s.type === 'stop')
+      .map(s => ({ id: s.id, name: s.name }));
     renderDropdown(results);
   } catch (e) {
     dropdown.innerHTML = `<div class="d-msg">Error: ${h(e.message)}</div>`;
   }
-}
-
-async function searchDB(query) {
-  const r = await fetch(
-    `https://v6.db.transport.rest/locations?query=${encodeURIComponent(query)}&results=8&stops=true&addresses=false&poi=false`
-  );
-  const data = await r.json();
-  return (Array.isArray(data) ? data : [])
-    .filter(s => s.type === 'stop')
-    .map(s => ({ id: s.id, name: s.name, src: 'db', tag: 'Europe' }));
-}
-
-async function searchSwiss(query) {
-  const r = await fetch(
-    `https://transport.opendata.ch/v1/locations?query=${encodeURIComponent(query)}&type=station&limit=5`
-  );
-  const { stations = [] } = await r.json();
-  return stations
-    .filter(s => s.id && s.name)
-    .map(s => ({ id: s.id, name: s.name, src: 'ch', tag: 'Switzerland' }));
-}
-
-async function searchIsrael(query) {
-  const r = await fetch(
-    `https://open-bus-stride-api.hasadna.org.il/gtfs-stops/list?stop_name=${encodeURIComponent(query)}&limit=12`
-  );
-  const data = await r.json();
-  const items = Array.isArray(data) ? data : (data.items || []);
-  return items
-    .filter(s => s.stop_name || s.stop_name_heb)
-    .map(s => ({ id: String(s.stop_code || s.id), name: s.stop_name || s.stop_name_heb, src: 'il', tag: 'Israel' }));
 }
 
 /* ── Render dropdown ── */
@@ -344,7 +296,6 @@ function renderDropdown(results) {
   dropdown.innerHTML = results.map((r, i) =>
     `<div class="d-row" data-idx="${i}">
       <span class="d-name">${h(r.name)}</span>
-      <span class="d-tag">${h(r.tag)}</span>
     </div>`
   ).join('');
 
@@ -364,8 +315,7 @@ function selectStation(stop) {
   closeDropdown();
   clearTimeout(refreshTimer);
 
-  document.getElementById('ftrApi').textContent =
-    { db: 'DB · transport.rest', ch: 'transport.opendata.ch', il: 'Open Bus · Hasadna' }[stop.src] || '—';
+  document.getElementById('ftrApi').textContent = 'VBB · Berlin & Brandenburg';
 
   showState('loading');
   loadDepartures();
@@ -377,14 +327,7 @@ async function loadDepartures() {
   clearTimeout(refreshTimer);
 
   try {
-    let deps;
-    if      (currentStop.src === 'db') deps = await fetchDepsDB(currentStop.id);
-    else if (currentStop.src === 'ch') deps = await fetchDepsCH(currentStop.id);
-    else if (currentStop.src === 'il') deps = await fetchDepsIL(currentStop.id);
-    else {
-      showState('Real-time data not supported for this source.');
-      return;
-    }
+    const deps = await fetchDepsVBB(currentStop.id);
     renderBoard(deps);
     document.getElementById('ftrTime').textContent =
       'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -395,50 +338,18 @@ async function loadDepartures() {
   refreshTimer = setTimeout(loadDepartures, REFRESH_MS);
 }
 
-/* ── Fetch: DB ── */
-async function fetchDepsDB(id) {
+/* ── Fetch: VBB (Berlin & Brandenburg) ── */
+async function fetchDepsVBB(id) {
   const r = await fetch(
-    `https://v6.db.transport.rest/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
+    `https://v6.vbb.transport.rest/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
   );
   const data = await r.json();
   return (data.departures || (Array.isArray(data) ? data : [])).map(d => ({
-    line: d.line?.name, product: d.line?.product,
-    dest: d.direction || d.destination?.name,
-    planned: d.plannedWhen, actual: d.when,
-  }));
-}
-
-/* ── Fetch: Switzerland ── */
-async function fetchDepsCH(id) {
-  const r = await fetch(
-    `https://transport.opendata.ch/v1/stationboard?id=${encodeURIComponent(id)}&limit=20`
-  );
-  const { stationboard = [] } = await r.json();
-  return stationboard.map(d => ({
-    line: d.number, product: d.category?.toLowerCase(),
-    dest: d.to,
-    planned: d.stop?.departure,
-    actual:  d.stop?.prognosis?.departure || d.stop?.departure,
-  }));
-}
-
-/* ── Fetch: Israel ── */
-async function fetchDepsIL(stopCode) {
-  const now = new Date(), to = new Date(now.getTime() + 90 * 60_000);
-  const r = await fetch(
-    `https://open-bus-stride-api.hasadna.org.il/gtfs-stop-times/list?` +
-    `stop_code=${encodeURIComponent(stopCode)}` +
-    `&arrival_time_from=${encodeURIComponent(now.toISOString())}` +
-    `&arrival_time_to=${encodeURIComponent(to.toISOString())}` +
-    `&limit=20&order_by=arrival_time`
-  );
-  const data = await r.json();
-  return (Array.isArray(data) ? data : (data.items || [])).map(d => ({
-    line:    d.route_short_name || '?',
-    product: 'bus',
-    dest:    d.trip_headsign || d.stop_headsign || '?',
-    planned: d.arrival_time || d.departure_time,
-    actual:  d.actual_arrival_time || d.arrival_time,
+    line:    d.line?.name,
+    product: d.line?.product,
+    dest:    d.direction || d.destination?.name,
+    planned: d.plannedWhen,
+    actual:  d.when,
   }));
 }
 
