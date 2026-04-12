@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Berlin Transit Board</title>
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#001640"/>
@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="Berlin Transit"/>
+  <link rel="apple-touch-icon" href="icon.png"/>
   <style>
 :root {
   --bg:       #001030;
@@ -25,16 +26,18 @@
   --font:     'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
+html { height: 100%; background: var(--bg); }
+body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
 
 /* ══ LAYOUT ══ */
-#main { display: flex; flex-direction: column; height: 100%; background: var(--panel); }
+#main { display: flex; flex-direction: column; height: 100%; height: 100dvh; background: var(--panel); }
 
 /* ══ HEADER ══ */
 .b-header {
   flex-shrink: 0; position: relative;
   display: flex; align-items: center; gap: 12px;
   padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
   background: var(--hdr);
   border-bottom: 1px solid var(--sep);
 }
@@ -176,9 +179,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 /* Footer */
 footer {
-  flex-shrink: 0; height: 26px;
+  flex-shrink: 0;
   display: flex; align-items: center; gap: 8px;
   padding: 0 20px;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: calc(26px + env(safe-area-inset-bottom));
   background: #001234; border-top: 1px solid var(--sep);
   font-size: 10px; color: var(--sub);
 }
