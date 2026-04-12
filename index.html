@@ -332,24 +332,57 @@ async function showRoute(tripId, line){
   if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
   activeRouteTripId=tripId;
 
-  // Use cache, or fetch from API (GTFS-backed shape via hafas)
-  let geo=polylineCache[tripId];
-  if(!geo){
+  let latlngs=polylineCache[tripId];
+  if(!latlngs){
     try{
-      const r=await fetch(`${API}/trips/${encodeURIComponent(tripId)}?stopovers=false&remarks=false&polyline=true`);
+      const r=await fetch(
+        `${API}/trips/${encodeURIComponent(tripId)}?stopovers=true&remarks=false&polyline=true`
+      );
+      if(!r.ok) throw new Error(r.status);
       const d=await r.json();
-      geo=(d.trip||d)?.polyline;
-      if(geo) polylineCache[tripId]=geo;
-    }catch{}
+      const t=d.trip||d;
+
+      // Normalise the various shapes hafas-rest can return
+      const raw=t?.polyline;
+      if(raw){
+        // GeoJSON FeatureCollection  → extract first LineString coordinates
+        if(raw.type==='FeatureCollection'){
+          const feat=raw.features?.find(f=>f.geometry?.type==='LineString');
+          if(feat) latlngs=feat.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // GeoJSON Feature
+        else if(raw.type==='Feature'&&raw.geometry?.type==='LineString'){
+          latlngs=raw.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // GeoJSON LineString
+        else if(raw.type==='LineString'){
+          latlngs=raw.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // hafas-client array of {latitude, longitude} objects
+        else if(Array.isArray(raw)){
+          latlngs=raw.map(p=>p.latitude!=null?[p.latitude,p.longitude]:[p[1],p[0]]);
+        }
+      }
+      // Fallback: connect stopovers in order
+      if(!latlngs?.length && t?.stopovers){
+        latlngs=t.stopovers
+          .map(s=>s.stop?.location)
+          .filter(l=>l?.latitude)
+          .map(l=>[l.latitude,l.longitude]);
+      }
+      if(latlngs?.length) polylineCache[tripId]=latlngs;
+    }catch(e){console.warn('route fetch failed',e);}
   }
-  if(!geo||activeRouteTripId!==tripId) return; // aborted or no data
+  if(!latlngs?.length||activeRouteTripId!==tripId) return;
 
   const n=line?.name||'?';
   const color=LINE_COLORS[n]||productBg(line?.product)||'#58a6ff';
-  activeRouteLayer=L.geoJSON(geo,{
-    style:{color,weight:4,opacity:.85,lineCap:'round',lineJoin:'round'}
-  }).addTo(map);
-  activeRouteLayer.bringToBack();
+  // Draw a subtle shadow line then the coloured line on top
+  const shadow=L.polyline(latlngs,{color:'#000',weight:7,opacity:.25,lineCap:'round',lineJoin:'round'}).addTo(map);
+  const route=L.polyline(latlngs,{color,weight:4,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(map);
+  shadow.bringToBack(); route.bringToBack();
+  // Store both so we can remove them together
+  activeRouteLayer={remove:()=>{shadow.remove();route.remove()}};
 }
 
 function clearRoute(){
