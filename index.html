@@ -275,6 +275,9 @@ let stationId = '900003201', stationName = 'Berlin Hauptbahnhof';
 let tab = 'departures';
 let filters = Object.fromEntries(FILTER_DEFS.map(f=>[f.key,true]));
 let activeTripIds = new Set(); // trip IDs from latest departures/arrivals fetch
+let polylineCache = {};       // tripId → GeoJSON (persists across refreshes)
+let activeRouteLayer = null;
+let activeRouteTripId = null;
 let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
 let map, tileLayer, stationMarker=null, vehicleMarkers={};
 let isDark = true;
@@ -318,20 +321,51 @@ function productBg(p){
           tram:'#cc2222',regional:'#ef7c00',ferry:'#0a5f98'}[p]||'#444';
 }
 
+/* ── ROUTE POLYLINE ── */
+async function showRoute(tripId, line){
+  // Toggle off if same marker clicked again
+  if(activeRouteTripId===tripId){
+    if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+    activeRouteTripId=null;
+    return;
+  }
+  if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+  activeRouteTripId=tripId;
+
+  // Use cache, or fetch from API (GTFS-backed shape via hafas)
+  let geo=polylineCache[tripId];
+  if(!geo){
+    try{
+      const r=await fetch(`${API}/trips/${encodeURIComponent(tripId)}?stopovers=false&remarks=false&polyline=true`);
+      const d=await r.json();
+      geo=(d.trip||d)?.polyline;
+      if(geo) polylineCache[tripId]=geo;
+    }catch{}
+  }
+  if(!geo||activeRouteTripId!==tripId) return; // aborted or no data
+
+  const n=line?.name||'?';
+  const color=LINE_COLORS[n]||productBg(line?.product)||'#58a6ff';
+  activeRouteLayer=L.geoJSON(geo,{
+    style:{color,weight:4,opacity:.85,lineCap:'round',lineJoin:'round'}
+  }).addTo(map);
+  activeRouteLayer.bringToBack();
+}
+
+function clearRoute(){
+  if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+  activeRouteTripId=null;
+}
+
 function updateVehicles(movements){
   const seen=new Set();
-  // Debug: count by product and line for diagnosis
-  const dbg={};
-  (movements||[]).forEach(m=>{
-    const p=m.line?.product||'?'; dbg[p]=(dbg[p]||0)+1;
-  });
-  const displayed = (movements||[]).filter(m=>filters[m.line?.product]).length;
+  const displayed=(movements||[]).filter(m=>filters[m.line?.product]).length;
   const sLines={};
   (movements||[]).filter(m=>m.line?.product==='suburban').forEach(m=>{
     const n=m.line.name||'?'; sLines[n]=(sLines[n]||0)+1;
   });
-  const sDetail = Object.keys(sLines).sort().join(' ') || '—';
-  document.getElementById('debugBadge').innerHTML =
+  const sDetail=Object.keys(sLines).sort().join(' ')||'—';
+  document.getElementById('debugBadge').innerHTML=
     `<b>On map: ${displayed}</b> (S: ${sDetail})`;
 
   (movements||[]).forEach(m=>{
@@ -352,9 +386,11 @@ function updateVehicles(movements){
         html:`<span style="background:${bg};color:${fg}">${n}</span>`,
         iconAnchor:[15,8]
       });
+      const line=m.line;
       vehicleMarkers[id]=L.marker([lat,lon],{icon,zIndexOffset:0})
         .addTo(map)
-        .bindTooltip(`${n}${m.direction?' → '+m.direction:''}`,{sticky:true});
+        .bindTooltip(`${n}${m.direction?' → '+m.direction:''}`,{sticky:true})
+        .on('click',()=>showRoute(id,line));
     }
   });
   Object.keys(vehicleMarkers).forEach(id=>{
@@ -580,6 +616,7 @@ async function loadStation(id,name){
   document.getElementById('stationName').textContent=name;
   document.getElementById('stationMeta').textContent=`Stop: ${id}`;
   document.getElementById('board').innerHTML='<div class="state-box"><div class="spinner"></div>Lade…</div>';
+  clearRoute();
   try{
     const r=await fetch(`${API}/stops/${id}`);
     const s=await r.json();
