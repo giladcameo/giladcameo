@@ -21,39 +21,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
 
-/* ══════ SPLASH ══════ */
-#splash {
-  position: fixed; inset: 0; z-index: 20;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 22px;
-  transition: opacity .5s;
-}
-#splash.hidden { opacity: 0; pointer-events: none; }
-
-.sp-logo {
-  width: 64px; height: 64px; border-radius: 16px;
-  background: var(--row-next);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 30px;
-}
-.sp-title { font-size: 26px; font-weight: 700; letter-spacing: -.3px; }
-.sp-sub { font-size: 13px; color: var(--sub); }
-
-.sp-btn {
-  padding: 13px 40px;
-  background: var(--row-next); color: #fff;
-  border: none; border-radius: 8px;
-  font-size: 14px; font-weight: 600; letter-spacing: .02em;
-  cursor: pointer; transition: opacity .15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.sp-btn:hover { opacity: .85; }
-.sp-btn:disabled { opacity: .4; cursor: not-allowed; }
-.sp-note { font-size: 11px; color: rgba(255,255,255,.3); text-align: center; max-width: 240px; line-height: 1.6; }
-
 /* ══════ MAIN ══════ */
-#main { display: none; flex-direction: column; height: 100%; background: var(--panel); }
+#main { display: flex; flex-direction: column; height: 100%; background: var(--panel); }
 
 /* HEADER */
 .b-header {
@@ -188,15 +157,6 @@ footer span:first-child { flex: 1; }
 </head>
 <body>
 
-<!-- ══════ SPLASH ══════ -->
-<div id="splash">
-  <div class="sp-logo">🚉</div>
-  <div class="sp-title">Transit Board</div>
-  <div class="sp-sub">Live departures from the nearest stop</div>
-  <button class="sp-btn" id="locBtn" onclick="requestLocation()">📍 Find nearest stop</button>
-  <div class="sp-note" id="spNote">Finds the closest transit stop within 500 m and shows live departures</div>
-</div>
-
 <!-- ══════ MAIN BOARD ══════ -->
 <div id="main">
 
@@ -230,7 +190,7 @@ footer span:first-child { flex: 1; }
 <script>
 'use strict';
 
-const RADIUS_M   = 500;
+const RADIUS_M   = 1000;
 const REFRESH_MS = 30_000;
 
 let userLat, userLon, cc;
@@ -243,37 +203,22 @@ function tick() {
 }
 setInterval(tick, 1000); tick();
 
-/* ── Geolocation ── */
-function requestLocation() {
-  const btn  = document.getElementById('locBtn');
-  const note = document.getElementById('spNote');
-  btn.disabled = true;
-  btn.textContent = '⌛ Locating…';
-  note.textContent = 'Please allow location access when prompted';
+/* ── Auto-locate on load ── */
+function startLocating() {
+  showState('loading');
+  document.getElementById('stationName').textContent = 'Detecting location…';
+  document.getElementById('stationMeta').textContent = '';
 
   if (!navigator.geolocation) {
-    btn.disabled = false; btn.textContent = '📍 Find nearest stop';
-    note.textContent = '⚠ Geolocation not supported by this browser'; return;
+    showState('Geolocation is not supported by this browser.');
+    return;
   }
 
   navigator.geolocation.getCurrentPosition(
-    pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; launch(); },
-    err => {
-      btn.disabled = false; btn.textContent = '📍 Find nearest stop';
-      note.textContent = '⚠ ' + (err.message || 'Location access denied');
-    },
+    pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; init(); },
+    err => showState('Could not detect location:\n' + (err.message || 'Permission denied')),
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
   );
-}
-
-function launch() {
-  const splash = document.getElementById('splash');
-  splash.classList.add('hidden');
-  setTimeout(() => {
-    splash.style.display = 'none';
-    document.getElementById('main').style.display = 'flex';
-  }, 500);
-  init();
 }
 
 /* ── Init ── */
@@ -579,7 +524,7 @@ function fmtTime(iso) {
 function showState(msg) {
   const board = document.getElementById('board');
   if (msg === 'loading') {
-    board.innerHTML = '<div class="state"><div class="spinner"></div>Searching for stops…</div>';
+    board.innerHTML = '<div class="state"><div class="spinner"></div>Detecting location…</div>';
   } else {
     board.innerHTML = `<div class="state">${h(msg)}</div>`;
   }
@@ -588,6 +533,9 @@ function showState(msg) {
 function h(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+/* ── Start immediately ── */
+startLocating();
 </script>
 </body>
 </html>
