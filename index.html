@@ -6,149 +6,173 @@
   <title>Transit Board</title>
   <style>
 :root {
-  --bg:        #001030;
-  --panel:     #001d50;
-  --hdr:       #001640;
-  --row-next:  #0057b5;
-  --sep:       rgba(255,255,255,0.1);
-  --text:      #ffffff;
-  --sub:       rgba(255,255,255,0.55);
-  --green:     #5cff7a;
-  --red:       #ff5252;
-  --yellow:    #ffcc44;
-  --font:      'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --bg:       #001030;
+  --panel:    #001d50;
+  --hdr:      #001640;
+  --next:     #0057b5;
+  --sep:      rgba(255,255,255,0.1);
+  --text:     #ffffff;
+  --sub:      rgba(255,255,255,0.5);
+  --green:    #5cff7a;
+  --red:      #ff5252;
+  --yellow:   #ffcc44;
+  --font:     'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
 
-/* ══════ MAIN ══════ */
+/* ══ LAYOUT ══ */
 #main { display: flex; flex-direction: column; height: 100%; background: var(--panel); }
 
-/* HEADER */
+/* ══ HEADER ══ */
 .b-header {
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 20px;
+  flex-shrink: 0; position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
   background: var(--hdr);
   border-bottom: 1px solid var(--sep);
 }
-.bh-left { flex: 1; min-width: 0; }
-.bh-station {
-  font-size: 17px; font-weight: 700; line-height: 1.2;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+
+/* Search input */
+.search-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+.search-wrap input {
+  width: 100%;
+  padding: 9px 32px 9px 36px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px;
+  color: #fff; font-family: var(--font); font-size: 14px;
+  outline: none; transition: border-color .15s, background .15s;
 }
-.bh-meta { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.search-wrap input::placeholder { color: rgba(255,255,255,.3); }
+.search-wrap input:focus { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.15); }
+.s-icon {
+  position: absolute; left: 10px; pointer-events: none;
+  color: rgba(255,255,255,.35); width: 16px; height: 16px;
+}
+.s-clear {
+  position: absolute; right: 8px;
+  background: none; border: none; color: rgba(255,255,255,.4);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 2px 4px;
+  opacity: 0; pointer-events: none; transition: opacity .15s;
+}
+.s-clear.on { opacity: 1; pointer-events: auto; }
+
+/* Dropdown */
+.dropdown {
+  position: absolute; top: calc(100% - 1px); left: 16px; right: 16px;
+  z-index: 300;
+  background: #001a44;
+  border: 1px solid rgba(255,255,255,.18); border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 320px; overflow-y: auto;
+  display: none;
+  box-shadow: 0 12px 28px rgba(0,0,0,.6);
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+}
+.dropdown.open { display: block; }
+.d-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  transition: background .1s;
+}
+.d-row:last-child { border-bottom: none; }
+.d-row:hover { background: rgba(255,255,255,.09); }
+.d-name { flex: 1; font-size: 14px; }
+.d-tag {
+  font-size: 10px; color: rgba(255,255,255,.4);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 3px; padding: 1px 6px; white-space: nowrap;
+}
+.d-msg { padding: 14px; font-size: 12px; color: var(--sub); text-align: center; }
+
+/* Clock */
 .bh-clock {
-  font-size: 28px; font-weight: 300;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.5px;
-  flex-shrink: 0;
+  font-size: 26px; font-weight: 300;
+  font-variant-numeric: tabular-nums; letter-spacing: -.5px;
+  flex-shrink: 0; color: var(--text);
 }
 
-/* COL LABELS */
+/* ══ COL LABELS ══ */
 .col-labels {
   flex-shrink: 0;
   display: grid; grid-template-columns: 52px 1fr 88px;
   padding: 4px 20px;
-  background: #001234;
-  border-bottom: 1px solid var(--sep);
+  background: #001234; border-bottom: 1px solid var(--sep);
   font-size: 9px; letter-spacing: .2em;
   text-transform: uppercase; color: var(--sub);
 }
 .col-labels span:last-child { text-align: right; }
 
-/* BOARD */
+/* ══ BOARD ══ */
 .b-scroll {
   flex: 1; overflow-y: auto;
   scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
 }
 .b-scroll::-webkit-scrollbar { width: 3px; }
 .b-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
-#board {}
 
-/* ── NEXT ROW ── */
+/* Next row */
 .dep-next {
   display: flex; align-items: center; gap: 16px;
   padding: 18px 20px;
-  background: var(--row-next);
+  background: var(--next);
   border-bottom: 2px solid rgba(255,255,255,.18);
-  animation: fadeIn .25s ease;
+  animation: fadeIn .2s ease;
 }
-.dep-next .badge {
-  width: 54px; height: 54px;
-  font-size: 15px; border-radius: 6px;
-  flex-shrink: 0;
-}
-.dep-next .d-info { flex: 1; min-width: 0; }
-.dep-next .d-dest {
-  font-size: 20px; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  line-height: 1.2;
-}
-.dep-next .d-time { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 4px; }
-.dep-next .d-eta { flex-shrink: 0; text-align: right; }
+.dep-next .badge   { width: 54px; height: 54px; font-size: 15px; border-radius: 6px; flex-shrink: 0; }
+.dep-next .d-info  { flex: 1; min-width: 0; }
+.dep-next .d-dest  { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dep-next .d-time  { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 4px; }
+.dep-next .d-eta   { flex-shrink: 0; text-align: right; }
 .dep-next .eta-num { font-size: 32px; font-weight: 700; line-height: 1; }
 .dep-next .eta-lbl { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 2px; }
 
-/* ── REGULAR ROWS ── */
+/* Regular rows */
 .dep-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 11px 20px;
-  border-bottom: 1px solid var(--sep);
-  transition: background .1s;
-  animation: fadeIn .2s ease;
+  padding: 11px 20px; border-bottom: 1px solid var(--sep);
+  transition: background .1s; animation: fadeIn .2s ease;
 }
-.dep-row:hover { background: rgba(255,255,255,.05); }
-.dep-row .badge {
-  width: 44px; height: 44px;
-  font-size: 13px; border-radius: 5px;
-  flex-shrink: 0;
-}
+.dep-row:hover  { background: rgba(255,255,255,.05); }
+.dep-row .badge { width: 44px; height: 44px; font-size: 13px; border-radius: 5px; flex-shrink: 0; }
 .dep-row .d-info { flex: 1; min-width: 0; }
 .dep-row .d-dest { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dep-row .d-time { font-size: 11px; color: var(--sub); margin-top: 2px; }
-.dep-row .d-eta { flex-shrink: 0; text-align: right; min-width: 60px; }
+.dep-row .d-eta  { flex-shrink: 0; text-align: right; min-width: 60px; }
 .dep-row .eta-num { font-size: 17px; font-weight: 700; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ── BADGE ── */
-.badge {
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900; color: #fff;
-}
+.badge { display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; }
 
-/* ── DELAY ── */
-.d-delay { font-size: 10px; }
+.d-delay      { font-size: 10px; }
 .d-delay.late { color: var(--red); }
 .d-delay.ok   { color: var(--green); }
 
-/* ── ETA colours ── */
 .eta-now  { color: var(--red); animation: blink 1s infinite; }
 .eta-soon { color: var(--yellow); }
-@keyframes blink { 50% { opacity: .25; } }
+@keyframes blink { 50% { opacity: .2; } }
 
-/* ── STATE ── */
+/* State */
 .state {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 60px 24px;
-  font-size: 13px; color: var(--sub);
-  text-align: center; line-height: 1.8;
+  font-size: 13px; color: var(--sub); text-align: center; line-height: 1.9;
 }
 .spinner {
-  width: 24px; height: 24px;
-  border: 2px solid rgba(255,255,255,.2);
-  border-top-color: #fff;
+  width: 22px; height: 22px;
+  border: 2px solid rgba(255,255,255,.2); border-top-color: #fff;
   border-radius: 50%; animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── FOOTER ── */
+/* Footer */
 footer {
   flex-shrink: 0; height: 26px;
-  display: flex; align-items: center;
-  padding: 0 20px; gap: 8px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 20px;
   background: #001234; border-top: 1px solid var(--sep);
   font-size: 10px; color: var(--sub);
 }
@@ -157,26 +181,31 @@ footer span:first-child { flex: 1; }
 </head>
 <body>
 
-<!-- ══════ MAIN BOARD ══════ -->
 <div id="main">
 
+  <!-- HEADER -->
   <div class="b-header">
-    <div class="bh-left">
-      <div class="bh-station" id="stationName">—</div>
-      <div class="bh-meta"   id="stationMeta"></div>
+    <div class="search-wrap">
+      <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search station…" autocomplete="off" spellcheck="false"/>
+      <button class="s-clear" id="clearBtn" title="Clear">✕</button>
     </div>
     <div class="bh-clock" id="clock">--:--</div>
+    <!-- Dropdown anchors to header -->
+    <div class="dropdown" id="dropdown"></div>
   </div>
 
+  <!-- COLUMN LABELS -->
   <div class="col-labels">
-    <span>Line</span>
-    <span>Destination</span>
-    <span>ETA</span>
+    <span>Line</span><span>Destination</span><span>ETA</span>
   </div>
 
+  <!-- BOARD -->
   <div class="b-scroll">
     <div id="board">
-      <div class="state"><div class="spinner"></div>Searching for stops…</div>
+      <div class="state">🔍<br>Search for a station above<br>to see live departures</div>
     </div>
   </div>
 
@@ -190,159 +219,156 @@ footer span:first-child { flex: 1; }
 <script>
 'use strict';
 
-const RADIUS_M   = 1000;
 const REFRESH_MS = 30_000;
-
-let userLat, userLon, cc;
-let currentStop = null, refreshTimer = null;
+let currentStop = null, refreshTimer = null, searchTimer = null;
 
 /* ── Clock ── */
+const clockEl = document.getElementById('clock');
 function tick() {
-  const el = document.getElementById('clock');
-  if (el) el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  clockEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 setInterval(tick, 1000); tick();
 
-/* ── Auto-locate on load ── */
-function startLocating() {
-  showState('loading');
-  document.getElementById('stationName').textContent = 'Detecting location…';
-  document.getElementById('stationMeta').textContent = '';
+/* ── Search input wiring ── */
+const searchInput = document.getElementById('searchInput');
+const clearBtn    = document.getElementById('clearBtn');
+const dropdown    = document.getElementById('dropdown');
 
-  if (!navigator.geolocation) {
-    showState('Geolocation is not supported by this browser.');
-    return;
-  }
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  clearBtn.classList.toggle('on', q.length > 0);
+  clearTimeout(searchTimer);
+  if (q.length < 2) { closeDropdown(); return; }
+  searchTimer = setTimeout(() => doSearch(q), 300);
+});
 
-  navigator.geolocation.getCurrentPosition(
-    pos => { userLat = pos.coords.latitude; userLon = pos.coords.longitude; init(); },
-    err => showState('Could not detect location:\n' + (err.message || 'Permission denied')),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
-  );
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { clearSearch(); }
+});
+
+clearBtn.addEventListener('click', clearSearch);
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.b-header')) closeDropdown();
+});
+
+function clearSearch() {
+  searchInput.value = '';
+  clearBtn.classList.remove('on');
+  closeDropdown();
+  clearTimeout(refreshTimer);
+  currentStop = null;
+  document.getElementById('ftrApi').textContent = '—';
+  document.getElementById('ftrTime').textContent = '—';
+  document.getElementById('board').innerHTML =
+    '<div class="state">🔍<br>Search for a station above<br>to see live departures</div>';
 }
 
-/* ── Init ── */
-async function init() {
-  showState('loading');
-  try {
-    const geo = await reverseGeocode(userLat, userLon);
-    cc = geo.cc;
-    document.getElementById('ftrApi').textContent = 'Data: ' + apiLabel(cc);
+function closeDropdown() {
+  dropdown.classList.remove('open');
+  dropdown.innerHTML = '';
+}
 
-    const stop = await findNearestStop(userLat, userLon, cc);
-    if (!stop) {
-      showState(`No transit stop found within ${RADIUS_M} m.\nTry moving closer to a stop.`);
-      return;
+/* ── Search: query all APIs ── */
+async function doSearch(query) {
+  dropdown.innerHTML = '<div class="d-msg">Searching…</div>';
+  dropdown.classList.add('open');
+
+  const isHebrew = /[\u05D0-\u05EA]/.test(query);
+
+  try {
+    let results = [];
+
+    if (isHebrew) {
+      results = await searchIsrael(query);
+    } else {
+      const [dbRes, chRes] = await Promise.allSettled([
+        searchDB(query),
+        searchSwiss(query),
+      ]);
+      if (dbRes.status === 'fulfilled') results.push(...dbRes.value);
+      if (chRes.status === 'fulfilled') results.push(...chRes.value);
+
+      // Deduplicate by name (case-insensitive)
+      const seen = new Set();
+      results = results.filter(r => {
+        const k = r.name.toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
     }
 
-    currentStop = stop;
-    document.getElementById('stationName').textContent = stop.name;
-    document.getElementById('stationMeta').textContent =
-      `📍 ${Math.round(stop.dist)} m away`;
-
-    loadDepartures();
+    renderDropdown(results);
   } catch (e) {
-    showState('Error: ' + e.message);
+    dropdown.innerHTML = `<div class="d-msg">Error: ${h(e.message)}</div>`;
   }
 }
 
-/* ── Reverse geocode ── */
-async function reverseGeocode(lat, lon) {
+async function searchDB(query) {
   const r = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
-    { headers: { 'User-Agent': 'TransitBoard/1.0 (giladcameo)' } }
-  );
-  const d = await r.json();
-  return { cc: (d.address?.country_code || 'xx').toUpperCase() };
-}
-
-function apiLabel(cc) {
-  return { DE: 'DB · transport.rest', AT: 'DB · transport.rest',
-           CH: 'transport.opendata.ch', IL: 'Open Bus · Hasadna' }[cc]
-         || 'OpenStreetMap';
-}
-
-/* ── Haversine ── */
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371000, r = Math.PI / 180;
-  const dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
-  const a = Math.sin(dLat / 2) ** 2
-          + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-/* ── Find nearest stop ── */
-async function findNearestStop(lat, lon, cc) {
-  if (cc === 'DE' || cc === 'AT') return nearestDB(lat, lon);
-  if (cc === 'CH')                return nearestSwiss(lat, lon);
-  if (cc === 'IL')                return nearestIsrael(lat, lon);
-  return nearestOverpass(lat, lon);
-}
-
-async function nearestDB(lat, lon) {
-  const r = await fetch(
-    `https://v6.db.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=5&distance=${RADIUS_M}`
+    `https://v6.db.transport.rest/locations?query=${encodeURIComponent(query)}&results=8&stops=true&addresses=false&poi=false`
   );
   const data = await r.json();
-  const s = (Array.isArray(data) ? data : []).find(s => (s.distance ?? Infinity) <= RADIUS_M);
-  return s ? { id: s.id, name: s.name, dist: s.distance, src: 'db' } : null;
+  return (Array.isArray(data) ? data : [])
+    .filter(s => s.type === 'stop')
+    .map(s => ({ id: s.id, name: s.name, src: 'db', tag: 'Europe' }));
 }
 
-async function nearestSwiss(lat, lon) {
+async function searchSwiss(query) {
   const r = await fetch(
-    `https://transport.opendata.ch/v1/locations?x=${lon}&y=${lat}&type=station&limit=8`
+    `https://transport.opendata.ch/v1/locations?query=${encodeURIComponent(query)}&type=station&limit=5`
   );
   const { stations = [] } = await r.json();
-  let best = null, bestD = Infinity;
-  for (const s of stations) {
-    if (!s.id || !s.coordinate) continue;
-    const d = haversine(lat, lon, s.coordinate.y, s.coordinate.x);
-    if (d < bestD && d <= RADIUS_M) { bestD = d; best = s; }
-  }
-  return best ? { id: best.id, name: best.name, dist: bestD, src: 'ch' } : null;
+  return stations
+    .filter(s => s.id && s.name)
+    .map(s => ({ id: s.id, name: s.name, src: 'ch', tag: 'Switzerland' }));
 }
 
-async function nearestIsrael(lat, lon) {
-  const D = 0.006;
+async function searchIsrael(query) {
   const r = await fetch(
-    `https://open-bus-stride-api.hasadna.org.il/gtfs-stops/list?` +
-    `stop_lat_from=${lat - D}&stop_lat_to=${lat + D}` +
-    `&stop_lon_from=${lon - D}&stop_lon_to=${lon + D}&limit=30`
+    `https://open-bus-stride-api.hasadna.org.il/gtfs-stops/list?stop_name=${encodeURIComponent(query)}&limit=12`
   );
   const data = await r.json();
   const items = Array.isArray(data) ? data : (data.items || []);
-  let best = null, bestD = Infinity;
-  for (const s of items) {
-    if (!s.stop_lat || !s.stop_lon) continue;
-    const d = haversine(lat, lon, +s.stop_lat, +s.stop_lon);
-    if (d < bestD && d <= RADIUS_M) { bestD = d; best = s; }
-  }
-  return best
-    ? { id: String(best.stop_code || best.id), name: best.stop_name || best.stop_name_heb, dist: bestD, src: 'il' }
-    : null;
+  return items
+    .filter(s => s.stop_name || s.stop_name_heb)
+    .map(s => ({ id: String(s.stop_code || s.id), name: s.stop_name || s.stop_name_heb, src: 'il', tag: 'Israel' }));
 }
 
-async function nearestOverpass(lat, lon) {
-  const body =
-    `[out:json][timeout:10];(` +
-    `node["public_transport"="stop_position"](around:${RADIUS_M},${lat},${lon});` +
-    `node["highway"="bus_stop"](around:${RADIUS_M},${lat},${lon});` +
-    `node["railway"="station"](around:${RADIUS_M},${lat},${lon});` +
-    `node["railway"="tram_stop"](around:${RADIUS_M},${lat},${lon});` +
-    `);out body;`;
-  const r = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST', body: 'data=' + encodeURIComponent(body)
-  });
-  const data = await r.json();
-  let best = null, bestD = Infinity;
-  for (const e of data.elements || []) {
-    if (!e.lat || !e.lon || !e.tags?.name) continue;
-    const d = haversine(lat, lon, e.lat, e.lon);
-    if (d < bestD) { bestD = d; best = e; }
+/* ── Render dropdown ── */
+function renderDropdown(results) {
+  if (!results.length) {
+    dropdown.innerHTML = '<div class="d-msg">No stations found</div>';
+    return;
   }
-  return best
-    ? { id: String(best.tags?.ref || best.id), name: best.tags.name, dist: bestD, src: 'osm' }
-    : null;
+  dropdown.innerHTML = results.map((r, i) =>
+    `<div class="d-row" data-idx="${i}">
+      <span class="d-name">${h(r.name)}</span>
+      <span class="d-tag">${h(r.tag)}</span>
+    </div>`
+  ).join('');
+
+  dropdown.querySelectorAll('.d-row').forEach(el => {
+    el.addEventListener('click', () => {
+      const s = results[+el.dataset.idx];
+      selectStation(s);
+    });
+  });
+}
+
+/* ── Select a station ── */
+function selectStation(stop) {
+  currentStop = stop;
+  searchInput.value = stop.name;
+  clearBtn.classList.add('on');
+  closeDropdown();
+  clearTimeout(refreshTimer);
+
+  document.getElementById('ftrApi').textContent =
+    { db: 'DB · transport.rest', ch: 'transport.opendata.ch', il: 'Open Bus · Hasadna' }[stop.src] || '—';
+
+  showState('loading');
+  loadDepartures();
 }
 
 /* ── Load departures ── */
@@ -352,14 +378,11 @@ async function loadDepartures() {
 
   try {
     let deps;
-    if      (currentStop.src === 'db')  deps = await fetchDepsDB(currentStop.id);
-    else if (currentStop.src === 'ch')  deps = await fetchDepsCH(currentStop.id);
-    else if (currentStop.src === 'il')  deps = await fetchDepsIL(currentStop.id);
+    if      (currentStop.src === 'db') deps = await fetchDepsDB(currentStop.id);
+    else if (currentStop.src === 'ch') deps = await fetchDepsCH(currentStop.id);
+    else if (currentStop.src === 'il') deps = await fetchDepsIL(currentStop.id);
     else {
-      showState(
-        `Real-time data is not yet supported for this region.\n\n` +
-        `Supported: Germany · Austria · Switzerland · Israel`
-      );
+      showState('Real-time data not supported for this source.');
       return;
     }
     renderBoard(deps);
@@ -401,8 +424,7 @@ async function fetchDepsCH(id) {
 
 /* ── Fetch: Israel ── */
 async function fetchDepsIL(stopCode) {
-  const now = new Date();
-  const to  = new Date(now.getTime() + 90 * 60_000);
+  const now = new Date(), to = new Date(now.getTime() + 90 * 60_000);
   const r = await fetch(
     `https://open-bus-stride-api.hasadna.org.il/gtfs-stop-times/list?` +
     `stop_code=${encodeURIComponent(stopCode)}` +
@@ -441,9 +463,7 @@ function buildNextRow(d, now) {
       <div class="d-dest">${h(d.dest || '?')}</div>
       <div class="d-time">${fmtTime(d.planned)}${delayText(d)}</div>
     </div>
-    <div class="d-eta">
-      ${etaHtmlBig(eta)}
-    </div>
+    <div class="d-eta">${etaBig(eta)}</div>
   </div>`;
 }
 
@@ -454,23 +474,21 @@ function buildRow(d, now) {
     <div class="badge" style="background:${bg(d)};color:${fg(d)}">${h(d.line || '?')}</div>
     <div class="d-info">
       <div class="d-dest">${h(d.dest || '?')}</div>
-      <div class="d-time" style="font-size:11px;color:rgba(255,255,255,.55)">${fmtTime(d.planned)}${delayText(d)}</div>
+      <div class="d-time">${fmtTime(d.planned)}${delayText(d)}</div>
     </div>
-    <div class="d-eta">${etaHtmlSmall(eta)}</div>
+    <div class="d-eta">${etaSmall(eta)}</div>
   </div>`;
 }
 
-function etaHtmlBig(m) {
-  if (m === null)  return '';
+function etaBig(m) {
+  if (m === null) return '';
   if (m <= 0) return `<div class="eta-num eta-now">NOW</div>`;
-  return `<div class="eta-num ${m <= 5 ? 'eta-soon' : ''}">${m}</div>
-          <div class="eta-lbl">min</div>`;
+  return `<div class="eta-num ${m <= 5 ? 'eta-soon' : ''}">${m}</div><div class="eta-lbl">min</div>`;
 }
-
-function etaHtmlSmall(m) {
-  if (m === null)  return '';
+function etaSmall(m) {
+  if (m === null) return '';
   if (m <= 0) return `<div class="eta-num eta-now" style="font-size:17px">NOW</div>`;
-  return `<div class="eta-num ${m <= 5 ? 'eta-soon' : ''}" style="font-size:17px">${m} <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.5)">min</span></div>`;
+  return `<div class="eta-num ${m <= 5 ? 'eta-soon' : ''}" style="font-size:17px">${m}<span style="font-size:11px;font-weight:400;opacity:.6"> min</span></div>`;
 }
 
 function delayText(d) {
@@ -495,47 +513,33 @@ const PRODUCT_BG = {
   bus:'#6e3fa3', regional:'#ef7c00', ferry:'#0a5f98',
   s:'#007734', r:'#ef7c00', ic:'#cc2222', t:'#cc2222',
 };
-
 function bg(d) {
   const n = (d.line || '').toUpperCase();
   return LINE_COLORS[n] || PRODUCT_BG[d.product] || '#334466';
 }
-function fg(d) {
-  return DARK_FG.has((d.line || '').toUpperCase()) ? '#000' : '#fff';
-}
+function fg(d) { return DARK_FG.has((d.line || '').toUpperCase()) ? '#000' : '#fff'; }
 
 /* ── Helpers ── */
 function etaMins(iso, now) {
   if (!iso) return null;
-  try {
-    // Handle HH:MM:SS (Israel GTFS)
-    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(iso)) return null;
-    return Math.round((new Date(iso) - now) / 60000);
-  } catch { return null; }
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(iso)) return null;
+  try { return Math.round((new Date(iso) - now) / 60000); } catch { return null; }
 }
-
 function fmtTime(iso) {
   if (!iso) return '—';
   if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(iso)) return iso.slice(0, 5);
   try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); }
-  catch { return iso.slice(11, 16) || '—'; }
+  catch { return '—'; }
 }
-
 function showState(msg) {
   const board = document.getElementById('board');
-  if (msg === 'loading') {
-    board.innerHTML = '<div class="state"><div class="spinner"></div>Detecting location…</div>';
-  } else {
-    board.innerHTML = `<div class="state">${h(msg)}</div>`;
-  }
+  board.innerHTML = msg === 'loading'
+    ? '<div class="state"><div class="spinner"></div>Loading departures…</div>'
+    : `<div class="state">${h(msg)}</div>`;
 }
-
 function h(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
-/* ── Start immediately ── */
-startLocating();
 </script>
 </body>
 </html>
