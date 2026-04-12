@@ -66,8 +66,13 @@
     /* Search inside panel */
     .search-wrap{position:relative;padding:8px 10px;border-bottom:1px solid var(--border)}
     .search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);
-      color:var(--text);padding:6px 10px 6px 30px;border-radius:7px;font-size:12px;outline:none}
+      color:var(--text);padding:6px 34px 6px 30px;border-radius:7px;font-size:12px;outline:none}
     .search-wrap input:focus{border-color:var(--accent)}
+    .locate-btn{position:absolute;right:19px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;
+      display:flex;align-items:center;transition:color .15s}
+    .locate-btn:hover{color:var(--accent)}
+    .locate-btn.locating{color:var(--accent);animation:pulse 1s infinite}
     .s-icon{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
     .search-results{position:absolute;top:calc(100% - 8px);left:10px;right:10px;
       background:var(--surface2);border:1px solid var(--border);border-radius:8px;
@@ -228,6 +233,12 @@
   <div class="search-wrap">
     <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input id="searchInput" type="text" placeholder="Station suchen…" autocomplete="off"/>
+    <button class="locate-btn" id="locateBtn" onclick="locateMe()" title="Nearest station">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+        <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/>
+      </svg>
+    </button>
     <div class="search-results" id="searchResults"></div>
   </div>
 
@@ -423,6 +434,42 @@ async function doSearch(q){
       : '<div class="sr-item"><span style="color:var(--muted)">Keine Ergebnisse</span></div>';
     searchResults.classList.add('open');
   }catch{}
+}
+
+/* ── LOCATE ME ── */
+let userMarker=null;
+async function locateMe(){
+  if(!navigator.geolocation)
+    return alert('Geolocation not supported by this browser.');
+  const btn=document.getElementById('locateBtn');
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    btn.classList.remove('locating');
+    const {latitude:lat,longitude:lon}=pos.coords;
+
+    // Show user's position on map
+    if(userMarker) userMarker.remove();
+    userMarker=L.circleMarker([lat,lon],{
+      radius:8,color:'#fff',fillColor:'#58a6ff',fillOpacity:.9,weight:2,zIndexOffset:2000
+    }).addTo(map).bindTooltip('You',{permanent:false});
+    map.setView([lat,lon],14,{animate:true,duration:.6});
+
+    // Find nearest subway/suburban stop
+    try{
+      const r=await fetch(
+        `${API}/stops/nearby?latitude=${lat}&longitude=${lon}&results=8&distance=2000&suburban=true&subway=true&bus=false&tram=false&regional=false`
+      );
+      const stops=await r.json();
+      const s=stops[0];
+      if(s) loadStation(s.id, s.name);
+    }catch(e){
+      alert('Could not find nearby station: '+e.message);
+    }
+  }, err=>{
+    btn.classList.remove('locating');
+    if(err.code===1) alert('Location access denied. Please allow location in your browser settings.');
+    else alert('Could not get location: '+err.message);
+  },{timeout:10000});
 }
 
 /* ── HELPERS ── */
