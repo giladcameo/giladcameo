@@ -1,555 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Gilad Cameo · Portfolio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gilad Cameo</title>
   <style>
-:root {
-  --bg:       #06080a;
-  --surface:  #0d1117;
-  --surface2: #161b22;
-  --border:   #21262d;
-  --amber:    #f0a800;
-  --amber-dim:#5a3d00;
-  --amber-bright:#ffc840;
-  --green:    #3fb950;
-  --muted:    #8b949e;
-  --text:     #e6edf3;
-  --font-mono:'Courier New', Consolas, monospace;
-  --font:     'Segoe UI', system-ui, -apple-system, sans-serif;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
 
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  line-height: 1.6;
-  min-height: 100vh;
-}
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 56px;
+      border-bottom: 1px solid #21262d;
+      background: #0d1117;
+    }
+    .logo {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: #f0a800;
+      letter-spacing: 2px;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 28px;
+    }
+    nav a {
+      color: #8b949e;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.15s;
+    }
+    nav a:hover { color: #f0a800; }
 
-/* CRT scanlines overlay */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px,
-    rgba(0,0,0,.04) 1px, rgba(0,0,0,.04) 2px
-  );
-}
+    /* HERO */
+    .hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 40px 60px;
+    }
+    .hero-label {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f0a800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .green-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 8px #3fb950;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-/* ── NAV ── */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(6,8,10,.85);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 clamp(16px, 5vw, 80px);
-  height: 54px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.nav-brand {
-  font-family: var(--font-mono);
-  font-size: 14px; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: var(--amber);
-}
-.nav-brand span { color: var(--amber-dim); }
-.nav-links {
-  display: flex; gap: 24px; list-style: none;
-}
-.nav-links a {
-  font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
-  color: var(--muted); text-decoration: none;
-  transition: color .15s;
-}
-.nav-links a:hover { color: var(--amber); }
+    .hero h1 {
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: #f0a800; }
 
-/* ── HERO ── */
-.hero {
-  padding: clamp(60px, 10vh, 120px) clamp(16px, 5vw, 80px) clamp(40px, 7vh, 80px);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: start;
-  gap: 32px;
-  max-width: 1200px; margin: 0 auto;
-}
-.hero-badge {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
-  color: var(--amber); margin-bottom: 20px;
-}
-.badge-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: pulse 2.4s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+    .hero-sub {
+      font-family: monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 24px;
+    }
+    .hero-bio {
+      font-size: 17px;
+      color: #8b949e;
+      line-height: 1.8;
+      max-width: 580px;
+      margin-bottom: 32px;
+    }
+    .hero-bio strong { color: #e6edf3; }
 
-.hero-name {
-  font-family: var(--font-mono);
-  font-size: clamp(36px, 7vw, 72px);
-  font-weight: 900;
-  letter-spacing: -.01em;
-  line-height: 1;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.hero-name em {
-  font-style: normal;
-  color: var(--amber);
-  text-shadow: 0 0 40px rgba(240,168,0,.25);
-}
-.hero-title {
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 2vw, 14px);
-  letter-spacing: .2em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 28px;
-}
-.hero-bio {
-  font-size: 16px; color: var(--muted);
-  max-width: 560px; line-height: 1.75;
-  margin-bottom: 32px;
-}
-.hero-bio strong { color: var(--text); }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      padding: 5px 14px;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 20px;
+    }
 
-.hero-tags {
-  display: flex; flex-wrap: wrap; gap: 8px;
-}
-.tag {
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 2px;
-}
+    /* SECTION */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 40px;
+      border-top: 1px solid #21262d;
+    }
+    .section-label {
+      font-family: monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f0a800;
+      margin-bottom: 8px;
+    }
+    .section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      color: #e6edf3;
+    }
 
-.hero-stat {
-  display: flex; flex-direction: column;
-  align-items: flex-end; gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: .08em; color: var(--muted);
-  white-space: nowrap;
-}
-.hero-stat-num {
-  font-size: 42px; font-weight: 900;
-  color: var(--amber); line-height: 1;
-  text-shadow: 0 0 30px rgba(240,168,0,.2);
-}
+    /* CARDS */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 680px) {
+      .cards { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 40px; }
+      nav { padding: 0 20px; }
+      .hero, .section { padding-left: 20px; padding-right: 20px; }
+    }
 
-/* ── SECTION ── */
-.section {
-  padding: clamp(40px, 8vh, 80px) clamp(16px, 5vw, 80px);
-  max-width: 1200px; margin: 0 auto;
-}
-.section-label {
-  font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: .3em; text-transform: uppercase;
-  color: var(--amber-dim); margin-bottom: 8px;
-}
-.section-title {
-  font-size: clamp(22px, 4vw, 32px); font-weight: 700;
-  color: var(--text); margin-bottom: clamp(24px, 4vh, 48px);
-}
-.section-divider {
-  height: 1px; background: var(--border); margin-bottom: clamp(24px, 4vh, 48px);
-}
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      border-color: #f0a800;
+      transform: translateY(-4px);
+    }
 
-/* ── PROJECT GRID ── */
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-}
+    /* Card thumbnails */
+    .thumb {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .thumb-berlin { background: #010409; }
+    .thumb-transit { background: #080907; font-family: monospace; }
 
-.project-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex; flex-direction: column;
-  transition: border-color .2s, transform .15s, box-shadow .2s;
-  text-decoration: none; color: inherit;
-}
-.project-card:hover {
-  border-color: var(--amber-dim);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 0 1px var(--amber-dim);
-}
+    /* Berlin thumbnail: map lines SVG */
+    .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .thumb-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(88,166,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,166,255,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .thumb-label {
+      position: absolute;
+      bottom: 10px; left: 12px;
+      font-family: monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(88,166,255,0.6);
+    }
 
-.card-preview {
-  height: 180px;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.card-preview-inner {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-}
+    /* Transit Board thumbnail */
+    .tb-wrap { width: 100%; }
+    .tb-top {
+      background: #0f110e;
+      border-bottom: 1px solid #1c1f18;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #f0a800; }
+    .tb-top-time { font-size: 14px; font-weight: 700; color: #ffc840; }
+    .tb-row-item {
+      display: grid;
+      grid-template-columns: 38px 1fr 36px 28px;
+      align-items: center;
+      padding: 5px 12px;
+      border-bottom: 1px solid #1c1f18;
+    }
+    .tb-badge-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      border-radius: 2px;
+      padding: 2px 4px;
+      min-width: 24px;
+    }
+    .tb-d  { font-size: 9px; color: #ffc840; letter-spacing: 0.5px; padding: 0 4px; }
+    .tb-t  { font-size: 9px; font-weight: 700; color: #f0a800; text-align: center; }
+    .tb-e  { font-size: 9px; font-weight: 700; text-align: right; }
+    .tb-scanline {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent 0px, transparent 1px,
+        rgba(0,0,0,0.1) 1px, rgba(0,0,0,0.1) 2px
+      );
+    }
 
-/* Berlin map preview */
-.preview-berlin {
-  background: #0d1117;
-  width: 100%; height: 100%;
-}
-.map-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(88,166,255,.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(88,166,255,.07) 1px, transparent 1px);
-  background-size: 30px 30px;
-}
-.map-lines { position: absolute; inset: 0; }
-.map-dot {
-  position: absolute;
-  border-radius: 50%;
-}
-.panel-mini {
-  position: absolute; left: 8px; top: 8px; bottom: 8px; width: 100px;
-  background: rgba(22,27,34,.95);
-  border: 1px solid rgba(48,54,61,.8);
-  border-radius: 6px; overflow: hidden;
-}
-.panel-mini-row {
-  height: 18px; border-bottom: 1px solid rgba(48,54,61,.5);
-  display: flex; align-items: center; gap: 4px; padding: 0 5px;
-}
-.mini-badge {
-  width: 18px; height: 10px; border-radius: 2px;
-  flex-shrink: 0;
-}
-.mini-text {
-  height: 6px; border-radius: 2px; background: rgba(230,237,243,.15); flex: 1;
-}
-.mini-eta {
-  width: 14px; height: 6px; border-radius: 2px; flex-shrink: 0;
-}
+    /* Card body */
+    .card-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-num {
+      font-family: monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #f0a800;
+      opacity: 0.6;
+      margin-bottom: 6px;
+    }
+    .card-body h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .card-body p {
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.7;
+      flex: 1;
+      margin-bottom: 16px;
+    }
+    .card-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      font-family: monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      color: #8b949e;
+      border-radius: 3px;
+    }
+    .card-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border: 1px solid #f0a800;
+      color: #f0a800;
+      background: transparent;
+      border-radius: 3px;
+      text-decoration: none;
+      align-self: flex-start;
+      transition: background 0.15s, color 0.15s;
+    }
+    .card-btn:hover { background: #f0a800; color: #0d1117; }
 
-/* Transit board preview */
-.preview-transit {
-  background: #080907;
-  width: 100%; height: 100%;
-  font-family: var(--font-mono);
-}
-.tb-header {
-  height: 26px; background: #0f110e;
-  border-bottom: 1px solid #1c1f18;
-  display: flex; align-items: center; padding: 0 8px; gap: 6px;
-}
-.tb-dot { font-size: 7px; color: #5a3d00; }
-.tb-loc { flex: 1; font-size: 7px; letter-spacing: .1em; text-transform: uppercase; color: #f0a800; }
-.tb-clock { font-size: 11px; font-weight: 700; color: #ffc840; }
-.tb-rows { padding: 4px 0; }
-.tb-row {
-  display: grid; grid-template-columns: 36px 1fr 32px 26px;
-  align-items: center; padding: 4px 8px;
-  border-bottom: 1px solid #1c1f18;
-}
-.tb-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 8px; font-weight: 900; border-radius: 2px;
-  padding: 1px 3px; min-width: 20px;
-}
-.tb-dest { font-size: 8px; letter-spacing: .05em; color: #ffc840; padding: 0 4px; }
-.tb-time { font-size: 8px; font-weight: 700; color: #f0a800; text-align: center; }
-.tb-eta  { font-size: 8px; font-weight: 700; text-align: right; }
-.tb-scan {
-  position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px,
-    rgba(0,0,0,.12) 1px, rgba(0,0,0,.12) 2px
-  );
-}
+    /* ABOUT */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; } }
+    .about-grid h3 {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #f0a800;
+      margin-bottom: 14px;
+    }
+    .about-grid p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.8;
+    }
+    .about-grid ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .about-grid li {
+      font-size: 14px;
+      color: #8b949e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .about-grid li::before {
+      content: '▸';
+      color: #f0a800;
+      flex-shrink: 0;
+    }
 
-.card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-.card-type {
-  font-family: var(--font-mono);
-  font-size: 8px; letter-spacing: .25em; text-transform: uppercase;
-  color: var(--amber-dim); margin-bottom: 6px;
-}
-.card-title {
-  font-size: 18px; font-weight: 700; color: var(--text);
-  margin-bottom: 8px; line-height: 1.25;
-}
-.card-desc {
-  font-size: 13px; color: var(--muted); line-height: 1.65;
-  flex: 1; margin-bottom: 16px;
-}
-.card-features {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 18px;
-}
-.feature-tag {
-  font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
-  padding: 3px 8px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 2px;
-}
-.card-cta {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
-  padding: 8px 18px;
-  border: 1px solid var(--amber-dim);
-  color: var(--amber);
-  background: transparent;
-  text-decoration: none;
-  transition: background .15s, color .15s;
-  align-self: flex-start;
-}
-.card-cta:hover { background: var(--amber); color: var(--bg); }
-.card-cta-arrow { font-size: 12px; }
-
-/* ── ABOUT ── */
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-}
-@media (max-width: 640px) {
-  .about-grid { grid-template-columns: 1fr; }
-  .hero { grid-template-columns: 1fr; }
-  .hero-stat { align-items: flex-start; }
-}
-
-.about-block { }
-.about-block h3 {
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-  color: var(--amber); margin-bottom: 12px;
-}
-.about-block p {
-  font-size: 14px; color: var(--muted); line-height: 1.75;
-}
-.about-block ul {
-  list-style: none; display: flex; flex-direction: column; gap: 8px;
-}
-.about-block li {
-  font-family: var(--font-mono);
-  font-size: 12px; color: var(--muted);
-  display: flex; align-items: center; gap: 8px;
-}
-.about-block li::before {
-  content: '▸'; color: var(--amber-dim); flex-shrink: 0;
-}
-
-/* ── FOOTER ── */
-footer {
-  border-top: 1px solid var(--border);
-  padding: 20px clamp(16px, 5vw, 80px);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 12px;
-}
-.footer-name {
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--amber-dim);
-}
-.footer-links {
-  display: flex; gap: 16px; list-style: none;
-}
-.footer-links a {
-  font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--muted); text-decoration: none; transition: color .15s;
-}
-.footer-links a:hover { color: var(--amber); }
+    /* FOOTER */
+    footer {
+      border-top: 1px solid #21262d;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    footer span {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: #30363d;
+    }
+    footer a {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: #8b949e;
+      text-decoration: none;
+    }
+    footer a:hover { color: #f0a800; }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="nav-brand">GC<span>.</span></div>
-  <ul class="nav-links">
+  <div class="logo">GC.</div>
+  <ul>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank" rel="noopener">GitHub</a></li>
+    <li><a href="https://github.com/giladcameo" target="_blank">GitHub</a></li>
   </ul>
 </nav>
 
 <!-- HERO -->
 <div class="hero">
-  <div>
-    <div class="hero-badge">
-      <span class="badge-dot"></span>
-      Available for collaboration
-    </div>
-    <h1 class="hero-name">Gilad<br><em>Cameo</em></h1>
-    <div class="hero-title">Urban Planner &amp; Developer</div>
-    <p class="hero-bio">
-      I build <strong>data tools for cities</strong> — real-time transit dashboards,
-      location-aware apps, and urban analytics. Interested in the intersection of
-      <strong>transportation</strong>, <strong>open data</strong>, and code.
-    </p>
-    <div class="hero-tags">
-      <span class="tag">Urban Planning</span>
-      <span class="tag">Transportation</span>
-      <span class="tag">Python · Pandas</span>
-      <span class="tag">Open Data</span>
-      <span class="tag">JavaScript</span>
-    </div>
+  <div class="hero-label">
+    <span class="green-dot"></span>
+    Open to collaboration
   </div>
-  <div class="hero-stat">
-    <span class="hero-stat-num">2</span>
-    <span>live tools</span>
-    <span>built</span>
+  <h1>Gilad<br><span>Cameo</span></h1>
+  <div class="hero-sub">Urban Planner &amp; Developer</div>
+  <p class="hero-bio">
+    I build <strong>data tools for cities</strong> — real-time transit dashboards,
+    location-aware apps, and urban analytics. Interested in the intersection of
+    <strong>transportation</strong>, <strong>open data</strong>, and code.
+  </p>
+  <div class="tags">
+    <span class="tag">Urban Planning</span>
+    <span class="tag">Transportation</span>
+    <span class="tag">Python · Pandas</span>
+    <span class="tag">AI Data Analysis</span>
+    <span class="tag">Open Data</span>
+    <span class="tag">JavaScript</span>
   </div>
 </div>
 
 <!-- PROJECTS -->
 <div class="section" id="projects">
   <div class="section-label">// projects</div>
-  <h2 class="section-title">Live Tools</h2>
-  <div class="section-divider"></div>
+  <h2>Live Tools</h2>
 
-  <div class="projects-grid">
+  <div class="cards">
 
-    <!-- Card 1: Berlin Transit -->
-    <a class="project-card" href="berlin-transit.html">
-      <div class="card-preview preview-berlin">
-        <div class="map-grid"></div>
-        <!-- SVG transit lines -->
-        <svg class="map-lines" viewBox="0 0 400 180" preserveAspectRatio="xMidYMid slice">
-          <!-- U-Bahn lines -->
-          <polyline points="20,90 80,90 120,70 180,70 220,70 280,50" stroke="#224f9e" stroke-width="3" fill="none" opacity=".8"/>
-          <polyline points="40,130 100,130 140,110 200,110 260,90 320,90" stroke="#55a822" stroke-width="3" fill="none" opacity=".8"/>
-          <polyline points="60,60 120,100 180,130 260,140 340,140" stroke="#cc2222" stroke-width="3" fill="none" opacity=".8"/>
-          <!-- S-Bahn -->
-          <polyline points="0,160 60,150 120,140 200,135 300,130 400,125" stroke="#007734" stroke-width="2.5" fill="none" opacity=".7"/>
-          <!-- Stops -->
-          <circle cx="120" cy="70" r="4" fill="#fff" opacity=".9"/>
-          <circle cx="200" cy="110" r="4" fill="#fff" opacity=".9"/>
-          <circle cx="180" cy="130" r="4" fill="#fff" opacity=".9"/>
-          <circle cx="260" cy="90" r="5" fill="#f5a800" opacity="1"/>
-          <circle cx="120" cy="140" r="4" fill="#fff" opacity=".9"/>
+    <!-- Berlin Transit -->
+    <a class="card" href="berlin-transit.html">
+      <div class="thumb thumb-berlin">
+        <div class="thumb-grid"></div>
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
+          <polyline points="0,80 60,80 110,60 180,60 250,55 340,45" stroke="#224f9e" stroke-width="3.5" fill="none"/>
+          <polyline points="20,120 80,120 130,100 200,95 280,80 380,75" stroke="#007734" stroke-width="3" fill="none"/>
+          <polyline points="50,50 110,90 175,120 260,130 360,130" stroke="#cc2222" stroke-width="3" fill="none"/>
+          <polyline points="0,145 70,138 150,132 250,128 400,122" stroke="#007734" stroke-width="2" fill="none" opacity="0.5"/>
+          <circle cx="110" cy="60" r="4.5" fill="#e6edf3"/>
+          <circle cx="200" cy="95" r="4.5" fill="#e6edf3"/>
+          <circle cx="175" cy="120" r="4.5" fill="#e6edf3"/>
+          <circle cx="200" cy="62" r="6" fill="#f0a800"/>
+          <circle cx="280" cy="80" r="4.5" fill="#e6edf3"/>
         </svg>
-        <!-- Mini departure panel -->
-        <div class="panel-mini">
-          <div class="panel-mini-row">
-            <div class="mini-badge" style="background:#224f9e"></div>
-            <div class="mini-text"></div>
-            <div class="mini-eta" style="background:rgba(63,185,80,.6)"></div>
-          </div>
-          <div class="panel-mini-row">
-            <div class="mini-badge" style="background:#007734"></div>
-            <div class="mini-text"></div>
-            <div class="mini-eta" style="background:rgba(240,168,0,.4)"></div>
-          </div>
-          <div class="panel-mini-row">
-            <div class="mini-badge" style="background:#cc2222"></div>
-            <div class="mini-text"></div>
-            <div class="mini-eta" style="background:rgba(139,148,158,.3)"></div>
-          </div>
-          <div class="panel-mini-row">
-            <div class="mini-badge" style="background:#6e3fa3"></div>
-            <div class="mini-text"></div>
-            <div class="mini-eta" style="background:rgba(139,148,158,.3)"></div>
-          </div>
-          <div class="panel-mini-row">
-            <div class="mini-badge" style="background:#ef7c00"></div>
-            <div class="mini-text"></div>
-            <div class="mini-eta" style="background:rgba(139,148,158,.3)"></div>
-          </div>
-        </div>
+        <div class="thumb-label">Berlin · Live Map</div>
       </div>
       <div class="card-body">
-        <div class="card-type">// tool 01</div>
-        <h3 class="card-title">Berlin Transit Live</h3>
-        <p class="card-desc">
-          Full-screen interactive map of Berlin's public transport network with
-          real-time departure data. Search any stop, filter by transport type,
-          and see live arrivals auto-refreshing every 10 seconds.
-        </p>
-        <div class="card-features">
-          <span class="feature-tag">Leaflet Map</span>
-          <span class="feature-tag">DB API</span>
-          <span class="feature-tag">10s Refresh</span>
-          <span class="feature-tag">U·S·Tram·Bus</span>
-          <span class="feature-tag">Stop Search</span>
+        <div class="card-num">// 01</div>
+        <h3>Berlin Transit Live</h3>
+        <p>Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
+        <div class="card-pills">
+          <span class="pill">Leaflet Map</span>
+          <span class="pill">DB API</span>
+          <span class="pill">U · S · Tram · Bus</span>
+          <span class="pill">10s Refresh</span>
         </div>
-        <span class="card-cta">Open App <span class="card-cta-arrow">→</span></span>
+        <span class="card-btn">Open App →</span>
       </div>
     </a>
 
-    <!-- Card 2: Transit Board -->
-    <a class="project-card" href="transit-board.html">
-      <div class="card-preview preview-transit">
-        <div style="width:100%;height:100%;display:flex;flex-direction:column;">
-          <div class="tb-header">
-            <span class="tb-dot">◉</span>
-            <span class="tb-loc">Tel Aviv · Allenby</span>
-            <span class="tb-clock">14:32:07</span>
+    <!-- Transit Board -->
+    <a class="card" href="transit-board.html">
+      <div class="thumb thumb-transit">
+        <div class="tb-wrap">
+          <div class="tb-top">
+            <span class="tb-top-loc">◉ Tel Aviv · Allenby</span>
+            <span class="tb-top-time">14:32:07</span>
           </div>
-          <!-- board header -->
-          <div style="display:grid;grid-template-columns:36px 1fr 32px 26px;padding:3px 8px;background:#0f110e;border-bottom:1px solid #1c1f18;">
-            <span style="font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:#5a3d00;">Line</span>
-            <span style="font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:#5a3d00;padding-left:4px;">Destination</span>
-            <span style="font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:#5a3d00;text-align:center;">Time</span>
-            <span style="font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:#5a3d00;text-align:right;">ETA</span>
+          <div class="tb-row-item">
+            <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">51</span>
+            <span class="tb-d">Ben Gurion Airport</span>
+            <span class="tb-t">14:35</span>
+            <span class="tb-e" style="color:#ff3c3c;">NOW</span>
           </div>
-          <div class="tb-rows">
-            <div class="tb-row">
-              <span class="tb-badge" style="background:#6e3fa3;color:#fff;">51</span>
-              <span class="tb-dest">Ben Gurion Airport</span>
-              <span class="tb-time">14:35</span>
-              <span class="tb-eta" style="color:#ff3c3c;animation:etaBlink 1s infinite;">NOW</span>
-            </div>
-            <div class="tb-row">
-              <span class="tb-badge" style="background:#6e3fa3;color:#fff;">4</span>
-              <span class="tb-dest">Bat Yam</span>
-              <span class="tb-time">14:38</span>
-              <span class="tb-eta" style="color:#ffaa00;">6'</span>
-            </div>
-            <div class="tb-row">
-              <span class="tb-badge" style="background:#224f9e;color:#fff;">11</span>
-              <span class="tb-dest">Tel Aviv Central</span>
-              <span class="tb-time">14:41</span>
-              <span class="tb-eta" style="color:#5a3d00;">9'</span>
-            </div>
-            <div class="tb-row">
-              <span class="tb-badge" style="background:#6e3fa3;color:#fff;">51</span>
-              <span class="tb-dest">Ben Gurion Airport</span>
-              <span class="tb-time">14:45</span>
-              <span class="tb-eta" style="color:#5a3d00;">13'</span>
-            </div>
-            <div class="tb-row">
-              <span class="tb-badge" style="background:#ef7c00;color:#fff;">480</span>
-              <span class="tb-dest">Jerusalem</span>
-              <span class="tb-time">14:50</span>
-              <span class="tb-eta" style="color:#5a3d00;">18'</span>
-            </div>
+          <div class="tb-row-item">
+            <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">4</span>
+            <span class="tb-d">Bat Yam</span>
+            <span class="tb-t">14:38</span>
+            <span class="tb-e" style="color:#ffaa00;">6'</span>
+          </div>
+          <div class="tb-row-item">
+            <span class="tb-badge-item" style="background:#224f9e;color:#fff;">11</span>
+            <span class="tb-d">Tel Aviv Central</span>
+            <span class="tb-t">14:41</span>
+            <span class="tb-e" style="color:#5a3d00;">9'</span>
+          </div>
+          <div class="tb-row-item">
+            <span class="tb-badge-item" style="background:#ef7c00;color:#fff;">480</span>
+            <span class="tb-d">Jerusalem</span>
+            <span class="tb-t">14:50</span>
+            <span class="tb-e" style="color:#5a3d00;">18'</span>
           </div>
         </div>
-        <div class="tb-scan"></div>
+        <div class="tb-scanline"></div>
       </div>
       <div class="card-body">
-        <div class="card-type">// tool 02</div>
-        <h3 class="card-title">Transit Board · Near Me</h3>
-        <p class="card-desc">
-          GPS-powered departure board that finds transit stops near your current
-          location anywhere in the world. Supports Germany, Austria, Switzerland,
-          and Israel with live real-time data. Retro CRT aesthetic.
-        </p>
-        <div class="card-features">
-          <span class="feature-tag">GPS Location</span>
-          <span class="feature-tag">DE · AT · CH · IL</span>
-          <span class="feature-tag">30s Refresh</span>
-          <span class="feature-tag">Multi-stop</span>
-          <span class="feature-tag">CRT Design</span>
+        <div class="card-num">// 02</div>
+        <h3>Transit Board · Near Me</h3>
+        <p>GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data with a retro CRT display aesthetic.</p>
+        <div class="card-pills">
+          <span class="pill">GPS Location</span>
+          <span class="pill">DE · AT · CH · IL</span>
+          <span class="pill">30s Refresh</span>
+          <span class="pill">Multi-stop</span>
         </div>
-        <span class="card-cta">Open App <span class="card-cta-arrow">→</span></span>
+        <span class="card-btn">Open App →</span>
       </div>
     </a>
 
@@ -559,19 +489,13 @@ footer {
 <!-- ABOUT -->
 <div class="section" id="about">
   <div class="section-label">// about</div>
-  <h2 class="section-title">Background</h2>
-  <div class="section-divider"></div>
+  <h2>Background</h2>
   <div class="about-grid">
-    <div class="about-block">
+    <div>
       <h3>Interests</h3>
-      <p>
-        Focused on urban mobility and public transport — how cities move, how
-        data can reveal patterns, and how better tools can help planners and
-        commuters alike. Currently learning Python and pandas, and using
-        AI for data analysis to extract insights from transit datasets.
-      </p>
+      <p>Focused on urban mobility and public transport — how cities move, how data can reveal patterns, and how better tools help planners and commuters. Currently learning Python and pandas, and using AI for data analysis to extract insights from transit datasets.</p>
     </div>
-    <div class="about-block">
+    <div>
       <h3>Stack</h3>
       <ul>
         <li>Python · Pandas · Data Analysis · AI</li>
@@ -583,17 +507,10 @@ footer {
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer>
-  <div class="footer-name">Gilad Cameo · 2025</div>
-  <ul class="footer-links">
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank" rel="noopener">GitHub</a></li>
-  </ul>
+  <span>Gilad Cameo · 2025</span>
+  <a href="https://github.com/giladcameo" target="_blank">github.com/giladcameo</a>
 </footer>
 
-<style>
-@keyframes etaBlink { 50% { opacity: .25; } }
-</style>
 </body>
 </html>
