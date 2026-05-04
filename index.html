@@ -37,12 +37,17 @@
       gap: 28px;
     }
     nav a {
-      color: #8b949e;
+      color: #b0bec5;
       text-decoration: none;
       font-size: 14px;
       transition: color 0.15s;
     }
     nav a:hover { color: #f0a800; }
+    a:focus-visible {
+      outline: 2px solid #f0a800;
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
 
     /* HERO */
     .hero {
@@ -70,6 +75,7 @@
       animation: blink 2s infinite;
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    @media (prefers-reduced-motion: reduce) { .green-dot { animation: none; } }
 
     .hero h1 {
       font-size: 64px;
@@ -84,12 +90,12 @@
       font-size: 13px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #8b949e;
+      color: #b0bec5;
       margin-bottom: 24px;
     }
     .hero-bio {
       font-size: 17px;
-      color: #8b949e;
+      color: #b0bec5;
       line-height: 1.8;
       max-width: 580px;
       margin-bottom: 32px;
@@ -107,7 +113,7 @@
       letter-spacing: 1px;
       padding: 5px 14px;
       border: 1px solid #30363d;
-      color: #8b949e;
+      color: #b0bec5;
       border-radius: 20px;
     }
 
@@ -188,7 +194,7 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: rgba(88,166,255,0.6);
+      color: rgba(88,166,255,0.9);
     }
 
     .tb-wrap { width: 100%; }
@@ -242,7 +248,6 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       color: #f0a800;
-      opacity: 0.6;
       margin-bottom: 6px;
     }
     .card-body h3 {
@@ -252,7 +257,7 @@
     }
     .card-body p {
       font-size: 13px;
-      color: #8b949e;
+      color: #b0bec5;
       line-height: 1.7;
       flex: 1;
       margin-bottom: 16px;
@@ -271,7 +276,7 @@
       padding: 3px 10px;
       background: #0d1117;
       border: 1px solid #21262d;
-      color: #8b949e;
+      color: #b0bec5;
       border-radius: 3px;
     }
     .card-btn {
@@ -309,7 +314,7 @@
     }
     .about-grid p {
       font-size: 14px;
-      color: #8b949e;
+      color: #b0bec5;
       line-height: 1.8;
     }
     .about-grid ul {
@@ -344,13 +349,13 @@
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #30363d;
+      color: #768390;
     }
     footer a {
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #8b949e;
+      color: #b0bec5;
       text-decoration: none;
     }
     footer a:hover { color: #f0a800; }
@@ -358,18 +363,18 @@
 </head>
 <body>
 
-<nav>
+<nav aria-label="Main navigation">
   <div class="logo">GC.</div>
   <ul>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank">GitHub</a></li>
+    <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
   </ul>
 </nav>
 
 <div class="hero">
   <div class="hero-label">
-    <span class="green-dot"></span>
+    <span class="green-dot" aria-hidden="true"></span>
     Open to collaboration
   </div>
   <h1>Gilad<br><span>Cameo</span></h1>
@@ -389,15 +394,15 @@
   </div>
 </div>
 
-<div class="section" id="projects">
-  <div class="section-label">// projects</div>
-  <h2>Live Tools</h2>
+<section class="section" id="projects" aria-labelledby="projects-heading">
+  <div class="section-label" aria-hidden="true">// projects</div>
+  <h2 id="projects-heading">Live Tools</h2>
   <div class="cards">
 
-    <a class="card" href="berlin-transit.html">
-      <div class="thumb thumb-berlin">
+    <a class="card" href="berlin-transit.html" aria-label="Berlin Transit Live — Open App">
+      <div class="thumb thumb-berlin" aria-hidden="true">
         <div class="thumb-grid"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <polyline points="0,80 60,80 110,60 180,60 250,55 340,45" stroke="#224f9e" stroke-width="3.5" fill="none"/>
           <polyline points="20,120 80,120 130,100 200,95 280,80 380,75" stroke="#007734" stroke-width="3" fill="none"/>
           <polyline points="50,50 110,90 175,120 260,130 360,130" stroke="#cc2222" stroke-width="3" fill="none"/>
@@ -424,8 +429,8 @@
       </div>
     </a>
 
-    <a class="card" href="transit-board.html">
-      <div class="thumb thumb-transit">
+    <a class="card" href="transit-board.html" aria-label="Transit Board Near Me — Open App">
+      <div class="thumb thumb-transit" aria-hidden="true">
         <div class="tb-wrap">
           <div class="tb-top">
             <span class="tb-top-loc">&#9685; Tel Aviv &middot; Allenby</span>
@@ -447,13 +452,13 @@
             <span class="tb-badge-item" style="background:#224f9e;color:#fff;">11</span>
             <span class="tb-d">Tel Aviv Central</span>
             <span class="tb-t">14:41</span>
-            <span class="tb-e" style="color:#5a3d00;">9'</span>
+            <span class="tb-e" style="color:#f0a800;">9'</span>
           </div>
           <div class="tb-row-item">
             <span class="tb-badge-item" style="background:#ef7c00;color:#fff;">480</span>
             <span class="tb-d">Jerusalem</span>
             <span class="tb-t">14:50</span>
-            <span class="tb-e" style="color:#5a3d00;">18'</span>
+            <span class="tb-e" style="color:#f0a800;">18'</span>
           </div>
         </div>
         <div class="tb-scanline"></div>
@@ -472,10 +477,10 @@
       </div>
     </a>
 
-    <a class="card" href="walkable.html">
-      <div class="thumb" style="background:#0a1628;">
+    <a class="card" href="walkable.html" aria-label="Walkable — Open App">
+      <div class="thumb" style="background:#0a1628;" aria-hidden="true">
         <div class="thumb-grid"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <circle cx="200" cy="80" r="60" stroke="rgba(56,189,248,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
           <circle cx="200" cy="80" r="38" stroke="rgba(56,189,248,0.4)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
           <circle cx="200" cy="80" r="18" stroke="rgba(56,189,248,0.6)" stroke-width="1.5" fill="none"/>
@@ -505,11 +510,11 @@
     </a>
 
   </div>
-</div>
+</section>
 
-<div class="section" id="about">
-  <div class="section-label">// about</div>
-  <h2>Background</h2>
+<section class="section" id="about" aria-labelledby="about-heading">
+  <div class="section-label" aria-hidden="true">// about</div>
+  <h2 id="about-heading">Background</h2>
   <div class="about-grid">
     <div>
       <h3>Interests</h3>
@@ -525,11 +530,11 @@
       </ul>
     </div>
   </div>
-</div>
+</section>
 
 <footer>
   <span>Gilad Cameo &middot; 2025</span>
-  <a href="https://github.com/giladcameo" target="_blank">github.com/giladcameo</a>
+  <a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
 </footer>
 
 </body>
