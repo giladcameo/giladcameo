@@ -11,6 +11,13 @@
       --bg:rgba(13,17,23,.93);--surface:rgba(22,27,34,.95);--surface2:rgba(33,38,45,.95);
       --border:rgba(48,54,61,.8);--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
       --green:#3fb950;--yellow:#d29922;--red:#f85149;
+      --map-bg:#1a1f2e;
+    }
+    [data-theme="light"]{
+      --bg:rgba(248,250,252,.95);--surface:rgba(255,255,255,.97);--surface2:rgba(241,245,249,.97);
+      --border:rgba(203,213,225,.8);--text:#1e293b;--muted:#64748b;--accent:#2563eb;
+      --green:#16a34a;--yellow:#d97706;--red:#dc2626;
+      --map-bg:#e8edf2;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;width:100%;overflow:hidden;
@@ -59,8 +66,13 @@
     /* Search inside panel */
     .search-wrap{position:relative;padding:8px 10px;border-bottom:1px solid var(--border)}
     .search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);
-      color:var(--text);padding:6px 10px 6px 30px;border-radius:7px;font-size:12px;outline:none}
+      color:var(--text);padding:6px 34px 6px 30px;border-radius:7px;font-size:12px;outline:none}
     .search-wrap input:focus{border-color:var(--accent)}
+    .locate-btn{position:absolute;right:19px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;
+      display:flex;align-items:center;transition:color .15s}
+    .locate-btn:hover{color:var(--accent)}
+    .locate-btn.locating{color:var(--accent);animation:pulse 1s infinite}
     .s-icon{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
     .search-results{position:absolute;top:calc(100% - 8px);left:10px;right:10px;
       background:var(--surface2);border:1px solid var(--border);border-radius:8px;
@@ -71,13 +83,6 @@
     .sr-item:hover{background:var(--surface)}
     .sr-name{font-weight:600;font-size:12px}
     .sr-sub{font-size:10px;color:var(--muted)}
-
-    /* Favs */
-    .favs{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap}
-    .fav-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
-      padding:2px 9px;border-radius:20px;cursor:pointer;font-size:10px;white-space:nowrap}
-    .fav-btn:hover,.fav-btn.active{border-color:var(--accent);color:var(--accent);
-      background:rgba(88,166,255,.12)}
 
     /* Station header */
     .stn-hdr{padding:8px 12px;border-bottom:1px solid var(--border)}
@@ -123,16 +128,79 @@
       font-size:9px;font-weight:800;white-space:nowrap;cursor:pointer;
       box-shadow:0 1px 4px rgba(0,0,0,.6)}
 
-    /* Leaflet override for dark */
-    .leaflet-container{background:#1a1f2e}
+    .leaflet-container{background:var(--map-bg)}
     .leaflet-control-zoom a{background:var(--surface) !important;color:var(--text) !important;
       border-color:var(--border) !important}
+
+    /* Theme toggle button */
+    .theme-btn{background:none;border:1px solid var(--border);color:var(--text);
+      border-radius:8px;padding:3px 8px;cursor:pointer;font-size:15px;line-height:1;
+      display:flex;align-items:center;}
+
+    /* Debug badge */
+    #debugBadge{position:fixed;bottom:10px;right:10px;z-index:500;
+      background:var(--surface);border:1px solid var(--border);border-radius:8px;
+      padding:6px 10px;font-size:10px;color:var(--muted);line-height:1.6;
+      max-width:200px;backdrop-filter:blur(8px)}
+
+    /* ── MOBILE ── */
+    @media(max-width:768px){
+      /* Header compact */
+      header{height:44px;padding:0 12px}
+      .logo-text{font-size:13px}
+      .clock{font-size:16px}
+
+      /* Filters: full-width strip under header, horizontal scroll */
+      .filter-bar{
+        top:44px;left:0;right:0;max-width:100%;
+        padding:6px 10px;gap:6px;flex-wrap:nowrap;
+        overflow-x:auto;justify-content:flex-start;
+        background:var(--bg);backdrop-filter:blur(12px);
+        border-bottom:1px solid var(--border);
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+      }
+      .filter-bar::-webkit-scrollbar{display:none}
+      .fc{font-size:12px;padding:5px 14px;flex-shrink:0}
+
+      /* Panel: bottom sheet */
+      .panel{
+        top:auto;left:0;right:0;width:100%;
+        bottom:0;height:52%;
+        border-radius:16px 16px 0 0;
+        border-left:none;border-right:none;border-bottom:none;
+        transition:height .3s cubic-bezier(.4,0,.2,1);
+      }
+      .panel.collapsed{height:56px}
+      .panel.expanded{height:85%}
+
+      /* Drag handle */
+      .panel-handle{
+        display:flex;justify-content:center;align-items:center;
+        padding:10px 0 6px;cursor:pointer;flex-shrink:0;
+      }
+      .panel-handle-bar{
+        width:36px;height:4px;background:var(--border);border-radius:2px;
+      }
+
+      /* Larger touch targets for tabs */
+      .tab-btn{padding:6px 14px;font-size:12px}
+      .dep-row{padding:8px 6px}
+      .line-badge{min-width:38px;font-size:12px;padding:3px 6px}
+      .dep-dest{font-size:12px}
+      .dep-time{font-size:13px}
+      .countdown{font-size:11px;padding:2px 8px}
+
+      /* Debug badge: move above panel */
+      #debugBadge{bottom:calc(52% + 8px);right:8px}
+    }
   </style>
 </head>
 <body>
 
 <!-- Full-screen map -->
 <div id="map"></div>
+<div id="debugBadge">Radar: warte…</div>
 
 <!-- Header -->
 <header>
@@ -141,21 +209,30 @@
   <div class="spacer"></div>
   <div class="clock" id="clock">--:--:--</div>
   <div class="pulse-wrap"><div class="pulse"></div><span>10s</span></div>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
 </header>
 
 <!-- Filter chips (top-right) -->
 <div class="filter-bar" id="filterBar"></div>
 
 <!-- Side panel -->
-<div class="panel">
+<div class="panel" id="panel">
+  <!-- Mobile drag handle -->
+  <div class="panel-handle" id="panelHandle" onclick="togglePanel()">
+    <div class="panel-handle-bar"></div>
+  </div>
 
   <div class="search-wrap">
     <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input id="searchInput" type="text" placeholder="Station suchen…" autocomplete="off"/>
+    <button class="locate-btn" id="locateBtn" onclick="locateMe()" title="Nearest station">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+        <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/>
+      </svg>
+    </button>
     <div class="search-results" id="searchResults"></div>
   </div>
-
-  <div class="favs" id="favs"></div>
 
   <div class="stn-hdr">
     <div class="stn-name" id="stationName">Berlin Hauptbahnhof</div>
@@ -173,27 +250,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API = 'https://v6.vbb.transport.rest';
+const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
+const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
 const REFRESH_MS = 10000;
-// Extended bbox to cover all VBB S-Bahn routes outside Berlin:
-// west → Potsdam Hbf (S7), east → Strausberg Nord (S5), north → Oranienburg (S1/S25), south → Blankenfelde (S2/S25)
-const BBOX = {north:52.82,west:12.88,south:52.18,east:14.00};
 
-const FAVS_LIST = [
-  {name:'Hbf',        id:'900003201'},
-  {name:'Alex',       id:'900100003'},
-  {name:'Zoo',        id:'900023201'},
-  {name:'Ostbhf',     id:'900120005'},
-  {name:'Südkreuz',   id:'900140004'},
-  {name:'Gesundbrunnen', id:'900007102'},
-];
 
 const FILTER_DEFS = [
   {key:'subway',   label:'U-Bahn', bg:'#224f9e', fg:'#fff'},
   {key:'suburban', label:'S-Bahn', bg:'#007734', fg:'#fff'},
-  {key:'bus',      label:'Bus',    bg:'#6e3fa3', fg:'#fff'},
-  {key:'tram',     label:'Tram',   bg:'#cc2222', fg:'#fff'},
-  {key:'regional', label:'Regio',  bg:'#ef7c00', fg:'#fff'},
   {key:'ferry',    label:'Fähre',  bg:'#0a5f98', fg:'#fff'},
 ];
 
@@ -210,8 +274,13 @@ const DARK_FG = new Set(['U4','S5','S7','S8','S25']);
 let stationId = '900003201', stationName = 'Berlin Hauptbahnhof';
 let tab = 'departures';
 let filters = Object.fromEntries(FILTER_DEFS.map(f=>[f.key,true]));
+let activeTripIds = new Set(); // trip IDs from latest departures/arrivals fetch
+let polylineCache = {};       // tripId → GeoJSON (persists across refreshes)
+let activeRouteLayer = null;
+let activeRouteTripId = null;
 let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
-let map, stationMarker=null, vehicleMarkers={};
+let map, tileLayer, stationMarker=null, vehicleMarkers={};
+let isDark = true;
 
 /* ── CLOCK ── */
 setInterval(()=>{
@@ -220,11 +289,23 @@ setInterval(()=>{
 },1000);
 
 /* ── MAP ── */
+const TILES = {
+  dark:  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+};
+
 function initMap(){
   map = L.map('map',{zoomControl:true}).setView([52.52,13.405],12);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  tileLayer = L.tileLayer(TILES.dark,{
     attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
   }).addTo(map);
+}
+
+function toggleTheme(){
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+  tileLayer.setUrl(isDark ? TILES.dark : TILES.light);
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
 }
 
 function setStationMarker(lat,lon,name){
@@ -240,8 +321,86 @@ function productBg(p){
           tram:'#cc2222',regional:'#ef7c00',ferry:'#0a5f98'}[p]||'#444';
 }
 
+/* ── ROUTE POLYLINE ── */
+async function showRoute(tripId, line){
+  // Toggle off if same marker clicked again
+  if(activeRouteTripId===tripId){
+    if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+    activeRouteTripId=null;
+    return;
+  }
+  if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+  activeRouteTripId=tripId;
+
+  let latlngs=polylineCache[tripId];
+  if(!latlngs){
+    try{
+      const r=await fetch(
+        `${API}/trips/${encodeURIComponent(tripId)}?stopovers=true&remarks=false&polyline=true`
+      );
+      if(!r.ok) throw new Error(r.status);
+      const d=await r.json();
+      const t=d.trip||d;
+
+      // Normalise the various shapes hafas-rest can return
+      const raw=t?.polyline;
+      if(raw){
+        // GeoJSON FeatureCollection  → extract first LineString coordinates
+        if(raw.type==='FeatureCollection'){
+          const feat=raw.features?.find(f=>f.geometry?.type==='LineString');
+          if(feat) latlngs=feat.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // GeoJSON Feature
+        else if(raw.type==='Feature'&&raw.geometry?.type==='LineString'){
+          latlngs=raw.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // GeoJSON LineString
+        else if(raw.type==='LineString'){
+          latlngs=raw.coordinates.map(([lng,lat])=>[lat,lng]);
+        }
+        // hafas-client array of {latitude, longitude} objects
+        else if(Array.isArray(raw)){
+          latlngs=raw.map(p=>p.latitude!=null?[p.latitude,p.longitude]:[p[1],p[0]]);
+        }
+      }
+      // Fallback: connect stopovers in order
+      if(!latlngs?.length && t?.stopovers){
+        latlngs=t.stopovers
+          .map(s=>s.stop?.location)
+          .filter(l=>l?.latitude)
+          .map(l=>[l.latitude,l.longitude]);
+      }
+      if(latlngs?.length) polylineCache[tripId]=latlngs;
+    }catch(e){console.warn('route fetch failed',e);}
+  }
+  if(!latlngs?.length||activeRouteTripId!==tripId) return;
+
+  const n=line?.name||'?';
+  const color=LINE_COLORS[n]||productBg(line?.product)||'#58a6ff';
+  // Draw a subtle shadow line then the coloured line on top
+  const shadow=L.polyline(latlngs,{color:'#000',weight:7,opacity:.25,lineCap:'round',lineJoin:'round'}).addTo(map);
+  const route=L.polyline(latlngs,{color,weight:4,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(map);
+  shadow.bringToBack(); route.bringToBack();
+  // Store both so we can remove them together
+  activeRouteLayer={remove:()=>{shadow.remove();route.remove()}};
+}
+
+function clearRoute(){
+  if(activeRouteLayer){activeRouteLayer.remove();activeRouteLayer=null;}
+  activeRouteTripId=null;
+}
+
 function updateVehicles(movements){
   const seen=new Set();
+  const displayed=(movements||[]).filter(m=>filters[m.line?.product]).length;
+  const sLines={};
+  (movements||[]).filter(m=>m.line?.product==='suburban').forEach(m=>{
+    const n=m.line.name||'?'; sLines[n]=(sLines[n]||0)+1;
+  });
+  const sDetail=Object.keys(sLines).sort().join(' ')||'—';
+  document.getElementById('debugBadge').innerHTML=
+    `<b>On map: ${displayed}</b> (S: ${sDetail})`;
+
   (movements||[]).forEach(m=>{
     if(!m.line||!m.location) return;
     const prod=m.line.product;
@@ -260,9 +419,11 @@ function updateVehicles(movements){
         html:`<span style="background:${bg};color:${fg}">${n}</span>`,
         iconAnchor:[15,8]
       });
+      const line=m.line;
       vehicleMarkers[id]=L.marker([lat,lon],{icon,zIndexOffset:0})
         .addTo(map)
-        .bindTooltip(`${n}${m.direction?' → '+m.direction:''}`,{sticky:true});
+        .bindTooltip(`${n}${m.direction?' → '+m.direction:''}`,{sticky:true})
+        .on('click',()=>showRoute(id,line));
     }
   });
   Object.keys(vehicleMarkers).forEach(id=>{
@@ -290,13 +451,6 @@ function toggleFilter(key){
   loadAll();
 }
 
-/* ── FAVS ── */
-function renderFavs(){
-  document.getElementById('favs').innerHTML=FAVS_LIST.map(s=>
-    `<button class="fav-btn ${s.id===stationId?'active':''}"
-       onclick="loadStation('${s.id}','${s.name}')">${s.name}</button>`
-  ).join('');
-}
 
 /* ── SEARCH ── */
 const searchInput=document.getElementById('searchInput');
@@ -323,6 +477,42 @@ async function doSearch(q){
       : '<div class="sr-item"><span style="color:var(--muted)">Keine Ergebnisse</span></div>';
     searchResults.classList.add('open');
   }catch{}
+}
+
+/* ── LOCATE ME ── */
+let userMarker=null;
+async function locateMe(){
+  if(!navigator.geolocation)
+    return alert('Geolocation not supported by this browser.');
+  const btn=document.getElementById('locateBtn');
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    btn.classList.remove('locating');
+    const {latitude:lat,longitude:lon}=pos.coords;
+
+    // Show user's position on map
+    if(userMarker) userMarker.remove();
+    userMarker=L.circleMarker([lat,lon],{
+      radius:8,color:'#fff',fillColor:'#58a6ff',fillOpacity:.9,weight:2,zIndexOffset:2000
+    }).addTo(map).bindTooltip('You',{permanent:false});
+    map.setView([lat,lon],14,{animate:true,duration:.6});
+
+    // Find nearest subway/suburban stop
+    try{
+      const r=await fetch(
+        `${API}/stops/nearby?latitude=${lat}&longitude=${lon}&results=8&distance=2000&suburban=true&subway=true&bus=false&tram=false&regional=false`
+      );
+      const stops=await r.json();
+      const s=stops[0];
+      if(s) loadStation(s.id, s.name);
+    }catch(e){
+      alert('Could not find nearby station: '+e.message);
+    }
+  }, err=>{
+    btn.classList.remove('locating');
+    if(err.code===1) alert('Location access denied. Please allow location in your browser settings.');
+    else alert('Could not get location: '+err.message);
+  },{timeout:10000});
 }
 
 /* ── HELPERS ── */
@@ -361,11 +551,14 @@ async function fetchDeps(id,type){
   depAbort=new AbortController();
   const qs=FILTER_DEFS.map(f=>f.key+'='+(filters[f.key]?'true':'false')).join('&');
   const ep=type==='departures'?'departures':'arrivals';
-  const res=await fetch(`${API}/stops/${id}/${ep}?duration=60&results=25&${qs}`,
+  const res=await fetch(`${API}/stops/${id}/${ep}?duration=90&results=40&bus=false&tram=false&regional=false&express=false&nationalExpress=false&national=false&${qs}`,
     {signal:depAbort.signal});
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   const data=await res.json();
-  return data[ep]||data;
+  const deps=data[ep]||data;
+  // Save trip IDs so the radar can filter to only these vehicles
+  activeTripIds=new Set(deps.map(d=>d.tripId).filter(Boolean));
+  return deps;
 }
 
 function renderBoard(deps,type){
@@ -384,32 +577,69 @@ function renderBoard(deps,type){
   }).join('');
 }
 
-/* ── FETCH RADAR ── */
+/* ── FETCH VEHICLE POSITIONS via /trips/{id} ── */
 async function fetchRadar(){
   if(radarAbort) radarAbort.abort();
   radarAbort=new AbortController();
-  const {north,west,south,east}=BBOX;
-  const res=await fetch(
-    `${API}/radar?north=${north}&west=${west}&south=${south}&east=${east}&results=512&duration=30&frames=1&polylines=false`,
-    {signal:radarAbort.signal});
-  if(!res.ok) return;
-  const data=await res.json();
-  updateVehicles(data.movements);
+  const sig={signal:radarAbort.signal};
+
+  const ids=[...activeTripIds].slice(0,40);
+  if(!ids.length){updateVehicles([]);return;}
+
+  // One request per trip — avoids bbox/bus-crowding entirely
+  const settled=await Promise.allSettled(
+    ids.map(id=>
+      fetch(`${API}/trips/${encodeURIComponent(id)}?stopovers=true&remarks=false`,sig)
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+    )
+  );
+
+  const movements=settled.flatMap(r=>{
+    if(r.status!=='fulfilled'||!r.value) return [];
+    const t=r.value.trip||r.value;
+    // Prefer live GPS; fall back to interpolated position from stopovers
+    let loc=t?.currentLocation;
+    if(!loc?.latitude && t?.stopovers?.length){
+      const now=Date.now();
+      // Find the stopover the train just passed or is currently at
+      const past=t.stopovers.filter(s=>{
+        const dep=s.departure||s.plannedDeparture;
+        return dep && new Date(dep)<=now;
+      });
+      const ref=past.length?past[past.length-1]:t.stopovers[0];
+      if(ref?.stop?.location) loc=ref.stop.location;
+    }
+    if(!loc?.latitude) return [];
+    return [{tripId:t.id,line:t.line,direction:t.direction,location:loc}];
+  });
+
+  const sLines=[...new Set(
+    movements.filter(m=>m.line?.product==='suburban').map(m=>m.line?.name).filter(Boolean)
+  )].sort().join(' ');
+  const displayed=movements.filter(m=>filters[m.line?.product]).length;
+  document.getElementById('debugBadge').innerHTML=
+    `<b>${displayed}/${ids.length} located</b> (S: ${sLines||'—'})`;
+
+  updateVehicles(movements);
 }
 
 /* ── LOAD ALL ── */
 async function loadAll(){
   clearTimeout(refreshTimer);
-  const [depsR]=await Promise.allSettled([fetchDeps(stationId,tab),fetchRadar()]);
   const board=document.getElementById('board');
-  if(depsR.status==='fulfilled'){
-    board.innerHTML=renderBoard(depsR.value,tab);
-  } else if(depsR.reason?.name!=='AbortError'){
-    const cors=location.protocol==='file:';
-    board.innerHTML=cors
-      ? `<div class="state-box" style="color:var(--red)">CORS-Fehler.<br><small>Starte: <code>python3 -m http.server 8080</code></small></div>`
-      : `<div class="state-box" style="color:var(--red)">${depsR.reason?.message}</div>`;
+  // Deps first — populates activeTripIds used by radar
+  try{
+    const deps=await fetchDeps(stationId,tab);
+    board.innerHTML=renderBoard(deps,tab);
+  }catch(e){
+    if(e.name!=='AbortError'){
+      const cors=location.protocol==='file:';
+      board.innerHTML=cors
+        ?`<div class="state-box" style="color:var(--red)">CORS-Fehler.<br><small>Starte: <code>python3 -m http.server 8080</code></small></div>`
+        :`<div class="state-box" style="color:var(--red)">${e.message}</div>`;
+    }
   }
+  await fetchRadar();
   refreshTimer=setTimeout(loadAll,REFRESH_MS);
 }
 
@@ -419,7 +649,7 @@ async function loadStation(id,name){
   document.getElementById('stationName').textContent=name;
   document.getElementById('stationMeta').textContent=`Stop: ${id}`;
   document.getElementById('board').innerHTML='<div class="state-box"><div class="spinner"></div>Lade…</div>';
-  renderFavs();
+  clearRoute();
   try{
     const r=await fetch(`${API}/stops/${id}`);
     const s=await r.json();
@@ -436,9 +666,29 @@ function switchTab(t){
   loadAll();
 }
 
+/* ── MOBILE PANEL TOGGLE ── */
+let panelState = 'half'; // 'collapsed' | 'half' | 'expanded'
+function togglePanel(){
+  const panel = document.getElementById('panel');
+  if(window.innerWidth > 768) return;
+  if(panelState === 'collapsed'){
+    panel.classList.remove('collapsed','expanded');
+    panelState = 'half';
+  } else if(panelState === 'half'){
+    panel.classList.add('expanded');
+    panel.classList.remove('collapsed');
+    panelState = 'expanded';
+  } else {
+    panel.classList.add('collapsed');
+    panel.classList.remove('expanded');
+    panelState = 'collapsed';
+  }
+  // Resize map after panel transition
+  setTimeout(()=> map && map.invalidateSize(), 320);
+}
+
 /* ── INIT ── */
 initMap();
-renderFavs();
 renderFilters();
 loadStation(stationId,stationName);
 </script>
