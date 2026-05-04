@@ -472,6 +472,77 @@
       </div>
     </a>
 
+    <a class="card" href="walkable.html" aria-label="Walkable — Open App">
+      <div class="thumb" style="background:#0a1628;" aria-hidden="true">
+        <div class="thumb-grid"></div>
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="200" cy="80" r="60" stroke="rgba(56,189,248,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+          <circle cx="200" cy="80" r="38" stroke="rgba(56,189,248,0.4)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+          <circle cx="200" cy="80" r="18" stroke="rgba(56,189,248,0.6)" stroke-width="1.5" fill="none"/>
+          <circle cx="200" cy="80" r="5" fill="#38bdf8"/>
+          <circle cx="200" cy="80" r="8" fill="none" stroke="#38bdf8" stroke-width="1.5"/>
+          <circle cx="238" cy="58" r="3.5" fill="#ef4444"/>
+          <circle cx="228" cy="102" r="3.5" fill="#22c55e"/>
+          <circle cx="162" cy="74" r="3.5" fill="#f97316"/>
+          <circle cx="245" cy="86" r="3.5" fill="#3b82f6"/>
+          <circle cx="180" cy="118" r="3.5" fill="#a855f7"/>
+          <circle cx="172" cy="50" r="3.5" fill="#ef4444"/>
+        </svg>
+        <div class="thumb-label">Walkable &middot; Near Me</div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">// 03</div>
+        <h3>Walkable</h3>
+        <p>Enter any address and instantly see everything within walking distance — restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
+        <div class="card-pills">
+          <span class="pill">Overpass API</span>
+          <span class="pill">Leaflet Map</span>
+          <span class="pill">Isochrone</span>
+          <span class="pill">OSM</span>
+        </div>
+        <span class="card-btn">Open App &rarr;</span>
+      </div>
+    </a>
+
+
+    <a class="card" href="shade-nav.html" aria-label="Shade Walk — Open App">
+      <div class="thumb" style="background:#071210;" aria-hidden="true">
+        <div class="thumb-grid" style="background-image:linear-gradient(rgba(34,197,94,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.06) 1px,transparent 1px);background-size:28px 28px;"></div>
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <!-- tree canopies -->
+          <circle cx="90"  cy="75" r="22" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
+          <circle cx="155" cy="55" r="18" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
+          <circle cx="230" cy="70" r="24" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
+          <circle cx="310" cy="60" r="20" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
+          <circle cx="130" cy="110" r="16" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+          <circle cx="270" cy="115" r="19" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+          <!-- route: shaded=green, exposed=amber -->
+          <polyline points="40,90 90,82 120,75 155,65 195,72 230,78 265,88 310,68 360,72" stroke="#f59e0b" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <polyline points="40,90 90,82"  stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <polyline points="120,75 155,65 195,72 230,78" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <polyline points="265,88 310,68 360,72" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <!-- A/B markers -->
+          <circle cx="40"  cy="90" r="7" fill="#1d4ed8" stroke="#fff" stroke-width="2"/>
+          <circle cx="360" cy="72" r="7" fill="#dc2626" stroke="#fff" stroke-width="2"/>
+          <text x="40"  y="94" text-anchor="middle" font-size="7" font-weight="800" fill="#fff">A</text>
+          <text x="360" y="76" text-anchor="middle" font-size="7" font-weight="800" fill="#fff">B</text>
+        </svg>
+        <div class="thumb-label" style="color:rgba(34,197,94,0.9)">Shade Walk &middot; Route</div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">// 04</div>
+        <h3>Shade Walk</h3>
+        <p>Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and colours the path green where tree cover protects you from the sun.</p>
+        <div class="card-pills">
+          <span class="pill">OSRM Foot</span>
+          <span class="pill">Overpass Trees</span>
+          <span class="pill">Shade Scoring</span>
+          <span class="pill">Leaflet Map</span>
+        </div>
+        <span class="card-btn">Open App &rarr;</span>
+      </div>
+    </a>
+
   </div>
 </div>
 

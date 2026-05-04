@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shade Walk — Navigate by tree canopy</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ──────────────────────────────────── */
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: #22c55e;
+      letter-spacing: 2px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .logo span { color: #86efac; font-weight: 400; }
+
+    .inputs-row {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .point-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .point-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      letter-spacing: 0;
+    }
+    .badge-a { background: #1d4ed8; color: #fff; }
+    .badge-b { background: #dc2626; color: #fff; }
+
+    .point-field input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .point-field input:focus { border-color: #22c55e; }
+    .point-field input::placeholder { color: #484f58; }
+    .point-field input.picking { border-color: #f59e0b; animation: pulse-border 1s infinite; }
+    @keyframes pulse-border {
+      0%,100% { border-color: #f59e0b; }
+      50% { border-color: #fcd34d; }
+    }
+
+    .pick-btn {
+      background: none;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      cursor: pointer;
+      padding: 6px 8px;
+      font-size: 14px;
+      line-height: 1;
+      transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .pick-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+    .pick-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.1); }
+
+    .route-btn {
+      background: #22c55e;
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .route-btn:hover { background: #4ade80; }
+    .route-btn:active { transform: scale(.97); }
+    .route-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+
+    /* ── Status bar ───────────────────────────────── */
+    #statusBar {
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      padding: 7px 20px;
+      font-size: 12px;
+      color: #8b949e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      min-height: 32px;
+    }
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid #21262d;
+      border-top-color: #22c55e;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Main area ────────────────────────────────── */
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Side panel ───────────────────────────────── */
+    #panel {
+      width: 280px;
+      min-width: 280px;
+      background: #161b22;
+      border-right: 1px solid #21262d;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .panel-section {
+      padding: 16px;
+      border-bottom: 1px solid #21262d;
+    }
+    .panel-section h3 {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #484f58;
+      margin-bottom: 12px;
+      font-family: monospace;
+    }
+
+    /* Shade bar */
+    .shade-bar-wrap {
+      margin-bottom: 12px;
+    }
+    .shade-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+    .shade-bar-label strong { color: #22c55e; font-size: 20px; }
+    .shade-bar {
+      height: 10px;
+      border-radius: 5px;
+      background: #21262d;
+      overflow: hidden;
+    }
+    .shade-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(to right, #22c55e, #4ade80);
+      transition: width .6s ease;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-box {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .stat-box .val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e6edf3;
+      line-height: 1.1;
+    }
+    .stat-box .lbl {
+      font-size: 10px;
+      color: #484f58;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 3px;
+      font-family: monospace;
+    }
+
+    /* Alternatives */
+    .alt-list { display: flex; flex-direction: column; gap: 8px; }
+    .alt-item {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .alt-item:hover { border-color: #30363d; }
+    .alt-item.selected { border-color: #22c55e; }
+    .alt-item .alt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .alt-item .alt-shade {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .alt-item .alt-dist {
+      font-size: 11px;
+      color: #8b949e;
+      font-family: monospace;
+    }
+    .alt-item .shade-mini {
+      margin-top: 6px;
+      height: 4px;
+      border-radius: 2px;
+      background: #21262d;
+      overflow: hidden;
+    }
+    .alt-item .shade-mini-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #8b949e;
+    }
+    .legend-swatch {
+      width: 32px;
+      height: 6px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Empty state */
+    #emptyState {
+      padding: 24px 16px;
+      text-align: center;
+    }
+    #emptyState .icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    #emptyState p {
+      font-size: 13px;
+      color: #484f58;
+      line-height: 1.6;
+    }
+
+    /* ── Map ──────────────────────────────────────── */
+    #map {
+      flex: 1;
+      z-index: 0;
+      cursor: default;
+    }
+    #map.picking-cursor { cursor: crosshair !important; }
+    #map.picking-cursor .leaflet-interactive { cursor: crosshair !important; }
+
+    /* Leaflet overrides */
+    .leaflet-popup-content-wrapper {
+      background: #161b22;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+    .leaflet-popup-tip { background: #161b22; }
+    .leaflet-popup-content { margin: 10px 14px; font-size: 13px; }
+
+    /* Marker labels */
+    .marker-label {
+      background: transparent;
+      border: none;
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.9);
+      white-space: nowrap;
+    }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 640px) {
+      #panel { display: none; }
+      .inputs-row { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">&#127807; Shade<span>Walk</span></a>
+  <div class="inputs-row">
+    <div class="point-field">
+      <div class="point-badge badge-a">A</div>
+      <input id="inputA" type="text" placeholder="From — start address" autocomplete="off" />
+      <button class="pick-btn" id="pickA" title="Click on map to set start" onclick="togglePick('A')">&#9654;</button>
+    </div>
+    <div class="point-field">
+      <div class="point-badge badge-b">B</div>
+      <input id="inputB" type="text" placeholder="To — destination address" autocomplete="off" />
+      <button class="pick-btn" id="pickB" title="Click on map to set destination" onclick="togglePick('B')">&#9654;</button>
+    </div>
+    <button class="route-btn" id="routeBtn" onclick="findRoute()" disabled>Find Shady Route</button>
+  </div>
+</header>
+
+<div id="statusBar">
+  <div class="spinner" id="spinner"></div>
+  <span id="statusText">Enter addresses or click the map arrows to set your start and destination</span>
+</div>
+
+<main>
+  <div id="panel">
+    <div id="emptyState">
+      <div class="icon">&#127807;</div>
+      <p>Set your start and destination to find the shadiest walking route through tree canopies.</p>
+    </div>
+    <div id="resultsPanel" style="display:none">
+      <div class="panel-section">
+        <h3>Shade Coverage</h3>
+        <div class="shade-bar-wrap">
+          <div class="shade-bar-label">
+            <strong id="shadePct">0%</strong>
+            <span id="shadeDesc">of route in shade</span>
+          </div>
+          <div class="shade-bar"><div class="shade-bar-fill" id="shadeBarFill" style="width:0%"></div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="val" id="statDist">—</div>
+            <div class="lbl">Distance</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="statTime">—</div>
+            <div class="lbl">Walk Time</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="statTrees">—</div>
+            <div class="lbl">Trees Found</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="statShaded">—</div>
+            <div class="lbl">Shaded Steps</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section" id="altsSection" style="display:none">
+        <h3>Route Alternatives</h3>
+        <div class="alt-list" id="altList"></div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Map Legend</h3>
+        <div class="legend">
+          <div class="legend-row">
+            <div class="legend-swatch" style="background:#22c55e"></div>
+            <span>Shaded by tree canopy</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-swatch" style="background:#f59e0b"></div>
+            <span>Exposed to sun</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-swatch" style="background:rgba(34,197,94,0.25); border: 1px solid rgba(34,197,94,0.4);"></div>
+            <span>Tree canopy (OSM)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+</main>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const NOMINATIM   = "https://nominatim.openstreetmap.org/search";
+const NOMINATIM_R = "https://nominatim.openstreetmap.org/reverse";
+const OSRM        = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
+const OVERPASS    = "https://overpass-api.de/api/interpreter";
+const CANOPY_R    = 9;   // default tree canopy radius (metres)
+const SAMPLE_INT  = 8;   // sample every N metres along route for shade calc
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let pointA = null, pointB = null;
+let pickingMode = null;       // 'A' | 'B' | null
+let trees = [];
+let routeLayerGroup = null;
+let canopyLayerGroup = null;
+let markerA = null, markerB = null;
+let routeData = [];           // [{coords, distance, duration, score, samples}]
+let selectedRouteIdx = 0;
+
+// ── Map init ──────────────────────────────────────────────────────────────────
+const map = L.map("map", { zoomControl: true }).setView([52.52, 13.405], 13);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: "© OpenStreetMap © CARTO",
+  maxZoom: 19,
+}).addTo(map);
+
+map.on("click", onMapClick);
+
+// ── Pick mode ─────────────────────────────────────────────────────────────────
+function togglePick(which) {
+  if (pickingMode === which) {
+    pickingMode = null;
+    updatePickUI();
+    return;
+  }
+  pickingMode = which;
+  updatePickUI();
+  setStatus(`Click on the map to set point ${which}`);
+}
+
+function updatePickUI() {
+  ["A","B"].forEach(w => {
+    const btn = document.getElementById("pick" + w);
+    const inp = document.getElementById("input" + w);
+    const active = pickingMode === w;
+    btn.classList.toggle("active", active);
+    inp.classList.toggle("picking", active);
+  });
+  document.getElementById("map").classList.toggle("picking-cursor", pickingMode !== null);
+}
+
+async function onMapClick(e) {
+  if (!pickingMode) return;
+  const { lat, lng } = e.latlng;
+  const which = pickingMode;
+  pickingMode = null;
+  updatePickUI();
+
+  setStatus("Reverse geocoding…", true);
+  try {
+    const res = await fetch(`${NOMINATIM_R}?lat=${lat}&lon=${lng}&format=json`, {
+      headers: { "Accept-Language": "en" }
+    });
+    const data = await res.json();
+    const display = data.display_name
+      ? data.display_name.split(",").slice(0, 2).join(",").trim()
+      : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+    if (which === "A") {
+      pointA = { lat, lon: lng, display };
+      document.getElementById("inputA").value = display;
+      placeMarker("A", lat, lng, display);
+    } else {
+      pointB = { lat, lon: lng, display };
+      document.getElementById("inputB").value = display;
+      placeMarker("B", lat, lng, display);
+    }
+    updateRouteBtn();
+    setStatus(`Point ${which} set — ${display}`);
+  } catch {
+    setStatus("Reverse geocode failed — try typing an address instead");
+  }
+}
+
+// ── Markers ───────────────────────────────────────────────────────────────────
+function makeMarkerIcon(letter, color) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:32px; height:32px; border-radius:50% 50% 50% 0; transform:rotate(-45deg);
+      background:${color}; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.6);
+      display:flex; align-items:center; justify-content:center;">
+      <span style="transform:rotate(45deg); font-size:12px; font-weight:800; color:#fff; display:block; line-height:1;">${letter}</span>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+}
+
+function placeMarker(which, lat, lon, display) {
+  if (which === "A") {
+    if (markerA) map.removeLayer(markerA);
+    markerA = L.marker([lat, lon], { icon: makeMarkerIcon("A", "#1d4ed8") })
+      .bindPopup(`<b>Start</b><br>${display}`)
+      .addTo(map);
+  } else {
+    if (markerB) map.removeLayer(markerB);
+    markerB = L.marker([lat, lon], { icon: makeMarkerIcon("B", "#dc2626") })
+      .bindPopup(`<b>Destination</b><br>${display}`)
+      .addTo(map);
+  }
+}
+
+// ── Input geocoding ───────────────────────────────────────────────────────────
+async function geocode(query) {
+  const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  const data = await res.json();
+  if (!data.length) throw new Error(`Address not found: "${query}"`);
+  return {
+    lat: parseFloat(data[0].lat),
+    lon: parseFloat(data[0].lon),
+    display: data[0].display_name.split(",").slice(0, 2).join(",").trim(),
+  };
+}
+
+document.getElementById("inputA").addEventListener("keydown", e => {
+  if (e.key === "Enter") findRoute();
+});
+document.getElementById("inputB").addEventListener("keydown", e => {
+  if (e.key === "Enter") findRoute();
+});
+document.getElementById("inputA").addEventListener("input", updateRouteBtn);
+document.getElementById("inputB").addEventListener("input", updateRouteBtn);
+
+function updateRouteBtn() {
+  const hasA = pointA || document.getElementById("inputA").value.trim();
+  const hasB = pointB || document.getElementById("inputB").value.trim();
+  document.getElementById("routeBtn").disabled = !(hasA && hasB);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setStatus(msg, loading = false) {
+  document.getElementById("statusText").textContent = msg;
+  document.getElementById("spinner").style.display = loading ? "block" : "none";
+}
+
+// ── Math helpers ──────────────────────────────────────────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function samplePolyline(coords, intervalM = SAMPLE_INT) {
+  if (coords.length === 0) return [];
+  const pts = [coords[0]];
+  let carry = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lon1, lat1] = coords[i];
+    const [lon2, lat2] = coords[i + 1];
+    const segLen = haversine(lat1, lon1, lat2, lon2);
+    let d = intervalM - carry;
+    while (d <= segLen) {
+      const t = d / segLen;
+      pts.push([lon1 + (lon2 - lon1) * t, lat1 + (lat2 - lat1) * t]);
+      d += intervalM;
+    }
+    carry = segLen - (d - intervalM);
+  }
+  pts.push(coords[coords.length - 1]);
+  return pts;
+}
+
+function isShaded(lon, lat, treeList) {
+  for (const t of treeList) {
+    if (haversine(lat, lon, t.lat, t.lon) <= t.radius) return true;
+  }
+  return false;
+}
+
+function scoreRoute(coords, treeList) {
+  const samples = samplePolyline(coords);
+  let shaded = 0;
+  for (const [lon, lat] of samples) {
+    if (isShaded(lon, lat, treeList)) shaded++;
+  }
+  return { score: samples.length ? shaded / samples.length : 0, samples, shaded, total: samples.length };
+}
+
+// ── Overpass tree fetch ───────────────────────────────────────────────────────
+async function fetchTrees(south, west, north, east) {
+  const buf = 0.003;
+  const bbox = `${south - buf},${west - buf},${north + buf},${east + buf}`;
+  const q = `[out:json][timeout:30];\n(\n  node["natural"="tree"](${bbox});\n  node["natural"="tree_row"](${bbox});\n);\nout body;`;
+  const res = await fetch(`${OVERPASS}?data=${encodeURIComponent(q)}`);
+  if (!res.ok) throw new Error("Overpass error " + res.status);
+  const data = await res.json();
+  return (data.elements || []).map(el => ({
+    lat: el.lat,
+    lon: el.lon,
+    radius: el.tags && el.tags.diameter_crown
+      ? parseFloat(el.tags.diameter_crown) / 2
+      : CANOPY_R,
+  }));
+}
+
+// ── OSRM route fetch ──────────────────────────────────────────────────────────
+async function fetchRoutes(latA, lonA, latB, lonB) {
+  const url = `${OSRM}/${lonA},${latA};${lonB},${latB}?overview=full&geometries=geojson&alternatives=3`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Routing error " + res.status);
+  const data = await res.json();
+  if (!data.routes || !data.routes.length) throw new Error("No route found between these points");
+  return data.routes.map(r => ({
+    coords: r.geometry.coordinates,
+    distance: r.distance,
+    duration: r.duration,
+  }));
+}
+
+// ── Draw route with shade coloring ────────────────────────────────────────────
+function drawShadedRoute(coords, treeList, layerGroup) {
+  const samples = samplePolyline(coords, 5);
+  if (samples.length < 2) return;
+
+  let seg = [samples[0]];
+  let curShaded = isShaded(samples[0][0], samples[0][1], treeList);
+
+  const flush = (shaded, points) => {
+    if (points.length < 2) return;
+    L.polyline(points.map(([lon, lat]) => [lat, lon]), {
+      color: shaded ? "#22c55e" : "#f59e0b",
+      weight: 6,
+      opacity: 0.95,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(layerGroup);
+  };
+
+  for (let i = 1; i < samples.length; i++) {
+    const [lon, lat] = samples[i];
+    const shaded = isShaded(lon, lat, treeList);
+    if (shaded === curShaded) {
+      seg.push(samples[i]);
+    } else {
+      flush(curShaded, seg);
+      seg = [samples[i - 1], samples[i]];
+      curShaded = shaded;
+    }
+  }
+  flush(curShaded, seg);
+}
+
+function drawGhostRoute(coords, layerGroup) {
+  L.polyline(coords.map(([lon, lat]) => [lat, lon]), {
+    color: "#484f58",
+    weight: 3,
+    opacity: 0.6,
+    dashArray: "6 5",
+  }).addTo(layerGroup);
+}
+
+function drawCanopies(treeList, layerGroup) {
+  const MAX_DISPLAY = 2000;
+  const display = treeList.length > MAX_DISPLAY
+    ? treeList.slice(0, MAX_DISPLAY)
+    : treeList;
+  for (const t of display) {
+    L.circle([t.lat, t.lon], {
+      radius: t.radius,
+      color: "#22c55e",
+      weight: 0,
+      fillColor: "#22c55e",
+      fillOpacity: 0.22,
+    }).addTo(layerGroup);
+  }
+}
+
+// ── Sidebar results ───────────────────────────────────────────────────────────
+function formatDist(m) {
+  return m >= 1000 ? (m / 1000).toFixed(1) + " km" : Math.round(m) + " m";
+}
+function formatTime(s) {
+  const m = Math.round(s / 60);
+  return m < 60 ? m + " min" : Math.floor(m / 60) + "h " + (m % 60) + "m";
+}
+function shadeColor(pct) {
+  if (pct >= 0.6) return "#22c55e";
+  if (pct >= 0.35) return "#86efac";
+  if (pct >= 0.15) return "#f59e0b";
+  return "#ef4444";
+}
+
+function renderResults(idx) {
+  const rd = routeData[idx];
+  const pct = Math.round(rd.score * 100);
+
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("resultsPanel").style.display = "block";
+
+  document.getElementById("shadePct").textContent = pct + "%";
+  document.getElementById("shadeDesc").textContent = pct > 50 ? "of route in shade ✓" : "of route in shade";
+  document.getElementById("shadePct").style.color = shadeColor(rd.score);
+  document.getElementById("shadeBarFill").style.width = pct + "%";
+  document.getElementById("shadeBarFill").style.background =
+    `linear-gradient(to right, ${shadeColor(rd.score)}, ${shadeColor(rd.score)}88)`;
+
+  document.getElementById("statDist").textContent = formatDist(rd.distance);
+  document.getElementById("statTime").textContent = formatTime(rd.duration);
+  document.getElementById("statTrees").textContent = trees.length.toLocaleString();
+  document.getElementById("statShaded").textContent = rd.shaded + "/" + rd.total;
+
+  // Alternatives
+  const sec = document.getElementById("altsSection");
+  const list = document.getElementById("altList");
+  if (routeData.length > 1) {
+    sec.style.display = "block";
+    list.innerHTML = "";
+    routeData.forEach((r, i) => {
+      const p = Math.round(r.score * 100);
+      const item = document.createElement("div");
+      item.className = "alt-item" + (i === idx ? " selected" : "");
+      item.innerHTML = `
+        <div class="alt-row">
+          <span class="alt-shade" style="color:${shadeColor(r.score)}">${p}% shade</span>
+          <span class="alt-dist">${formatDist(r.distance)} · ${formatTime(r.duration)}</span>
+        </div>
+        <div class="shade-mini">
+          <div class="shade-mini-fill" style="width:${p}%; background:${shadeColor(r.score)}"></div>
+        </div>`;
+      item.onclick = () => selectRoute(i);
+      list.appendChild(item);
+    });
+  } else {
+    sec.style.display = "none";
+  }
+}
+
+function selectRoute(idx) {
+  selectedRouteIdx = idx;
+
+  // Clear old route layers, keep canopies
+  if (routeLayerGroup) { map.removeLayer(routeLayerGroup); }
+  routeLayerGroup = L.layerGroup().addTo(map);
+
+  routeData.forEach((r, i) => {
+    if (i === idx) {
+      drawShadedRoute(r.coords, trees, routeLayerGroup);
+    } else {
+      drawGhostRoute(r.coords, routeLayerGroup);
+    }
+  });
+
+  // Re-place markers on top
+  if (pointA && markerA) { markerA.addTo(map); }
+  if (pointB && markerB) { markerB.addTo(map); }
+
+  renderResults(idx);
+}
+
+// ── Main flow ─────────────────────────────────────────────────────────────────
+async function findRoute() {
+  const valA = document.getElementById("inputA").value.trim();
+  const valB = document.getElementById("inputB").value.trim();
+  if (!valA || !valB) return;
+
+  document.getElementById("routeBtn").disabled = true;
+
+  try {
+    // 1. Geocode if needed
+    setStatus("Geocoding addresses…", true);
+    if (!pointA || document.getElementById("inputA").dataset.lastVal !== valA) {
+      pointA = await geocode(valA);
+      document.getElementById("inputA").dataset.lastVal = valA;
+      placeMarker("A", pointA.lat, pointA.lon, pointA.display);
+    }
+    if (!pointB || document.getElementById("inputB").dataset.lastVal !== valB) {
+      pointB = await geocode(valB);
+      document.getElementById("inputB").dataset.lastVal = valB;
+      placeMarker("B", pointB.lat, pointB.lon, pointB.display);
+    }
+
+    // 2. Clear previous layers
+    if (routeLayerGroup) { map.removeLayer(routeLayerGroup); routeLayerGroup = null; }
+    if (canopyLayerGroup) { map.removeLayer(canopyLayerGroup); canopyLayerGroup = null; }
+    routeData = [];
+
+    // 3. Fetch routes
+    setStatus("Calculating walking routes…", true);
+    const rawRoutes = await fetchRoutes(pointA.lat, pointA.lon, pointB.lat, pointB.lon);
+
+    // 4. Fetch trees in the bounding box of all routes
+    const allCoords = rawRoutes.flatMap(r => r.coords);
+    const lats = allCoords.map(c => c[1]);
+    const lons = allCoords.map(c => c[0]);
+    const south = Math.min(...lats), north = Math.max(...lats);
+    const west  = Math.min(...lons), east  = Math.max(...lons);
+
+    setStatus(`Fetching tree canopy data from OpenStreetMap…`, true);
+    trees = await fetchTrees(south, west, north, east);
+
+    const treeNote = trees.length === 0
+      ? " (no tree data in OSM for this area)"
+      : ` — ${trees.length} trees found`;
+    setStatus(`Scoring routes for shade…`, true);
+
+    // 5. Score each route
+    routeData = rawRoutes.map(r => {
+      const { score, samples, shaded, total } = scoreRoute(r.coords, trees);
+      return { ...r, score, samples, shaded, total };
+    });
+
+    // Sort by shade score desc
+    routeData.sort((a, b) => b.score - a.score);
+    selectedRouteIdx = 0;
+
+    // 6. Draw layers
+    canopyLayerGroup = L.layerGroup().addTo(map);
+    drawCanopies(trees, canopyLayerGroup);
+
+    routeLayerGroup = L.layerGroup().addTo(map);
+    routeData.forEach((r, i) => {
+      if (i === 0) drawShadedRoute(r.coords, trees, routeLayerGroup);
+      else drawGhostRoute(r.coords, routeLayerGroup);
+    });
+
+    // Re-add markers on top
+    if (markerA) markerA.addTo(map);
+    if (markerB) markerB.addTo(map);
+
+    // 7. Fit map
+    const bounds = L.latLngBounds(
+      [Math.min(pointA.lat, pointB.lat), Math.min(pointA.lon, pointB.lon)],
+      [Math.max(pointA.lat, pointB.lat), Math.max(pointA.lon, pointB.lon)]
+    );
+    map.fitBounds(bounds, { padding: [60, 60] });
+
+    // 8. Update UI
+    renderResults(0);
+
+    const pct = Math.round(routeData[0].score * 100);
+    setStatus(`Best route: ${pct}% shaded · ${formatDist(routeData[0].distance)} · ${formatTime(routeData[0].duration)}${treeNote}`);
+
+  } catch (err) {
+    setStatus("Error: " + err.message);
+    console.error(err);
+  } finally {
+    document.getElementById("routeBtn").disabled = false;
+  }
+}
+</script>
+</body>
+</html>
