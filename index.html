@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0d1117;
+      background: #0f1724;
       color: #e6edf3;
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
@@ -21,14 +21,14 @@
       justify-content: space-between;
       padding: 0 40px;
       height: 56px;
-      border-bottom: 1px solid #21262d;
-      background: #0d1117;
+      border-bottom: 1px solid #182035;
+      background: #0f1724;
     }
     .logo {
       font-family: monospace;
       font-size: 16px;
       font-weight: 700;
-      color: #f0a800;
+      color: #06b6d4;
       letter-spacing: 2px;
     }
     nav ul {
@@ -42,9 +42,9 @@
       font-size: 14px;
       transition: color 0.15s;
     }
-    nav a:hover { color: #f0a800; }
+    nav a:hover { color: #06b6d4; }
     a:focus-visible {
-      outline: 2px solid #f0a800;
+      outline: 2px solid #06b6d4;
       outline-offset: 3px;
       border-radius: 3px;
     }
@@ -60,7 +60,7 @@
       font-size: 11px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #f0a800;
+      color: #06b6d4;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -83,7 +83,7 @@
       line-height: 1.05;
       margin-bottom: 16px;
     }
-    .hero h1 span { color: #f0a800; }
+    .hero h1 span { color: #06b6d4; }
 
     .hero-sub {
       font-family: monospace;
@@ -112,7 +112,7 @@
       font-size: 11px;
       letter-spacing: 1px;
       padding: 5px 14px;
-      border: 1px solid #30363d;
+      border: 1px solid #1e2d45;
       color: #b0bec5;
       border-radius: 20px;
     }
@@ -122,14 +122,14 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 60px 40px;
-      border-top: 1px solid #21262d;
+      border-top: 1px solid #182035;
     }
     .section-label {
       font-family: monospace;
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #f0a800;
+      color: #06b6d4;
       margin-bottom: 8px;
     }
     .section h2 {
@@ -153,8 +153,8 @@
     }
 
     .card {
-      background: #161b22;
-      border: 1px solid #30363d;
+      background: #0d1a2e;
+      border: 1px solid #1e2d45;
       border-radius: 10px;
       overflow: hidden;
       display: flex;
@@ -164,7 +164,7 @@
       color: inherit;
     }
     .card:hover {
-      border-color: #f0a800;
+      border-color: #06b6d4;
       transform: translateY(-4px);
     }
 
@@ -176,15 +176,15 @@
       position: relative;
       overflow: hidden;
     }
-    .thumb-berlin { background: #010409; }
-    .thumb-transit { background: #080907; font-family: monospace; }
+    .thumb-berlin { background: #010916; }
+    .thumb-transit { background: #060810; font-family: monospace; }
 
     .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .thumb-grid {
       position: absolute; inset: 0;
       background-image:
-        linear-gradient(rgba(88,166,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(88,166,255,0.06) 1px, transparent 1px);
+        linear-gradient(rgba(6,182,212,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6,182,212,0.06) 1px, transparent 1px);
       background-size: 28px 28px;
     }
     .thumb-label {
@@ -194,26 +194,26 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: rgba(88,166,255,0.9);
+      color: rgba(6,182,212,0.9);
     }
 
     .tb-wrap { width: 100%; }
     .tb-top {
-      background: #0f110e;
-      border-bottom: 1px solid #1c1f18;
+      background: #0a0d1a;
+      border-bottom: 1px solid #151d30;
       padding: 6px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #f0a800; }
-    .tb-top-time { font-size: 14px; font-weight: 700; color: #ffc840; }
+    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #06b6d4; }
+    .tb-top-time { font-size: 14px; font-weight: 700; color: #38bdf8; }
     .tb-row-item {
       display: grid;
       grid-template-columns: 38px 1fr 36px 28px;
       align-items: center;
       padding: 5px 12px;
-      border-bottom: 1px solid #1c1f18;
+      border-bottom: 1px solid #151d30;
     }
     .tb-badge-item {
       display: inline-flex;
@@ -225,8 +225,8 @@
       padding: 2px 4px;
       min-width: 24px;
     }
-    .tb-d  { font-size: 9px; color: #ffc840; letter-spacing: 0.5px; padding: 0 4px; }
-    .tb-t  { font-size: 9px; font-weight: 700; color: #f0a800; text-align: center; }
+    .tb-d  { font-size: 9px; color: #38bdf8; letter-spacing: 0.5px; padding: 0 4px; }
+    .tb-t  { font-size: 9px; font-weight: 700; color: #06b6d4; text-align: center; }
     .tb-e  { font-size: 9px; font-weight: 700; text-align: right; }
     .tb-scanline {
       position: absolute; inset: 0; pointer-events: none;
@@ -247,7 +247,7 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #f0a800;
+      color: #06b6d4;
       margin-bottom: 6px;
     }
     .card-body h3 {
@@ -274,8 +274,8 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       padding: 3px 10px;
-      background: #0d1117;
-      border: 1px solid #21262d;
+      background: #0f1724;
+      border: 1px solid #182035;
       color: #b0bec5;
       border-radius: 3px;
     }
@@ -288,15 +288,15 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       padding: 8px 18px;
-      border: 1px solid #f0a800;
-      color: #f0a800;
+      border: 1px solid #06b6d4;
+      color: #06b6d4;
       background: transparent;
       border-radius: 3px;
       text-decoration: none;
       align-self: flex-start;
       transition: background 0.15s, color 0.15s;
     }
-    .card-btn:hover { background: #f0a800; color: #0d1117; }
+    .card-btn:hover { background: #06b6d4; color: #0f1724; }
 
     .about-grid {
       display: grid;
@@ -309,7 +309,7 @@
       font-size: 11px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #f0a800;
+      color: #06b6d4;
       margin-bottom: 14px;
     }
     .about-grid p {
@@ -332,12 +332,12 @@
     }
     .about-grid li::before {
       content: '\25b8';
-      color: #f0a800;
+      color: #06b6d4;
       flex-shrink: 0;
     }
 
     footer {
-      border-top: 1px solid #21262d;
+      border-top: 1px solid #182035;
       padding: 24px 40px;
       display: flex;
       justify-content: space-between;
@@ -358,7 +358,7 @@
       color: #b0bec5;
       text-decoration: none;
     }
-    footer a:hover { color: #f0a800; }
+    footer a:hover { color: #06b6d4; }
   </style>
 </head>
 <body>
@@ -410,7 +410,7 @@
           <circle cx="110" cy="60" r="4.5" fill="#e6edf3"/>
           <circle cx="200" cy="95" r="4.5" fill="#e6edf3"/>
           <circle cx="175" cy="120" r="4.5" fill="#e6edf3"/>
-          <circle cx="200" cy="62" r="6" fill="#f0a800"/>
+          <circle cx="200" cy="62" r="6" fill="#06b6d4"/>
           <circle cx="280" cy="80" r="4.5" fill="#e6edf3"/>
         </svg>
         <div class="thumb-label">Berlin &middot; Live Map</div>
@@ -446,19 +446,19 @@
             <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">4</span>
             <span class="tb-d">Bat Yam</span>
             <span class="tb-t">14:38</span>
-            <span class="tb-e" style="color:#ffaa00;">6'</span>
+            <span class="tb-e" style="color:#38bdf8;">6'</span>
           </div>
           <div class="tb-row-item">
             <span class="tb-badge-item" style="background:#224f9e;color:#fff;">11</span>
             <span class="tb-d">Tel Aviv Central</span>
             <span class="tb-t">14:41</span>
-            <span class="tb-e" style="color:#f0a800;">9'</span>
+            <span class="tb-e" style="color:#06b6d4;">9'</span>
           </div>
           <div class="tb-row-item">
             <span class="tb-badge-item" style="background:#ef7c00;color:#fff;">480</span>
             <span class="tb-d">Jerusalem</span>
             <span class="tb-t">14:50</span>
-            <span class="tb-e" style="color:#f0a800;">18'</span>
+            <span class="tb-e" style="color:#06b6d4;">18'</span>
           </div>
         </div>
         <div class="tb-scanline"></div>
