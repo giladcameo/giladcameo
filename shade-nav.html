@@ -7,26 +7,57 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── CSS variables (dark default) ────────────────── */
+    :root {
+      --bg:       #0d1117;
+      --bg2:      #161b22;
+      --bg3:      #1c2128;
+      --border:   #21262d;
+      --border2:  #30363d;
+      --text:     #e6edf3;
+      --text2:    #8b949e;
+      --text3:    #484f58;
+      --input-bg: #0d1117;
+      --drop-bg:  #1c2128;
+      --green:    #22c55e;
+      --green2:   #4ade80;
+      --amber:    #f59e0b;
+      --sun:      #fcd34d;
+      --map-tiles: "dark_all";
+    }
+    body.light {
+      --bg:       #f6f8fa;
+      --bg2:      #ffffff;
+      --bg3:      #f0f2f5;
+      --border:   #d0d7de;
+      --border2:  #c6cdd5;
+      --text:     #1f2328;
+      --text2:    #57606a;
+      --text3:    #8c959f;
+      --input-bg: #ffffff;
+      --drop-bg:  #ffffff;
+    }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: background .2s, color .2s;
     }
 
     /* ── Header ──────────────────────────────────── */
     header {
-      background: #161b22;
-      border-bottom: 1px solid #21262d;
-      padding: 10px 20px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
       flex-wrap: wrap;
       flex-shrink: 0;
     }
@@ -35,7 +66,7 @@
       font-family: monospace;
       font-size: 15px;
       font-weight: 700;
-      color: #22c55e;
+      color: var(--green);
       letter-spacing: 2px;
       white-space: nowrap;
       text-decoration: none;
@@ -44,23 +75,24 @@
 
     .inputs-row {
       display: flex;
-      gap: 8px;
+      gap: 7px;
       flex: 1;
       align-items: center;
       flex-wrap: wrap;
       min-width: 0;
     }
 
+    /* Address field with autocomplete */
     .point-field {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex: 1;
-      min-width: 180px;
+      min-width: 160px;
     }
 
     .point-badge {
-      width: 26px; height: 26px;
+      width: 24px; height: 24px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; font-weight: 800;
@@ -69,33 +101,72 @@
     .badge-a { background: #1d4ed8; color: #fff; }
     .badge-b { background: #dc2626; color: #fff; }
 
-    .point-field input[type="text"] {
-      flex: 1;
-      background: #0d1117;
-      border: 1px solid #30363d;
+    .ac-wrap { flex: 1; position: relative; min-width: 0; }
+
+    .ac-wrap input[type="text"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border2);
       border-radius: 6px;
-      color: #e6edf3;
-      padding: 8px 12px;
+      color: var(--text);
+      padding: 8px 11px;
       font-size: 13px;
       outline: none;
       transition: border-color .2s;
     }
-    .point-field input[type="text"]:focus { border-color: #22c55e; }
-    .point-field input[type="text"]::placeholder { color: #484f58; }
-    .point-field input[type="text"].picking {
-      border-color: #f59e0b;
+    .ac-wrap input[type="text"]:focus { border-color: var(--green); }
+    .ac-wrap input[type="text"]::placeholder { color: var(--text3); }
+    .ac-wrap input[type="text"].picking {
+      border-color: var(--amber);
       animation: pulse-border 1s infinite;
     }
     @keyframes pulse-border {
-      0%,100% { border-color: #f59e0b; }
+      0%,100% { border-color: var(--amber); }
       50%      { border-color: #fcd34d; }
     }
 
-    .pick-btn {
+    /* Autocomplete dropdown */
+    .ac-drop {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--drop-bg);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      z-index: 1000;
+      overflow: hidden;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .ac-drop.open { display: block; }
+    .ac-item {
+      padding: 9px 13px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: background .1s;
+    }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.hi { background: var(--bg3); }
+    .ac-sub {
+      display: block;
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ac-msg { padding: 10px 13px; font-size: 12px; color: var(--text3); }
+
+    /* Small icon buttons */
+    .icon-btn {
       background: none;
-      border: 1px solid #30363d;
+      border: 1px solid var(--border2);
       border-radius: 6px;
-      color: #8b949e;
+      color: var(--text2);
       cursor: pointer;
       padding: 6px 8px;
       font-size: 14px;
@@ -103,25 +174,40 @@
       transition: border-color .15s, color .15s;
       flex-shrink: 0;
     }
-    .pick-btn:hover { border-color: #f59e0b; color: #f59e0b; }
-    .pick-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.1); }
+    .icon-btn:hover { border-color: var(--amber); color: var(--amber); }
+    .icon-btn.active { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,.1); }
+
+    /* GPS button */
+    .gps-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text2);
+      cursor: pointer;
+      padding: 6px 8px;
+      font-size: 14px;
+      line-height: 1;
+      transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .gps-btn:hover { border-color: var(--green); color: var(--green); }
 
     /* Time control */
     .time-ctrl {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: #0d1117;
-      border: 1px solid #30363d;
+      gap: 5px;
+      background: var(--input-bg);
+      border: 1px solid var(--border2);
       border-radius: 6px;
-      padding: 5px 10px;
+      padding: 5px 9px;
       flex-shrink: 0;
     }
-    .time-ctrl .sun-icon { font-size: 15px; line-height: 1; }
+    .time-ctrl .sun-icon { font-size: 14px; line-height: 1; }
     .time-ctrl input[type="time"] {
       background: transparent;
       border: none;
-      color: #fcd34d;
+      color: var(--sun);
       font-size: 13px;
       font-family: monospace;
       font-weight: 700;
@@ -135,24 +221,39 @@
     }
     .now-btn {
       background: none;
-      border: 1px solid #30363d;
+      border: 1px solid var(--border2);
       border-radius: 4px;
-      color: #8b949e;
+      color: var(--text2);
       font-size: 10px;
       font-family: monospace;
-      padding: 3px 7px;
+      padding: 3px 6px;
       cursor: pointer;
-      transition: color .15s, border-color .15s;
       letter-spacing: 1px;
+      transition: color .15s, border-color .15s;
     }
-    .now-btn:hover { color: #fcd34d; border-color: #fcd34d; }
+    .now-btn:hover { color: var(--sun); border-color: var(--sun); }
+
+    /* Theme toggle */
+    .theme-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text2);
+      cursor: pointer;
+      padding: 6px 9px;
+      font-size: 15px;
+      line-height: 1;
+      transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover { border-color: var(--sun); color: var(--sun); }
 
     .route-btn {
-      background: #22c55e;
+      background: var(--green);
       color: #0d1117;
       border: none;
       border-radius: 6px;
-      padding: 9px 18px;
+      padding: 9px 16px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
@@ -160,17 +261,17 @@
       transition: background .15s, transform .1s;
       flex-shrink: 0;
     }
-    .route-btn:hover { background: #4ade80; }
+    .route-btn:hover { background: var(--green2); }
     .route-btn:active { transform: scale(.97); }
-    .route-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+    .route-btn:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
 
     /* ── Status bar ───────────────────────────────── */
     #statusBar {
-      background: #0d1117;
-      border-bottom: 1px solid #21262d;
-      padding: 6px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
       font-size: 12px;
-      color: #8b949e;
+      color: var(--text2);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -179,8 +280,8 @@
     }
     .spinner {
       width: 12px; height: 12px;
-      border: 2px solid #21262d;
-      border-top-color: #22c55e;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
       border-radius: 50%;
       animation: spin .6s linear infinite;
       display: none;
@@ -188,19 +289,15 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Main area ────────────────────────────────── */
-    main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    /* ── Main layout ──────────────────────────────── */
+    main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
     /* ── Side panel ───────────────────────────────── */
     #panel {
-      width: 280px;
-      min-width: 280px;
-      background: #161b22;
-      border-right: 1px solid #21262d;
+      width: 272px;
+      min-width: 272px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
@@ -208,177 +305,148 @@
     }
 
     .panel-section {
-      padding: 14px 16px;
-      border-bottom: 1px solid #21262d;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--border);
     }
     .panel-section h3 {
       font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #484f58;
+      color: var(--text3);
       margin-bottom: 10px;
       font-family: monospace;
     }
 
-    /* Shade bar */
-    .shade-bar-wrap { margin-bottom: 12px; }
+    .shade-bar-wrap { margin-bottom: 10px; }
     .shade-bar-label {
       display: flex;
       justify-content: space-between;
       font-size: 12px;
-      color: #8b949e;
-      margin-bottom: 6px;
+      color: var(--text2);
+      margin-bottom: 5px;
     }
-    .shade-bar-label strong { color: #22c55e; font-size: 20px; }
+    .shade-bar-label strong { font-size: 20px; }
     .shade-bar {
-      height: 10px;
-      border-radius: 5px;
-      background: #21262d;
-      overflow: hidden;
+      height: 9px; border-radius: 5px;
+      background: var(--border); overflow: hidden;
     }
-    .shade-bar-fill {
-      height: 100%;
-      border-radius: 5px;
-      transition: width .6s ease;
-    }
+    .shade-bar-fill { height: 100%; border-radius: 5px; transition: width .6s ease; }
 
-    /* Stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
     .stat-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
+      background: var(--bg3);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 9px 11px;
+      padding: 8px 10px;
     }
     .stat-box .val {
-      font-size: 17px;
-      font-weight: 700;
-      color: #e6edf3;
-      line-height: 1.1;
-      font-family: monospace;
+      font-size: 16px; font-weight: 700;
+      color: var(--text); line-height: 1.1; font-family: monospace;
     }
     .stat-box .lbl {
-      font-size: 9px;
-      color: #484f58;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 3px;
-      font-family: monospace;
+      font-size: 9px; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-top: 3px; font-family: monospace;
     }
 
-    /* Sun grid */
-    .sun-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
+    .sun-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 8px; }
     .sun-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 6px;
-      padding: 9px 11px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px;
     }
-    .sun-box .val {
-      font-size: 15px;
-      font-weight: 700;
-      font-family: monospace;
-      line-height: 1.1;
-    }
-    .sun-box .lbl {
-      font-size: 9px;
-      color: #484f58;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 3px;
-      font-family: monospace;
-    }
-    .night-note {
-      font-size: 12px;
-      color: #6e7681;
-      font-style: italic;
-      text-align: center;
-      padding: 4px 0;
-    }
+    .sun-box .val { font-size: 14px; font-weight: 700; font-family: monospace; line-height: 1.1; }
+    .sun-box .lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; font-family: monospace; }
+    .night-note { font-size: 12px; color: var(--text3); font-style: italic; text-align: center; padding: 3px 0; }
 
-    /* Alternatives */
-    .alt-list { display: flex; flex-direction: column; gap: 8px; }
+    .alt-list { display: flex; flex-direction: column; gap: 7px; }
     .alt-item {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 6px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: border-color .15s;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 11px;
+      cursor: pointer; transition: border-color .15s;
     }
-    .alt-item:hover { border-color: #30363d; }
-    .alt-item.selected { border-color: #22c55e; }
-    .alt-item .alt-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .alt-item:hover { border-color: var(--border2); }
+    .alt-item.selected { border-color: var(--green); }
+    .alt-item .alt-row { display: flex; justify-content: space-between; align-items: center; }
     .alt-item .alt-shade { font-size: 13px; font-weight: 700; }
-    .alt-item .alt-dist { font-size: 11px; color: #8b949e; font-family: monospace; }
-    .alt-item .shade-mini {
-      margin-top: 6px;
-      height: 4px;
-      border-radius: 2px;
-      background: #21262d;
-      overflow: hidden;
-    }
+    .alt-item .alt-dist { font-size: 11px; color: var(--text2); font-family: monospace; }
+    .alt-item .shade-mini { margin-top: 5px; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
     .alt-item .shade-mini-fill { height: 100%; border-radius: 2px; }
 
-    /* Legend */
-    .legend { display: flex; flex-direction: column; gap: 8px; }
-    .legend-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      color: #8b949e;
-    }
-    .legend-swatch {
-      width: 28px; height: 6px;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-    .legend-circle {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    .legend { display: flex; flex-direction: column; gap: 7px; }
+    .legend-row { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--text2); }
+    .legend-swatch { width: 26px; height: 5px; border-radius: 3px; flex-shrink: 0; }
+    .legend-circle { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
 
-    /* Empty state */
-    #emptyState {
-      padding: 24px 16px;
-      text-align: center;
-    }
-    #emptyState .icon { font-size: 36px; margin-bottom: 12px; }
-    #emptyState p { font-size: 13px; color: #484f58; line-height: 1.6; }
+    #emptyState { padding: 22px 15px; text-align: center; }
+    #emptyState .icon { font-size: 32px; margin-bottom: 10px; }
+    #emptyState p { font-size: 13px; color: var(--text3); line-height: 1.6; }
 
     /* ── Map ──────────────────────────────────────── */
-    #map { flex: 1; z-index: 0; cursor: default; }
+    #map-wrap { flex: 1; position: relative; min-width: 0; }
+    #map { width: 100%; height: 100%; z-index: 0; cursor: default; }
     #map.picking-cursor { cursor: crosshair !important; }
     #map.picking-cursor .leaflet-interactive { cursor: crosshair !important; }
 
-    .leaflet-popup-content-wrapper {
-      background: #161b22;
-      color: #e6edf3;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    /* Mobile panel toggle button on map */
+    #panelToggle {
+      display: none;
+      position: absolute;
+      bottom: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 500;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: monospace;
+      padding: 7px 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
     }
-    .leaflet-popup-tip { background: #161b22; }
+
+    /* Mobile bottom panel overlay */
+    #mobilePanel {
+      display: none;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      max-height: 60%;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      z-index: 600;
+      overflow-y: auto;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+    }
+    .mobile-handle {
+      width: 36px; height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      margin: 10px auto 6px;
+    }
+
+    /* Leaflet popup theming */
+    .leaflet-popup-content-wrapper {
+      background: var(--bg2);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    .leaflet-popup-tip { background: var(--bg2); }
     .leaflet-popup-content { margin: 10px 14px; font-size: 13px; }
 
-    @media (max-width: 640px) {
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 700px) {
       #panel { display: none; }
-      .inputs-row { flex-direction: column; align-items: stretch; }
+      #panelToggle { display: block; }
+      .time-ctrl { display: none; }
+      .logo span { display: none; }
+    }
+    @media (max-width: 480px) {
+      header { padding: 8px 12px; gap: 7px; }
+      .inputs-row { gap: 6px; }
+      .point-field { min-width: 140px; }
+      .route-btn { padding: 8px 12px; font-size: 12px; }
     }
   </style>
 </head>
@@ -389,37 +457,44 @@
   <div class="inputs-row">
     <div class="point-field">
       <div class="point-badge badge-a">A</div>
-      <input id="inputA" type="text" placeholder="From — start address" autocomplete="off" />
-      <button class="pick-btn" id="pickA" title="Click on map to set start" onclick="togglePick('A')">&#9654;</button>
+      <div class="ac-wrap">
+        <input id="inputA" type="text" placeholder="From address…" autocomplete="off" />
+        <div class="ac-drop" id="acDropA"></div>
+      </div>
+      <button class="gps-btn" id="gpsBtn" title="Use my current location" onclick="useMyLocation()">&#9678;</button>
+      <button class="icon-btn" id="pickA" title="Click on map to set start" onclick="togglePick('A')">&#9654;</button>
     </div>
     <div class="point-field">
       <div class="point-badge badge-b">B</div>
-      <input id="inputB" type="text" placeholder="To — destination address" autocomplete="off" />
-      <button class="pick-btn" id="pickB" title="Click on map to set destination" onclick="togglePick('B')">&#9654;</button>
+      <div class="ac-wrap">
+        <input id="inputB" type="text" placeholder="To address…" autocomplete="off" />
+        <div class="ac-drop" id="acDropB"></div>
+      </div>
+      <button class="icon-btn" id="pickB" title="Click on map to set destination" onclick="togglePick('B')">&#9654;</button>
     </div>
-    <div class="time-ctrl" title="Shade changes with sun position — pick a time of day">
+    <div class="time-ctrl" title="Time of day affects building shadow angles">
       <span class="sun-icon">&#9728;</span>
       <input type="time" id="timeInput" />
       <button class="now-btn" onclick="setNow()">NOW</button>
     </div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
     <button class="route-btn" id="routeBtn" onclick="findRoute()" disabled>Find Shady Route</button>
   </div>
 </header>
 
 <div id="statusBar">
   <div class="spinner" id="spinner"></div>
-  <span id="statusText">Enter addresses or click &#9654; to pin points on the map</span>
+  <span id="statusText">Enter addresses, use &#9678; for your location, or click &#9654; to pin on the map</span>
 </div>
 
 <main>
+  <!-- Desktop side panel -->
   <div id="panel">
     <div id="emptyState">
       <div class="icon">&#127807;</div>
       <p>Set your start and destination, choose a time of day, and find the shadiest walking route — using real tree canopy data and building heights from OpenStreetMap.</p>
     </div>
     <div id="resultsPanel" style="display:none">
-
-      <!-- Shade coverage -->
       <div class="panel-section">
         <h3>Shade Coverage</h3>
         <div class="shade-bar-wrap">
@@ -430,83 +505,47 @@
           <div class="shade-bar"><div class="shade-bar-fill" id="shadeBarFill" style="width:0%"></div></div>
         </div>
         <div class="stats-grid">
-          <div class="stat-box">
-            <div class="val" id="statDist">—</div>
-            <div class="lbl">Distance</div>
-          </div>
-          <div class="stat-box">
-            <div class="val" id="statTime">—</div>
-            <div class="lbl">Walk Time</div>
-          </div>
-          <div class="stat-box">
-            <div class="val" id="statTrees">—</div>
-            <div class="lbl">Trees</div>
-          </div>
-          <div class="stat-box">
-            <div class="val" id="statBuildings">—</div>
-            <div class="lbl">Buildings</div>
-          </div>
+          <div class="stat-box"><div class="val" id="statDist">—</div><div class="lbl">Distance</div></div>
+          <div class="stat-box"><div class="val" id="statTime">—</div><div class="lbl">Walk Time</div></div>
+          <div class="stat-box"><div class="val" id="statTrees">—</div><div class="lbl">Trees</div></div>
+          <div class="stat-box"><div class="val" id="statBuildings">—</div><div class="lbl">Buildings</div></div>
         </div>
       </div>
-
-      <!-- Sun position -->
       <div class="panel-section" id="sunSection">
         <h3>Sun Position</h3>
-        <div id="sunContent">
-          <div class="sun-grid">
-            <div class="sun-box">
-              <div class="val" id="sunAltVal" style="color:#fcd34d">—</div>
-              <div class="lbl">Altitude</div>
-            </div>
-            <div class="sun-box">
-              <div class="val" id="sunAzVal" style="color:#fcd34d">—</div>
-              <div class="lbl">Direction</div>
-            </div>
-            <div class="sun-box">
-              <div class="val" id="shadowLenVal" style="color:#94a3b8">—</div>
-              <div class="lbl">Shadow / 10m bldg</div>
-            </div>
-            <div class="sun-box">
-              <div class="val" id="sunTimeVal" style="color:#fcd34d">—</div>
-              <div class="lbl">Selected time</div>
-            </div>
-          </div>
-          <div id="nightNote" class="night-note" style="display:none">&#9790; Sun below horizon — no building shadows</div>
+        <div class="sun-grid">
+          <div class="sun-box"><div class="val" id="sunAltVal" style="color:var(--sun)">—</div><div class="lbl">Altitude</div></div>
+          <div class="sun-box"><div class="val" id="sunAzVal" style="color:var(--sun)">—</div><div class="lbl">Direction</div></div>
+          <div class="sun-box"><div class="val" id="shadowLenVal" style="color:var(--text2)">—</div><div class="lbl">Shadow / 10m bldg</div></div>
+          <div class="sun-box"><div class="val" id="sunTimeVal" style="color:var(--sun)">—</div><div class="lbl">Selected time</div></div>
         </div>
+        <div id="nightNote" class="night-note" style="display:none">&#9790; Sun below horizon — no building shadows</div>
       </div>
-
-      <!-- Alternatives -->
       <div class="panel-section" id="altsSection" style="display:none">
         <h3>Route Alternatives</h3>
         <div class="alt-list" id="altList"></div>
       </div>
-
-      <!-- Legend -->
       <div class="panel-section">
         <h3>Map Legend</h3>
         <div class="legend">
-          <div class="legend-row">
-            <div class="legend-swatch" style="background:#22c55e"></div>
-            <span>Shaded (trees or buildings)</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background:#f59e0b"></div>
-            <span>Exposed to sun</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-circle" style="background:rgba(34,197,94,0.3);border:1px solid rgba(34,197,94,0.5)"></div>
-            <span>Tree canopy</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-circle" style="background:rgba(96,75,30,0.55);border:1px solid rgba(180,140,60,0.4)"></div>
-            <span>Building shadow</span>
-          </div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#22c55e"></div><span>Shaded (trees or buildings)</span></div>
+          <div class="legend-row"><div class="legend-swatch" style="background:#f59e0b"></div><span>Exposed to sun</span></div>
+          <div class="legend-row"><div class="legend-circle" style="background:rgba(34,197,94,0.3);border:1px solid rgba(34,197,94,0.5)"></div><span>Tree canopy</span></div>
+          <div class="legend-row"><div class="legend-circle" style="background:rgba(96,75,30,0.55);border:1px solid rgba(180,140,60,0.4)"></div><span>Building shadow</span></div>
         </div>
       </div>
-
     </div>
   </div>
-  <div id="map"></div>
+
+  <!-- Map + mobile overlays -->
+  <div id="map-wrap">
+    <div id="map"></div>
+    <button id="panelToggle" onclick="toggleMobilePanel()">&#9660; Route Info</button>
+    <div id="mobilePanel">
+      <div class="mobile-handle"></div>
+      <div id="mobilePanelContent"></div>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -515,378 +554,218 @@ const NOMINATIM   = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_R = "https://nominatim.openstreetmap.org/reverse";
 const OSRM        = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
 const OVERPASS    = "https://overpass-api.de/api/interpreter";
-const CANOPY_R    = 9;    // default tree canopy radius (m)
-const SAMPLE_INT  = 8;    // sample spacing for shade scoring (m)
-const DRAW_INT    = 5;    // sample spacing for route coloring (m)
-const MAX_SHADOW  = 120;  // cap shadow length at 120 m
+const CANOPY_R    = 9;
+const SAMPLE_INT  = 8;
+const DRAW_INT    = 5;
+const MAX_SHADOW  = 120;
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let pointA = null, pointB = null;
-let pickingMode   = null;
-let trees         = [];
-let cachedBuildings = [];   // raw building rings + heights
-let shadowPolys   = [];     // computed shadow polygons for current time
-let midLat        = 0;
-let midLon        = 0;
-let routeLayerGroup  = null;
-let canopyLayerGroup = null;
-let shadowLayerGroup = null;
+let pickingMode = null;
+let trees = [], cachedBuildings = [], shadowPolys = [];
+let midLat = 0, midLon = 0;
+let routeLayerGroup = null, canopyLayerGroup = null, shadowLayerGroup = null;
 let markerA = null, markerB = null;
-let routeData     = [];
-let selectedRouteIdx = 0;
+let routeData = [];
+let lightMode = false;
+
+// Autocomplete state
+const acState = {
+  A: { results: [], cursor: -1, timer: null },
+  B: { results: [], cursor: -1, timer: null },
+};
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  lightMode = !lightMode;
+  document.body.classList.toggle("light", lightMode);
+  document.getElementById("themeBtn").textContent = lightMode ? "☀" : "☾";
+  localStorage.setItem("shadeWalkTheme", lightMode ? "light" : "dark");
+  // Swap tile layer
+  map.eachLayer(l => { if (l._url) map.removeLayer(l); });
+  addTileLayer();
+}
+function addTileLayer() {
+  const theme = lightMode ? "light_all" : "dark_all";
+  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${theme}/{z}/{x}/{y}{r}.png`, {
+    attribution: "© OpenStreetMap © CARTO", maxZoom: 19,
+  }).addTo(map);
+}
+// Restore saved theme
+(function() {
+  const saved = localStorage.getItem("shadeWalkTheme");
+  if (saved === "light") { lightMode = true; document.body.classList.add("light"); document.getElementById("themeBtn").textContent = "☀"; }
+})();
 
 // ── Map init ──────────────────────────────────────────────────────────────────
 const canvasRenderer = L.canvas({ padding: 0.5 });
 const map = L.map("map", { zoomControl: true }).setView([52.52, 13.405], 13);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: "© OpenStreetMap © CARTO",
-  maxZoom: 19,
-}).addTo(map);
+addTileLayer();
 map.on("click", onMapClick);
 
-// Init time to now
+// ── Time ──────────────────────────────────────────────────────────────────────
 setNow();
 document.getElementById("timeInput").addEventListener("change", onTimeChange);
-
-// ── Time helpers ──────────────────────────────────────────────────────────────
 function setNow() {
   const now = new Date();
-  const hh  = String(now.getHours()).padStart(2, "0");
-  const mm  = String(now.getMinutes()).padStart(2, "0");
-  document.getElementById("timeInput").value = `${hh}:${mm}`;
+  document.getElementById("timeInput").value =
+    String(now.getHours()).padStart(2,"0") + ":" + String(now.getMinutes()).padStart(2,"0");
 }
-
 function getSelectedDate() {
   const val = document.getElementById("timeInput").value || "12:00";
   const [h, m] = val.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d;
+  const d = new Date(); d.setHours(h, m, 0, 0); return d;
 }
-
 function onTimeChange() {
-  if (!cachedBuildings.length && !routeData.length) return;
-  recomputeForTime();
+  if (routeData.length) recomputeForTime();
 }
 
-// ── Sun position (Spencer / NOAA simplified) ──────────────────────────────────
-function getSunPosition(date, lat, lon) {
-  const rad = x => x * Math.PI / 180;
-  const deg = x => x * 180 / Math.PI;
-
-  const JD = date.getTime() / 86400000 + 2440587.5;
-  const n  = JD - 2451545.0;
-
-  const L  = ((280.460 + 0.9856474 * n) % 360 + 360) % 360;
-  const g  = ((357.528 + 0.9856003 * n) % 360 + 360) % 360;
-  const lam = L + 1.915 * Math.sin(rad(g)) + 0.020 * Math.sin(rad(2 * g));
-  const eps = 23.439 - 0.0000004 * n;
-
-  const sinDec = Math.sin(rad(eps)) * Math.sin(rad(lam));
-  const decl   = deg(Math.asin(sinDec));
-
-  // Equation of time (hours)
-  const RA  = ((deg(Math.atan2(Math.cos(rad(eps)) * Math.sin(rad(lam)), Math.cos(rad(lam)))) % 360) + 360) % 360;
-  const EoT = (L - RA) / 15;
-
-  const utcH = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-  const HRA  = rad((utcH + lon / 15 + EoT - 12) * 15);
-
-  const latR   = rad(lat);
-  const declR  = rad(decl);
-  const sinAlt = Math.sin(latR) * Math.sin(declR) + Math.cos(latR) * Math.cos(declR) * Math.cos(HRA);
-  const altitude = deg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
-
-  const cosAlt = Math.cos(rad(altitude));
-  let cosAz = cosAlt < 1e-10 ? 0
-    : (Math.sin(declR) - Math.sin(latR) * sinAlt) / (cosAlt * Math.cos(latR));
-  cosAz = Math.max(-1, Math.min(1, cosAz));
-  let azimuth = deg(Math.acos(cosAz));
-  if (Math.sin(HRA) > 0) azimuth = 360 - azimuth;
-
-  return { altitude, azimuth };
+// ── GPS location ──────────────────────────────────────────────────────────────
+function useMyLocation() {
+  if (!navigator.geolocation) { setStatus("Geolocation is not supported by your browser"); return; }
+  setStatus("Getting your location…", true);
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    try {
+      const res  = await fetch(`${NOMINATIM_R}?lat=${lat}&lon=${lon}&format=json`, { headers: { "Accept-Language": "en" } });
+      const data = await res.json();
+      const display = data.display_name
+        ? data.display_name.split(",").slice(0,2).join(",").trim()
+        : `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      pointA = { lat, lon, display };
+      document.getElementById("inputA").value = display;
+      document.getElementById("inputA").dataset.lastVal = display;
+      placeMarker("A", lat, lon, display);
+      map.setView([lat, lon], 15);
+      updateRouteBtn();
+      setStatus("Start set: " + display);
+    } catch { setStatus("Could not reverse geocode your location"); }
+  }, err => setStatus("Location error: " + (err.code === 1 ? "Permission denied" : err.message)));
 }
 
-function azimuthLabel(az) {
-  const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
-  return dirs[Math.round(az / 45) % 8];
+// ── Autocomplete ──────────────────────────────────────────────────────────────
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
-// ── Geometry helpers ──────────────────────────────────────────────────────────
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.asin(Math.sqrt(a));
+const acSearch = {
+  A: debounce(q => _acSearch("A", q), 320),
+  B: debounce(q => _acSearch("B", q), 320),
+};
+
+async function _acSearch(which, query) {
+  const drop = document.getElementById("acDrop" + which);
+  if (query.length < 2) { closeDrop(which); return; }
+  drop.innerHTML = '<div class="ac-msg">Searching…</div>';
+  drop.classList.add("open");
+  try {
+    const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`;
+    const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
+    const data = await res.json();
+    acState[which].results = data;
+    acState[which].cursor  = -1;
+    if (!data.length) { drop.innerHTML = '<div class="ac-msg">No results — try a different spelling</div>'; return; }
+    drop.innerHTML = data.map((r, i) => {
+      const parts = r.display_name.split(",");
+      const main  = parts.slice(0, 2).join(",").trim();
+      const sub   = parts.slice(2, 4).join(",").trim();
+      return `<div class="ac-item" data-i="${i}">${main}${sub ? `<span class="ac-sub">${sub}</span>` : ""}</div>`;
+    }).join("");
+    drop.querySelectorAll(".ac-item").forEach(el =>
+      el.addEventListener("mousedown", e => { e.preventDefault(); pickResult(which, +el.dataset.i); })
+    );
+  } catch { drop.innerHTML = '<div class="ac-msg">Search unavailable</div>'; }
 }
 
-function samplePolyline(coords, intervalM) {
-  if (!coords.length) return [];
-  const pts = [coords[0]];
-  let carry = 0;
-  for (let i = 0; i < coords.length - 1; i++) {
-    const [lon1, lat1] = coords[i], [lon2, lat2] = coords[i + 1];
-    const segLen = haversine(lat1, lon1, lat2, lon2);
-    let d = intervalM - carry;
-    while (d <= segLen) {
-      const t = d / segLen;
-      pts.push([lon1 + (lon2 - lon1) * t, lat1 + (lat2 - lat1) * t]);
-      d += intervalM;
-    }
-    carry = segLen - (d - intervalM);
+function pickResult(which, idx) {
+  const r = acState[which].results[idx];
+  if (!r) return;
+  const lat = parseFloat(r.lat), lon = parseFloat(r.lon);
+  const display = r.display_name.split(",").slice(0,2).join(",").trim();
+  document.getElementById("input" + which).value = display;
+  document.getElementById("input" + which).dataset.lastVal = display;
+  closeDrop(which);
+  if (which === "A") { pointA = { lat, lon, display }; placeMarker("A", lat, lon, display); }
+  else               { pointB = { lat, lon, display }; placeMarker("B", lat, lon, display); }
+  map.setView([lat, lon], 14);
+  updateRouteBtn();
+}
+
+function closeDrop(which) {
+  document.getElementById("acDrop" + which).classList.remove("open");
+  acState[which].cursor = -1;
+}
+
+function handleAcKey(which, e) {
+  const drop  = document.getElementById("acDrop" + which);
+  const items = [...drop.querySelectorAll(".ac-item")];
+  const st    = acState[which];
+  if (!drop.classList.contains("open") || !items.length) {
+    if (e.key === "Enter") findRoute();
+    return;
   }
-  pts.push(coords[coords.length - 1]);
-  return pts;
-}
-
-function pointInPolygon(lon, lat, ring) {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i], [xj, yj] = ring[j];
-    if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi)
-      inside = !inside;
-  }
-  return inside;
-}
-
-function convexHull(pts) {
-  if (pts.length < 3) return pts.slice();
-  const sorted = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (O, A, B) => (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
-  const lower = [], upper = [];
-  for (const p of sorted) {
-    while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
-    lower.push(p);
-  }
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const p = sorted[i];
-    while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
-    upper.push(p);
-  }
-  lower.pop(); upper.pop();
-  return [...lower, ...upper];
-}
-
-// ── Building shadow computation ───────────────────────────────────────────────
-function buildingHeight(tags) {
-  if (tags.height) {
-    const h = parseFloat(tags.height);
-    if (h > 0) return h;
-  }
-  if (tags["building:levels"]) {
-    const l = parseFloat(tags["building:levels"]);
-    if (l > 0) return l * 3.5;
-  }
-  return 4; // ~1 floor default
-}
-
-function computeShadowPolygon(ring, sunAlt, sunAz) {
-  if (sunAlt <= 1 || ring.length < 3) return null;
-
-  const refLat = ring.reduce((s, p) => s + p[1], 0) / ring.length;
-  const shadowAzR = ((sunAz + 180) % 360) * Math.PI / 180;
-
-  // average building height embedded in ring meta — passed via closure
-  const len = Math.min(ring._h / Math.tan(sunAlt * Math.PI / 180), MAX_SHADOW);
-  const dlat = len * Math.cos(shadowAzR) / 111320;
-  const dlon = len * Math.sin(shadowAzR) / (111320 * Math.cos(refLat * Math.PI / 180));
-
-  const projected = ring.map(([lon, lat]) => [lon + dlon, lat + dlat]);
-  return convexHull([...ring, ...projected]);
-}
-
-function computeAllShadowPolygons(buildings, sunAlt, sunAz) {
-  if (sunAlt <= 1) return [];
-  return buildings.map(b => computeShadowPolygon(b.ring, sunAlt, sunAz)).filter(Boolean);
-}
-
-// ── Shade check ───────────────────────────────────────────────────────────────
-function isShaded(lon, lat, treeList, shPolys) {
-  for (const t of treeList) {
-    if (haversine(lat, lon, t.lat, t.lon) <= t.radius) return true;
-  }
-  for (const poly of shPolys) {
-    if (pointInPolygon(lon, lat, poly)) return true;
-  }
-  return false;
-}
-
-function scoreRoute(coords, treeList, shPolys) {
-  const samples = samplePolyline(coords, SAMPLE_INT);
-  let shaded = 0;
-  for (const [lon, lat] of samples) {
-    if (isShaded(lon, lat, treeList, shPolys)) shaded++;
-  }
-  return { score: samples.length ? shaded / samples.length : 0, shaded, total: samples.length };
-}
-
-// ── Overpass fetches ──────────────────────────────────────────────────────────
-async function fetchTrees(south, west, north, east) {
-  const buf = 0.003;
-  const bbox = `${south-buf},${west-buf},${north+buf},${east+buf}`;
-  const q = `[out:json][timeout:30];\n(\n  node["natural"="tree"](${bbox});\n  node["natural"="tree_row"](${bbox});\n);\nout body;`;
-  const res = await fetch(`${OVERPASS}?data=${encodeURIComponent(q)}`);
-  if (!res.ok) throw new Error("Overpass tree error " + res.status);
-  const data = await res.json();
-  return (data.elements || []).map(el => ({
-    lat: el.lat,
-    lon: el.lon,
-    radius: el.tags?.diameter_crown ? parseFloat(el.tags.diameter_crown) / 2 : CANOPY_R,
-  }));
-}
-
-async function fetchBuildings(south, west, north, east) {
-  const buf = 0.002;
-  const bbox = `${south-buf},${west-buf},${north+buf},${east+buf}`;
-  const q = `[out:json][timeout:40];\nway["building"](${bbox});\nout geom qt;`;
-  const res = await fetch(`${OVERPASS}?data=${encodeURIComponent(q)}`);
-  if (!res.ok) throw new Error("Overpass building error " + res.status);
-  const data = await res.json();
-  const buildings = [];
-  for (const el of (data.elements || [])) {
-    if (!el.geometry || el.geometry.length < 3) continue;
-    const ring = el.geometry.map(p => [p.lon, p.lat]);
-    ring._h = buildingHeight(el.tags || {});
-    buildings.push({ ring, height: ring._h });
-  }
-  return buildings;
-}
-
-// ── OSRM ──────────────────────────────────────────────────────────────────────
-async function fetchRoutes(latA, lonA, latB, lonB) {
-  const url = `${OSRM}/${lonA},${latA};${lonB},${latB}?overview=full&geometries=geojson&alternatives=3`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Routing error " + res.status);
-  const data = await res.json();
-  if (!data.routes?.length) throw new Error("No route found between these points");
-  return data.routes.map(r => ({
-    coords:   r.geometry.coordinates,
-    distance: r.distance,
-    duration: r.duration,
-  }));
-}
-
-// ── Geocoding ─────────────────────────────────────────────────────────────────
-async function geocode(query) {
-  const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=1`;
-  const res  = await fetch(url, { headers: { "Accept-Language": "en" } });
-  const data = await res.json();
-  if (!data.length) throw new Error(`Address not found: "${query}"`);
-  return {
-    lat: parseFloat(data[0].lat),
-    lon: parseFloat(data[0].lon),
-    display: data[0].display_name.split(",").slice(0, 2).join(",").trim(),
-  };
-}
-
-// ── Map drawing ───────────────────────────────────────────────────────────────
-function drawShadedRoute(coords, treeList, shPolys, lg) {
-  const samples = samplePolyline(coords, DRAW_INT);
-  if (samples.length < 2) return;
-
-  let seg = [samples[0]];
-  let curShaded = isShaded(samples[0][0], samples[0][1], treeList, shPolys);
-
-  const flush = (shaded, pts) => {
-    if (pts.length < 2) return;
-    L.polyline(pts.map(([lon, lat]) => [lat, lon]), {
-      color: shaded ? "#22c55e" : "#f59e0b",
-      weight: 6, opacity: 0.95,
-      lineCap: "round", lineJoin: "round",
-    }).addTo(lg);
-  };
-
-  for (let i = 1; i < samples.length; i++) {
-    const [lon, lat] = samples[i];
-    const shaded = isShaded(lon, lat, treeList, shPolys);
-    if (shaded === curShaded) {
-      seg.push(samples[i]);
-    } else {
-      flush(curShaded, seg);
-      seg = [samples[i - 1], samples[i]];
-      curShaded = shaded;
-    }
-  }
-  flush(curShaded, seg);
-}
-
-function drawGhostRoute(coords, lg) {
-  L.polyline(coords.map(([lon, lat]) => [lat, lon]), {
-    color: "#484f58", weight: 3, opacity: 0.6, dashArray: "6 5",
-  }).addTo(lg);
-}
-
-function drawCanopies(treeList, lg) {
-  const display = treeList.slice(0, 2000);
-  for (const t of display) {
-    L.circle([t.lat, t.lon], {
-      radius: t.radius,
-      renderer: canvasRenderer,
-      color: "#22c55e", weight: 0,
-      fillColor: "#22c55e", fillOpacity: 0.2,
-    }).addTo(lg);
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    st.cursor = Math.min(st.cursor + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle("hi", i === st.cursor));
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    st.cursor = Math.max(st.cursor - 1, 0);
+    items.forEach((el, i) => el.classList.toggle("hi", i === st.cursor));
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    if (st.cursor >= 0) pickResult(which, st.cursor); else findRoute();
+  } else if (e.key === "Escape") {
+    closeDrop(which);
   }
 }
 
-function drawBuildingShadows(polys, lg) {
-  for (const poly of polys) {
-    L.polygon(poly.map(([lon, lat]) => [lat, lon]), {
-      renderer: canvasRenderer,
-      color: "#b8960c", weight: 0.5, opacity: 0.3,
-      fillColor: "#604b1e", fillOpacity: 0.45,
-    }).addTo(lg);
-  }
-}
+// Wire inputs
+["A","B"].forEach(w => {
+  const inp = document.getElementById("input" + w);
+  inp.addEventListener("input",   e => { acSearch[w](e.target.value.trim()); updateRouteBtn(); });
+  inp.addEventListener("keydown", e => handleAcKey(w, e));
+  inp.addEventListener("blur",    () => setTimeout(() => closeDrop(w), 160));
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest(".ac-wrap")) { closeDrop("A"); closeDrop("B"); }
+});
 
 // ── Pick mode ─────────────────────────────────────────────────────────────────
 function togglePick(which) {
   if (pickingMode === which) { pickingMode = null; updatePickUI(); return; }
-  pickingMode = which;
-  updatePickUI();
+  pickingMode = which; updatePickUI();
   setStatus(`Click on the map to set point ${which}`);
 }
-
 function updatePickUI() {
-  ["A", "B"].forEach(w => {
-    document.getElementById("pick" + w).classList.toggle("active", pickingMode === w);
-    document.getElementById("input" + w).classList.toggle("picking", pickingMode === w);
+  ["A","B"].forEach(w => {
+    document.getElementById("pick"+w).classList.toggle("active", pickingMode === w);
+    document.getElementById("input"+w).classList.toggle("picking", pickingMode === w);
   });
-  document.getElementById("map").classList.toggle("picking-cursor", pickingMode !== null);
+  document.getElementById("map").classList.toggle("picking-cursor", !!pickingMode);
 }
 
 async function onMapClick(e) {
   if (!pickingMode) return;
   const { lat, lng } = e.latlng;
   const which = pickingMode;
-  pickingMode = null;
-  updatePickUI();
+  pickingMode = null; updatePickUI();
   setStatus("Reverse geocoding…", true);
   try {
-    const res = await fetch(`${NOMINATIM_R}?lat=${lat}&lon=${lng}&format=json`, {
-      headers: { "Accept-Language": "en" },
-    });
+    const res  = await fetch(`${NOMINATIM_R}?lat=${lat}&lon=${lng}&format=json`, { headers: { "Accept-Language": "en" } });
     const data = await res.json();
     const display = data.display_name
-      ? data.display_name.split(",").slice(0, 2).join(",").trim()
+      ? data.display_name.split(",").slice(0,2).join(",").trim()
       : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    if (which === "A") {
-      pointA = { lat, lon: lng, display };
-      document.getElementById("inputA").value = display;
-      placeMarker("A", lat, lng, display);
-    } else {
-      pointB = { lat, lon: lng, display };
-      document.getElementById("inputB").value = display;
-      placeMarker("B", lat, lng, display);
-    }
+    if (which === "A") { pointA = { lat, lon: lng, display }; document.getElementById("inputA").value = display; placeMarker("A", lat, lng, display); }
+    else               { pointB = { lat, lon: lng, display }; document.getElementById("inputB").value = display; placeMarker("B", lat, lng, display); }
     updateRouteBtn();
     setStatus(`Point ${which} set — ${display}`);
-  } catch {
-    setStatus("Reverse geocode failed — try typing an address instead");
-  }
+  } catch { setStatus("Reverse geocode failed"); }
 }
 
+// ── Markers ───────────────────────────────────────────────────────────────────
 function makeMarkerIcon(letter, color) {
   return L.divIcon({
     className: "",
@@ -895,257 +774,345 @@ function makeMarkerIcon(letter, color) {
       display:flex;align-items:center;justify-content:center;">
       <span style="transform:rotate(45deg);font-size:12px;font-weight:800;color:#fff;display:block;line-height:1;">${letter}</span>
     </div>`,
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32],
+    iconSize: [32,32], iconAnchor: [16,32], popupAnchor: [0,-32],
   });
 }
-
 function placeMarker(which, lat, lon, display) {
   const prev = which === "A" ? markerA : markerB;
   if (prev) map.removeLayer(prev);
-  const m = L.marker([lat, lon], {
-    icon: makeMarkerIcon(which, which === "A" ? "#1d4ed8" : "#dc2626"),
-  }).bindPopup(`<b>${which === "A" ? "Start" : "Destination"}</b><br>${display}`).addTo(map);
-  if (which === "A") markerA = m; else markerB = m;
+  const m = L.marker([lat,lon], { icon: makeMarkerIcon(which, which==="A"?"#1d4ed8":"#dc2626") })
+    .bindPopup(`<b>${which==="A"?"Start":"Destination"}</b><br>${display}`).addTo(map);
+  if (which==="A") markerA=m; else markerB=m;
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
-function setStatus(msg, loading = false) {
+// ── UI ────────────────────────────────────────────────────────────────────────
+function setStatus(msg, loading=false) {
   document.getElementById("statusText").textContent = msg;
   document.getElementById("spinner").style.display = loading ? "block" : "none";
 }
-
 function updateRouteBtn() {
   const hasA = pointA || document.getElementById("inputA").value.trim();
   const hasB = pointB || document.getElementById("inputB").value.trim();
   document.getElementById("routeBtn").disabled = !(hasA && hasB);
 }
-
-document.getElementById("inputA").addEventListener("keydown",  e => { if (e.key === "Enter") findRoute(); });
-document.getElementById("inputB").addEventListener("keydown",  e => { if (e.key === "Enter") findRoute(); });
-document.getElementById("inputA").addEventListener("input", updateRouteBtn);
-document.getElementById("inputB").addEventListener("input", updateRouteBtn);
-
-function formatDist(m) { return m >= 1000 ? (m/1000).toFixed(1)+" km" : Math.round(m)+" m"; }
-function formatTime(s) {
-  const m = Math.round(s / 60);
-  return m < 60 ? m+" min" : Math.floor(m/60)+"h "+(m%60)+"m";
+function formatDist(m) { return m>=1000 ? (m/1000).toFixed(1)+" km" : Math.round(m)+" m"; }
+function formatTime(s) { const m=Math.round(s/60); return m<60?m+" min":Math.floor(m/60)+"h "+(m%60)+"m"; }
+function shadeColor(p) {
+  if (p>=.6) return "#22c55e"; if (p>=.35) return "#86efac";
+  if (p>=.15) return "#f59e0b"; return "#ef4444";
 }
-function shadeColor(pct) {
-  if (pct >= 0.6)  return "#22c55e";
-  if (pct >= 0.35) return "#86efac";
-  if (pct >= 0.15) return "#f59e0b";
-  return "#ef4444";
+
+// ── Mobile panel ──────────────────────────────────────────────────────────────
+function toggleMobilePanel() {
+  const mp = document.getElementById("mobilePanel");
+  const btn = document.getElementById("panelToggle");
+  const open = mp.style.display === "block";
+  mp.style.display = open ? "none" : "block";
+  btn.textContent  = open ? "▼ Route Info" : "▲ Route Info";
+}
+function syncMobilePanel() {
+  const panel = document.getElementById("resultsPanel");
+  document.getElementById("mobilePanelContent").innerHTML =
+    panel.style.display !== "none" ? panel.innerHTML : "";
+}
+
+// ── Sun calculation ───────────────────────────────────────────────────────────
+function getSunPosition(date, lat, lon) {
+  const r=x=>x*Math.PI/180, d=x=>x*180/Math.PI;
+  const JD=date.getTime()/86400000+2440587.5, n=JD-2451545;
+  const L=((280.46+.9856474*n)%360+360)%360;
+  const g=((357.528+.9856003*n)%360+360)%360;
+  const lam=L+1.915*Math.sin(r(g))+.02*Math.sin(r(2*g));
+  const eps=23.439-.0000004*n;
+  const sinDec=Math.sin(r(eps))*Math.sin(r(lam));
+  const decl=d(Math.asin(Math.max(-1,Math.min(1,sinDec))));
+  const RA=((d(Math.atan2(Math.cos(r(eps))*Math.sin(r(lam)),Math.cos(r(lam))))%360)+360)%360;
+  const EoT=(L-RA)/15;
+  const utcH=date.getUTCHours()+date.getUTCMinutes()/60+date.getUTCSeconds()/3600;
+  const HRA=r((utcH+lon/15+EoT-12)*15);
+  const latR=r(lat), declR=r(decl);
+  const sinAlt=Math.sin(latR)*Math.sin(declR)+Math.cos(latR)*Math.cos(declR)*Math.cos(HRA);
+  const alt=d(Math.asin(Math.max(-1,Math.min(1,sinAlt))));
+  const cosAlt=Math.cos(r(alt));
+  let cosAz=cosAlt<1e-10?0:(Math.sin(declR)-Math.sin(latR)*sinAlt)/(cosAlt*Math.cos(latR));
+  cosAz=Math.max(-1,Math.min(1,cosAz));
+  let az=d(Math.acos(cosAz));
+  if (Math.sin(HRA)>0) az=360-az;
+  return {altitude:alt, azimuth:az};
+}
+const azLabel = az => ["N","NE","E","SE","S","SW","W","NW","N"][Math.round(az/45)%8];
+
+// ── Geometry ──────────────────────────────────────────────────────────────────
+function haversine(lat1,lon1,lat2,lon2) {
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(a));
+}
+function samplePolyline(coords, step) {
+  if (!coords.length) return [];
+  const pts=[coords[0]]; let carry=0;
+  for (let i=0;i<coords.length-1;i++) {
+    const [lon1,lat1]=coords[i],[lon2,lat2]=coords[i+1];
+    const seg=haversine(lat1,lon1,lat2,lon2);
+    let d=step-carry;
+    while(d<=seg){const t=d/seg;pts.push([lon1+(lon2-lon1)*t,lat1+(lat2-lat1)*t]);d+=step;}
+    carry=seg-(d-step);
+  }
+  pts.push(coords[coords.length-1]);
+  return pts;
+}
+function pointInPolygon(lon,lat,ring) {
+  let inside=false;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const[xi,yi]=ring[i],[xj,yj]=ring[j];
+    if((yi>lat)!==(yj>lat)&&lon<((xj-xi)*(lat-yi))/(yj-yi)+xi) inside=!inside;
+  }
+  return inside;
+}
+function convexHull(pts) {
+  if(pts.length<3)return pts.slice();
+  const s=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cr=(O,A,B)=>(A[0]-O[0])*(B[1]-O[1])-(A[1]-O[1])*(B[0]-O[0]);
+  const lo=[],up=[];
+  for(const p of s){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let i=s.length-1;i>=0;i--){const p=s[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  lo.pop();up.pop();return[...lo,...up];
+}
+
+// ── Buildings / shadows ───────────────────────────────────────────────────────
+function bldgHeight(tags) {
+  if(tags.height){const h=parseFloat(tags.height);if(h>0)return h;}
+  if(tags["building:levels"]){const l=parseFloat(tags["building:levels"]);if(l>0)return l*3.5;}
+  return 4;
+}
+function computeShadowPolygon(ring, alt, az) {
+  if(alt<=1||ring.length<3)return null;
+  const refLat=ring.reduce((s,p)=>s+p[1],0)/ring.length;
+  const azR=((az+180)%360)*Math.PI/180;
+  const len=Math.min(ring._h/Math.tan(alt*Math.PI/180),MAX_SHADOW);
+  const dlat=len*Math.cos(azR)/111320;
+  const dlon=len*Math.sin(azR)/(111320*Math.cos(refLat*Math.PI/180));
+  return convexHull([...ring,  ...ring.map(([lo,la])=>[lo+dlon,la+dlat])]);
+}
+function computeAllShadows(buildings, alt, az) {
+  if(alt<=1)return[];
+  return buildings.map(b=>computeShadowPolygon(b.ring,alt,az)).filter(Boolean);
+}
+
+// ── Shade check ───────────────────────────────────────────────────────────────
+function isShaded(lon,lat,treeList,shPolys) {
+  for(const t of treeList) if(haversine(lat,lon,t.lat,t.lon)<=t.radius) return true;
+  for(const p of shPolys)  if(pointInPolygon(lon,lat,p)) return true;
+  return false;
+}
+function scoreRoute(coords,treeList,shPolys) {
+  const samples=samplePolyline(coords,SAMPLE_INT);
+  let shaded=0;
+  for(const[lon,lat]of samples) if(isShaded(lon,lat,treeList,shPolys)) shaded++;
+  return{score:samples.length?shaded/samples.length:0, shaded, total:samples.length};
+}
+
+// ── Overpass ──────────────────────────────────────────────────────────────────
+async function fetchTrees(s,w,n,e) {
+  const buf=.003,bbox=`${s-buf},${w-buf},${n+buf},${e+buf}`;
+  const q=`[out:json][timeout:30];\n(\n  node["natural"="tree"](${bbox});\n  node["natural"="tree_row"](${bbox});\n);\nout body;`;
+  const res=await fetch(`${OVERPASS}?data=${encodeURIComponent(q)}`);
+  if(!res.ok) throw new Error("Overpass tree error "+res.status);
+  const data=await res.json();
+  return(data.elements||[]).map(el=>({lat:el.lat,lon:el.lon,radius:el.tags?.diameter_crown?parseFloat(el.tags.diameter_crown)/2:CANOPY_R}));
+}
+async function fetchBuildings(s,w,n,e) {
+  const buf=.002,bbox=`${s-buf},${w-buf},${n+buf},${e+buf}`;
+  const q=`[out:json][timeout:40];\nway["building"](${bbox});\nout geom qt;`;
+  const res=await fetch(`${OVERPASS}?data=${encodeURIComponent(q)}`);
+  if(!res.ok) throw new Error("Overpass building error "+res.status);
+  const data=await res.json();
+  const out=[];
+  for(const el of(data.elements||[])){
+    if(!el.geometry||el.geometry.length<3)continue;
+    const ring=el.geometry.map(p=>[p.lon,p.lat]);
+    ring._h=bldgHeight(el.tags||{});
+    out.push({ring,height:ring._h});
+  }
+  return out;
+}
+
+// ── OSRM ──────────────────────────────────────────────────────────────────────
+async function fetchRoutes(latA,lonA,latB,lonB) {
+  const url=`${OSRM}/${lonA},${latA};${lonB},${latB}?overview=full&geometries=geojson&alternatives=3`;
+  const res=await fetch(url);
+  if(!res.ok) throw new Error("Routing error "+res.status);
+  const data=await res.json();
+  if(!data.routes?.length) throw new Error("No route found between these points");
+  return data.routes.map(r=>({coords:r.geometry.coordinates,distance:r.distance,duration:r.duration}));
+}
+
+// ── Geocoding ─────────────────────────────────────────────────────────────────
+async function geocode(query) {
+  const url=`${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=1`;
+  const res=await fetch(url,{headers:{"Accept-Language":"en"}});
+  const data=await res.json();
+  if(!data.length) throw new Error(`Address not found: "${query}"`);
+  return{lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon),display:data[0].display_name.split(",").slice(0,2).join(",").trim()};
+}
+
+// ── Drawing ───────────────────────────────────────────────────────────────────
+function drawShadedRoute(coords,treeList,shPolys,lg) {
+  const samples=samplePolyline(coords,DRAW_INT);
+  if(samples.length<2)return;
+  let seg=[samples[0]],curShaded=isShaded(samples[0][0],samples[0][1],treeList,shPolys);
+  const flush=(sh,pts)=>{
+    if(pts.length<2)return;
+    L.polyline(pts.map(([lo,la])=>[la,lo]),{color:sh?"#22c55e":"#f59e0b",weight:6,opacity:.95,lineCap:"round",lineJoin:"round"}).addTo(lg);
+  };
+  for(let i=1;i<samples.length;i++){
+    const[lon,lat]=samples[i],sh=isShaded(lon,lat,treeList,shPolys);
+    if(sh===curShaded){seg.push(samples[i]);}else{flush(curShaded,seg);seg=[samples[i-1],samples[i]];curShaded=sh;}
+  }
+  flush(curShaded,seg);
+}
+function drawGhostRoute(coords,lg) {
+  L.polyline(coords.map(([lo,la])=>[la,lo]),{color:"#484f58",weight:3,opacity:.6,dashArray:"6 5"}).addTo(lg);
+}
+function drawCanopies(treeList,lg) {
+  treeList.slice(0,2000).forEach(t=>L.circle([t.lat,t.lon],{radius:t.radius,renderer:canvasRenderer,color:"#22c55e",weight:0,fillColor:"#22c55e",fillOpacity:.2}).addTo(lg));
+}
+function drawBuildingShadows(polys,lg) {
+  polys.forEach(poly=>L.polygon(poly.map(([lo,la])=>[la,lo]),{renderer:canvasRenderer,color:"#b8960c",weight:.5,opacity:.3,fillColor:"#604b1e",fillOpacity:.45}).addTo(lg));
 }
 
 // ── Panel rendering ───────────────────────────────────────────────────────────
 function renderSunPanel(sunPos) {
-  const isNight = sunPos.altitude <= 0;
-  document.getElementById("nightNote").style.display = isNight ? "block" : "none";
-  if (isNight) {
-    document.getElementById("sunAltVal").textContent = "below horizon";
-    document.getElementById("sunAzVal").textContent  = "—";
-    document.getElementById("shadowLenVal").textContent = "—";
-  } else {
-    const shadowLen10m = Math.min(10 / Math.tan(sunPos.altitude * Math.PI / 180), MAX_SHADOW);
-    document.getElementById("sunAltVal").textContent    = sunPos.altitude.toFixed(1) + "°";
-    document.getElementById("sunAzVal").textContent     = azimuthLabel(sunPos.azimuth) + " " + Math.round(sunPos.azimuth) + "°";
-    document.getElementById("shadowLenVal").textContent = Math.round(shadowLen10m) + " m";
+  const night=sunPos.altitude<=0;
+  document.getElementById("nightNote").style.display=night?"block":"none";
+  if(night){
+    document.getElementById("sunAltVal").textContent="below horizon";
+    document.getElementById("sunAzVal").textContent="—";
+    document.getElementById("shadowLenVal").textContent="—";
+  }else{
+    const sl=Math.min(10/Math.tan(sunPos.altitude*Math.PI/180),MAX_SHADOW);
+    document.getElementById("sunAltVal").textContent=sunPos.altitude.toFixed(1)+"°";
+    document.getElementById("sunAzVal").textContent=azLabel(sunPos.azimuth)+" "+Math.round(sunPos.azimuth)+"°";
+    document.getElementById("shadowLenVal").textContent=Math.round(sl)+" m";
   }
-  const val = document.getElementById("timeInput").value || "--:--";
-  document.getElementById("sunTimeVal").textContent = val;
+  document.getElementById("sunTimeVal").textContent=document.getElementById("timeInput").value||"--:--";
 }
-
 function renderResults(idx) {
-  const rd  = routeData[idx];
-  const pct = Math.round(rd.score * 100);
-
-  document.getElementById("emptyState").style.display    = "none";
-  document.getElementById("resultsPanel").style.display  = "block";
-
-  document.getElementById("shadePct").textContent  = pct + "%";
-  document.getElementById("shadeDesc").textContent = pct > 50 ? "of route in shade ✓" : "of route in shade";
-  document.getElementById("shadePct").style.color  = shadeColor(rd.score);
-  document.getElementById("shadeBarFill").style.width = pct + "%";
-  document.getElementById("shadeBarFill").style.background =
-    `linear-gradient(to right, ${shadeColor(rd.score)}, ${shadeColor(rd.score)}88)`;
-
-  document.getElementById("statDist").textContent      = formatDist(rd.distance);
-  document.getElementById("statTime").textContent      = formatTime(rd.duration);
-  document.getElementById("statTrees").textContent     = trees.length.toLocaleString();
-  document.getElementById("statBuildings").textContent = cachedBuildings.length.toLocaleString();
-
-  // Alternatives
-  const sec  = document.getElementById("altsSection");
-  const list = document.getElementById("altList");
-  if (routeData.length > 1) {
-    sec.style.display = "block";
-    list.innerHTML = "";
-    routeData.forEach((r, i) => {
-      const p    = Math.round(r.score * 100);
-      const item = document.createElement("div");
-      item.className = "alt-item" + (i === idx ? " selected" : "");
-      item.innerHTML = `
-        <div class="alt-row">
-          <span class="alt-shade" style="color:${shadeColor(r.score)}">${p}% shade</span>
-          <span class="alt-dist">${formatDist(r.distance)} · ${formatTime(r.duration)}</span>
-        </div>
-        <div class="shade-mini">
-          <div class="shade-mini-fill" style="width:${p}%;background:${shadeColor(r.score)}"></div>
-        </div>`;
-      item.onclick = () => selectRoute(i);
+  const rd=routeData[idx],pct=Math.round(rd.score*100);
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("resultsPanel").style.display="block";
+  document.getElementById("shadePct").textContent=pct+"%";
+  document.getElementById("shadePct").style.color=shadeColor(rd.score);
+  document.getElementById("shadeDesc").textContent=pct>50?"of route in shade ✓":"of route in shade";
+  document.getElementById("shadeBarFill").style.width=pct+"%";
+  document.getElementById("shadeBarFill").style.background=`linear-gradient(to right,${shadeColor(rd.score)},${shadeColor(rd.score)}88)`;
+  document.getElementById("statDist").textContent=formatDist(rd.distance);
+  document.getElementById("statTime").textContent=formatTime(rd.duration);
+  document.getElementById("statTrees").textContent=trees.length.toLocaleString();
+  document.getElementById("statBuildings").textContent=cachedBuildings.length.toLocaleString();
+  const sec=document.getElementById("altsSection"),list=document.getElementById("altList");
+  if(routeData.length>1){
+    sec.style.display="block"; list.innerHTML="";
+    routeData.forEach((r,i)=>{
+      const p=Math.round(r.score*100),item=document.createElement("div");
+      item.className="alt-item"+(i===idx?" selected":"");
+      item.innerHTML=`<div class="alt-row"><span class="alt-shade" style="color:${shadeColor(r.score)}">${p}% shade</span><span class="alt-dist">${formatDist(r.distance)} · ${formatTime(r.duration)}</span></div><div class="shade-mini"><div class="shade-mini-fill" style="width:${p}%;background:${shadeColor(r.score)}"></div></div>`;
+      item.onclick=()=>selectRoute(i);
       list.appendChild(item);
     });
-  } else {
-    sec.style.display = "none";
-  }
+  }else{sec.style.display="none";}
+  // Mobile panel toggle label
+  document.getElementById("panelToggle").textContent=`▼ ${pct}% shaded · ${formatDist(rd.distance)}`;
+  syncMobilePanel();
 }
 
 function selectRoute(idx) {
-  selectedRouteIdx = idx;
-  if (routeLayerGroup) map.removeLayer(routeLayerGroup);
-  routeLayerGroup = L.layerGroup().addTo(map);
-
-  routeData.forEach((r, i) => {
-    if (i === idx) drawShadedRoute(r.coords, trees, shadowPolys, routeLayerGroup);
-    else           drawGhostRoute(r.coords, routeLayerGroup);
-  });
-
-  if (markerA) markerA.addTo(map);
-  if (markerB) markerB.addTo(map);
-
+  if(routeLayerGroup){map.removeLayer(routeLayerGroup);}
+  routeLayerGroup=L.layerGroup().addTo(map);
+  routeData.forEach((r,i)=>{ if(i===idx)drawShadedRoute(r.coords,trees,shadowPolys,routeLayerGroup); else drawGhostRoute(r.coords,routeLayerGroup); });
+  if(markerA)markerA.addTo(map);
+  if(markerB)markerB.addTo(map);
   renderResults(idx);
 }
 
-// ── Recompute when time changes (no re-fetch) ─────────────────────────────────
+// ── Recompute for time change ─────────────────────────────────────────────────
 function recomputeForTime() {
-  if (!routeData.length) return;
-
-  const sunPos = getSunPosition(getSelectedDate(), midLat, midLon);
-  shadowPolys  = computeAllShadowPolygons(cachedBuildings, sunPos.altitude, sunPos.azimuth);
-
-  // Redraw shadow layer
-  if (shadowLayerGroup) map.removeLayer(shadowLayerGroup);
-  shadowLayerGroup = L.layerGroup().addTo(map);
-  drawBuildingShadows(shadowPolys, shadowLayerGroup);
-
-  // Re-score all routes
-  routeData = routeData.map(r => {
-    const { score, shaded, total } = scoreRoute(r.coords, trees, shadowPolys);
-    return { ...r, score, shaded, total };
-  });
-  routeData.sort((a, b) => b.score - a.score);
-
-  // Redraw route + markers
+  if(!routeData.length)return;
+  const sunPos=getSunPosition(getSelectedDate(),midLat,midLon);
+  shadowPolys=computeAllShadows(cachedBuildings,sunPos.altitude,sunPos.azimuth);
+  if(shadowLayerGroup)map.removeLayer(shadowLayerGroup);
+  shadowLayerGroup=L.layerGroup().addTo(map);
+  drawBuildingShadows(shadowPolys,shadowLayerGroup);
+  routeData=routeData.map(r=>{const{score,shaded,total}=scoreRoute(r.coords,trees,shadowPolys);return{...r,score,shaded,total};});
+  routeData.sort((a,b)=>b.score-a.score);
   selectRoute(0);
-
   renderSunPanel(sunPos);
-
-  const pct = Math.round(routeData[0].score * 100);
-  setStatus(`${pct}% shaded · ${formatDist(routeData[0].distance)} · ${formatTime(routeData[0].duration)}`);
+  setStatus(`${Math.round(routeData[0].score*100)}% shaded · ${formatDist(routeData[0].distance)} · ${formatTime(routeData[0].duration)}`);
 }
 
 // ── Main flow ─────────────────────────────────────────────────────────────────
 async function findRoute() {
-  const valA = document.getElementById("inputA").value.trim();
-  const valB = document.getElementById("inputB").value.trim();
-  if (!valA || !valB) return;
-
-  document.getElementById("routeBtn").disabled = true;
-
+  const valA=document.getElementById("inputA").value.trim();
+  const valB=document.getElementById("inputB").value.trim();
+  if(!valA||!valB)return;
+  document.getElementById("routeBtn").disabled=true;
   try {
-    // 1. Geocode
-    setStatus("Geocoding addresses…", true);
-    if (!pointA || document.getElementById("inputA").dataset.lastVal !== valA) {
-      pointA = await geocode(valA);
-      document.getElementById("inputA").dataset.lastVal = valA;
-      placeMarker("A", pointA.lat, pointA.lon, pointA.display);
+    setStatus("Geocoding addresses…",true);
+    if(!pointA||document.getElementById("inputA").dataset.lastVal!==valA){
+      pointA=await geocode(valA);
+      document.getElementById("inputA").dataset.lastVal=valA;
+      placeMarker("A",pointA.lat,pointA.lon,pointA.display);
     }
-    if (!pointB || document.getElementById("inputB").dataset.lastVal !== valB) {
-      pointB = await geocode(valB);
-      document.getElementById("inputB").dataset.lastVal = valB;
-      placeMarker("B", pointB.lat, pointB.lon, pointB.display);
+    if(!pointB||document.getElementById("inputB").dataset.lastVal!==valB){
+      pointB=await geocode(valB);
+      document.getElementById("inputB").dataset.lastVal=valB;
+      placeMarker("B",pointB.lat,pointB.lon,pointB.display);
     }
+    [routeLayerGroup,canopyLayerGroup,shadowLayerGroup].forEach(lg=>{if(lg)map.removeLayer(lg);});
+    routeLayerGroup=canopyLayerGroup=shadowLayerGroup=null; routeData=[];
 
-    // 2. Clear previous layers
-    [routeLayerGroup, canopyLayerGroup, shadowLayerGroup].forEach(lg => {
-      if (lg) map.removeLayer(lg);
-    });
-    routeLayerGroup = canopyLayerGroup = shadowLayerGroup = null;
-    routeData = [];
+    setStatus("Calculating walking routes…",true);
+    const rawRoutes=await fetchRoutes(pointA.lat,pointA.lon,pointB.lat,pointB.lon);
 
-    // 3. Fetch routes
-    setStatus("Calculating walking routes…", true);
-    const rawRoutes = await fetchRoutes(pointA.lat, pointA.lon, pointB.lat, pointB.lon);
+    const allCoords=rawRoutes.flatMap(r=>r.coords);
+    const lats=allCoords.map(c=>c[1]),lons=allCoords.map(c=>c[0]);
+    const south=Math.min(...lats),north=Math.max(...lats),west=Math.min(...lons),east=Math.max(...lons);
+    midLat=(south+north)/2; midLon=(west+east)/2;
 
-    // Bounding box of all route coords
-    const allCoords = rawRoutes.flatMap(r => r.coords);
-    const lats = allCoords.map(c => c[1]);
-    const lons = allCoords.map(c => c[0]);
-    const south = Math.min(...lats), north = Math.max(...lats);
-    const west  = Math.min(...lons), east  = Math.max(...lons);
-    midLat = (south + north) / 2;
-    midLon = (west  + east)  / 2;
+    setStatus("Fetching tree canopy data…",true);
+    trees=await fetchTrees(south,west,north,east);
 
-    // 4. Fetch trees
-    setStatus("Fetching tree canopy data…", true);
-    trees = await fetchTrees(south, west, north, east);
+    setStatus(`Fetching building heights… (${trees.length} trees found)`,true);
+    cachedBuildings=await fetchBuildings(south,west,north,east);
 
-    // 5. Fetch buildings
-    setStatus(`Fetching building heights… (${trees.length} trees found)`, true);
-    cachedBuildings = await fetchBuildings(south, west, north, east);
+    const sunPos=getSunPosition(getSelectedDate(),midLat,midLon);
+    shadowPolys=computeAllShadows(cachedBuildings,sunPos.altitude,sunPos.azimuth);
 
-    // 6. Sun position + shadow polygons
-    const sunPos = getSunPosition(getSelectedDate(), midLat, midLon);
-    shadowPolys  = computeAllShadowPolygons(cachedBuildings, sunPos.altitude, sunPos.azimuth);
+    setStatus("Scoring routes for shade…",true);
+    routeData=rawRoutes.map(r=>{const{score,shaded,total}=scoreRoute(r.coords,trees,shadowPolys);return{...r,score,shaded,total};});
+    routeData.sort((a,b)=>b.score-a.score);
 
-    setStatus("Scoring routes for shade…", true);
+    shadowLayerGroup=L.layerGroup().addTo(map);
+    drawBuildingShadows(shadowPolys,shadowLayerGroup);
+    canopyLayerGroup=L.layerGroup().addTo(map);
+    drawCanopies(trees,canopyLayerGroup);
+    routeLayerGroup=L.layerGroup().addTo(map);
+    routeData.forEach((r,i)=>{ if(i===0)drawShadedRoute(r.coords,trees,shadowPolys,routeLayerGroup); else drawGhostRoute(r.coords,routeLayerGroup); });
+    if(markerA)markerA.addTo(map);
+    if(markerB)markerB.addTo(map);
 
-    // 7. Score each route
-    routeData = rawRoutes.map(r => {
-      const { score, shaded, total } = scoreRoute(r.coords, trees, shadowPolys);
-      return { ...r, score, shaded, total };
-    });
-    routeData.sort((a, b) => b.score - a.score);
-    selectedRouteIdx = 0;
-
-    // 8. Draw layers (order: shadows → canopies → route → markers)
-    shadowLayerGroup = L.layerGroup().addTo(map);
-    drawBuildingShadows(shadowPolys, shadowLayerGroup);
-
-    canopyLayerGroup = L.layerGroup().addTo(map);
-    drawCanopies(trees, canopyLayerGroup);
-
-    routeLayerGroup = L.layerGroup().addTo(map);
-    routeData.forEach((r, i) => {
-      if (i === 0) drawShadedRoute(r.coords, trees, shadowPolys, routeLayerGroup);
-      else         drawGhostRoute(r.coords, routeLayerGroup);
-    });
-
-    if (markerA) markerA.addTo(map);
-    if (markerB) markerB.addTo(map);
-
-    // 9. Fit map
-    map.fitBounds(
-      L.latLngBounds([south, west], [north, east]),
-      { padding: [60, 60] }
-    );
-
-    // 10. Update panel
+    map.fitBounds(L.latLngBounds([south,west],[north,east]),{padding:[60,60]});
     renderSunPanel(sunPos);
     renderResults(0);
 
-    const pct  = Math.round(routeData[0].score * 100);
-    const note = sunPos.altitude <= 1 ? " (sun below horizon)" : "";
-    setStatus(
-      `Best route: ${pct}% shaded · ${formatDist(routeData[0].distance)} · ${formatTime(routeData[0].duration)}` +
-      ` — ${trees.length} trees, ${cachedBuildings.length} buildings${note}`
-    );
-
-  } catch (err) {
-    setStatus("Error: " + err.message);
+    const pct=Math.round(routeData[0].score*100);
+    const night=sunPos.altitude<=1?" (sun below horizon)":"";
+    setStatus(`Best route: ${pct}% shaded · ${formatDist(routeData[0].distance)} · ${formatTime(routeData[0].duration)} — ${trees.length} trees, ${cachedBuildings.length} buildings${night}`);
+  }catch(err){
+    setStatus("Error: "+err.message);
     console.error(err);
-  } finally {
-    document.getElementById("routeBtn").disabled = false;
+  }finally{
+    document.getElementById("routeBtn").disabled=false;
   }
 }
 </script>
