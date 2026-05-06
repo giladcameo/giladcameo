@@ -262,9 +262,10 @@
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
-const VALHALLA_URL = "https://valhalla1.openstreetmap.de/isochrone";
-const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+const _B = window.BACKEND_URL || '';
+const OVERPASS_URL  = _B ? `${_B}/api/overpass`         : "https://overpass-api.de/api/interpreter";
+const VALHALLA_URL  = _B ? `${_B}/api/valhalla/isochrone` : "https://valhalla1.openstreetmap.de/isochrone";
+const NOMINATIM_URL = _B ? `${_B}/api/nominatim/search`  : "https://nominatim.openstreetmap.org/search";
 
 const CATEGORIES = [
   {

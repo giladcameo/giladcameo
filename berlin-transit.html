@@ -250,8 +250,13 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
-const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
+// Set BACKEND_URL to your deployed backend to avoid rate-limits and CORS issues.
+// e.g. https://giladcameo-api.onrender.com
+// Leave empty to call the external APIs directly (works on HTTPS pages).
+const BACKEND_URL = window.BACKEND_URL || '';
+
+const API    = BACKEND_URL ? `${BACKEND_URL}/api/vbb` : 'https://v6.vbb.transport.rest';
+const API_DB = BACKEND_URL ? `${BACKEND_URL}/api/db`  : 'https://v6.db.transport.rest';
 const REFRESH_MS = 10000;
 
 

@@ -233,6 +233,9 @@ footer span:first-child { flex: 1; }
 const REFRESH_MS = 30_000;
 let currentStop = null, refreshTimer = null, searchTimer = null;
 
+const BACKEND_URL = window.BACKEND_URL || '';
+const VBB_BASE = BACKEND_URL ? `${BACKEND_URL}/api/vbb` : 'https://v6.vbb.transport.rest';
+
 /* ── Clock ── */
 const clockEl = document.getElementById('clock');
 function tick() {
@@ -286,7 +289,7 @@ async function doSearch(query) {
   dropdown.classList.add('open');
   try {
     const r = await fetch(
-      `https://v6.vbb.transport.rest/locations?query=${encodeURIComponent(query)}&results=10&stops=true&addresses=false&poi=false`
+      `${VBB_BASE}/locations?query=${encodeURIComponent(query)}&results=10&stops=true&addresses=false&poi=false`
     );
     const data = await r.json();
     const results = (Array.isArray(data) ? data : [])
@@ -352,7 +355,7 @@ async function loadDepartures() {
 /* ── Fetch: VBB (Berlin & Brandenburg) ── */
 async function fetchDepsVBB(id) {
   const r = await fetch(
-    `https://v6.vbb.transport.rest/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
+    `${VBB_BASE}/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
   );
   const data = await r.json();
   return (data.departures || (Array.isArray(data) ? data : [])).map(d => ({

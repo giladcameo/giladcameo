@@ -511,10 +511,11 @@
 
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────────
-const NOMINATIM   = "https://nominatim.openstreetmap.org/search";
-const NOMINATIM_R = "https://nominatim.openstreetmap.org/reverse";
-const OSRM        = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
-const OVERPASS    = "https://overpass-api.de/api/interpreter";
+const _B = window.BACKEND_URL || '';
+const NOMINATIM   = _B ? `${_B}/api/nominatim/search`  : "https://nominatim.openstreetmap.org/search";
+const NOMINATIM_R = _B ? `${_B}/api/nominatim/reverse` : "https://nominatim.openstreetmap.org/reverse";
+const OSRM        = _B ? `${_B}/api/osrm`              : "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
+const OVERPASS    = _B ? `${_B}/api/overpass`          : "https://overpass-api.de/api/interpreter";
 const CANOPY_R    = 9;    // default tree canopy radius (m)
 const SAMPLE_INT  = 8;    // sample spacing for shade scoring (m)
 const DRAW_INT    = 5;    // sample spacing for route coloring (m)
