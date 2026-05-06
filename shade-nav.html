@@ -164,6 +164,12 @@
     .route-btn:active { transform: scale(.97); }
     .route-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
 
+    .sn-support {
+      text-decoration: none; font-size: 18px; line-height: 1;
+      flex-shrink: 0; opacity: .6; transition: opacity .15s;
+    }
+    .sn-support:hover { opacity: 1; }
+
     /* ── Status bar ───────────────────────────────── */
     #statusBar {
       background: #0d1117;
@@ -404,6 +410,7 @@
     </div>
     <button class="route-btn" id="routeBtn" onclick="findRoute()" disabled>Find Shady Route</button>
   </div>
+  <a class="sn-support" href="https://ko-fi.com/giladcameo" target="_blank" rel="noopener noreferrer" title="Support this project">☕</a>
 </header>
 
 <div id="statusBar">

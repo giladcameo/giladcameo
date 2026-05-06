@@ -136,6 +136,9 @@
     .theme-btn{background:none;border:1px solid var(--border);color:var(--text);
       border-radius:8px;padding:3px 8px;cursor:pointer;font-size:15px;line-height:1;
       display:flex;align-items:center;}
+    .support-link{text-decoration:none;font-size:16px;line-height:1;opacity:.7;
+      transition:opacity .15s;}
+    .support-link:hover{opacity:1;}
 
     /* Debug badge */
     #debugBadge{position:fixed;bottom:10px;right:10px;z-index:500;
@@ -210,6 +213,7 @@
   <div class="clock" id="clock">--:--:--</div>
   <div class="pulse-wrap"><div class="pulse"></div><span>10s</span></div>
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+  <a class="support-link" href="https://ko-fi.com/giladcameo" target="_blank" rel="noopener noreferrer" title="Support this project">☕</a>
 </header>
 
 <!-- Filter chips (top-right) -->

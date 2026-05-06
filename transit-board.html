@@ -102,6 +102,11 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
   font-variant-numeric: tabular-nums; letter-spacing: -.5px;
   flex-shrink: 0; color: var(--text);
 }
+.tb-support {
+  text-decoration: none; font-size: 18px; line-height: 1;
+  flex-shrink: 0; opacity: .6; transition: opacity .15s;
+}
+.tb-support:hover { opacity: 1; }
 
 /* ══ COL LABELS ══ */
 .col-labels {
@@ -204,6 +209,7 @@ footer span:first-child { flex: 1; }
       <button class="s-clear" id="clearBtn" title="Clear">✕</button>
     </div>
     <div class="bh-clock" id="clock">--:--</div>
+    <a class="tb-support" href="https://ko-fi.com/giladcameo" target="_blank" rel="noopener noreferrer" title="Support this project">☕</a>
     <!-- Dropdown anchors to header -->
     <div class="dropdown" id="dropdown"></div>
   </div>

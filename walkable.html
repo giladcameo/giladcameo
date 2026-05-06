@@ -117,6 +117,12 @@
     #searchBtn:active { transform: scale(.97); }
     #searchBtn:disabled { background: #334155; cursor: not-allowed; }
 
+    .w-support {
+      text-decoration: none; font-size: 18px; line-height: 1;
+      flex-shrink: 0; opacity: .6; transition: opacity .15s;
+    }
+    .w-support:hover { opacity: 1; }
+
     /* ── Status bar ─────────────────────────────────── */
     #statusBar {
       background: #1e293b;
@@ -242,6 +248,7 @@
     </div>
     <button id="searchBtn" onclick="run()">Search</button>
   </div>
+  <a class="w-support" href="https://ko-fi.com/giladcameo" target="_blank" rel="noopener noreferrer" title="Support this project">☕</a>
 </header>
 
 <div id="statusBar">

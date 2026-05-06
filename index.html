@@ -48,6 +48,20 @@
       outline-offset: 3px;
       border-radius: 3px;
     }
+    .nav-support {
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border: 1px solid #f0a800;
+      color: #f0a800;
+      background: transparent;
+      border-radius: 3px;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .nav-support:hover { background: #f0a800; color: #0d1117; }
 
     /* HERO */
     .hero {
@@ -359,6 +373,119 @@
       text-decoration: none;
     }
     footer a:hover { color: #f0a800; }
+
+    /* HIRE / SERVICES */
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 680px) { .services-grid { grid-template-columns: 1fr; } }
+    .service-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .service-card:hover { border-color: #f0a800; }
+    .service-icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .service-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #e6edf3;
+    }
+    .service-card p {
+      font-size: 12px;
+      color: #8b949e;
+      line-height: 1.7;
+    }
+    .hire-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      background: #f0a800;
+      color: #0d1117;
+      font-weight: 700;
+      border-radius: 3px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .hire-cta:hover { opacity: 0.88; }
+
+    /* SPONSOR */
+    .sponsor-bar {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px 28px;
+      flex-wrap: wrap;
+    }
+    .sponsor-bar p {
+      font-size: 13px;
+      color: #8b949e;
+      line-height: 1.6;
+      flex: 1;
+      min-width: 200px;
+    }
+    .sponsor-bar p strong { color: #e6edf3; }
+    .sponsor-btn {
+      font-family: monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border: 1px solid #30363d;
+      color: #b0bec5;
+      background: transparent;
+      border-radius: 3px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .sponsor-btn:hover { border-color: #f0a800; color: #f0a800; }
+
+    /* SUPPORT */
+    .support-box {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .support-box p {
+      font-size: 14px;
+      color: #8b949e;
+      margin-bottom: 20px;
+      line-height: 1.7;
+    }
+    .kofi-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border: 1px solid #f0a800;
+      color: #f0a800;
+      background: transparent;
+      border-radius: 3px;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .kofi-btn:hover { background: #f0a800; color: #0d1117; }
   </style>
 </head>
 <body>
@@ -368,8 +495,10 @@
   <ul>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#about">About</a></li>
+    <li><a href="#hire">Hire Me</a></li>
     <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
   </ul>
+  <a class="nav-support" href="https://ko-fi.com/giladcameo" target="_blank" aria-label="Support this project on Ko-fi">☕ Support</a>
 </nav>
 
 <div class="hero">
@@ -568,6 +697,42 @@
         <li>Leaflet &middot; Geospatial Tools</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<section class="section" id="hire" aria-labelledby="hire-heading">
+  <div class="section-label" aria-hidden="true">// services</div>
+  <h2 id="hire-heading">Hire Me</h2>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon">🗺️</div>
+      <h4>Custom Transit Dashboards</h4>
+      <p>Real-time departure boards, route maps, and live transit visualizations built with GTFS, open APIs, and Leaflet.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">📍</div>
+      <h4>Geospatial Web Tools</h4>
+      <p>Location-aware apps, walkability analysis, isochrone mapping, and urban data visualizations for planners and startups.</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">📊</div>
+      <h4>Urban Data Analysis</h4>
+      <p>Open data pipelines, QGIS/ArcGIS analysis, and custom reports for city agencies, NGOs, and mobility companies.</p>
+    </div>
+  </div>
+  <a class="hire-cta" href="mailto:gilad@example.com" aria-label="Contact Gilad to hire him">Get in Touch &rarr;</a>
+</section>
+
+<section class="section" aria-labelledby="sponsor-heading">
+  <div class="section-label" aria-hidden="true">// sponsorship</div>
+  <h2 id="sponsor-heading">Support the Tools</h2>
+  <div class="sponsor-bar" style="margin-bottom:16px;">
+    <p><strong>Sponsor a tool.</strong> These apps are free and open to everyone. If your company works in mobility, urban planning, or transit tech and wants visibility on a tool used by commuters across Berlin and Tel Aviv, get in touch about sponsorship.</p>
+    <a class="sponsor-btn" href="mailto:gilad@example.com">Become a Sponsor</a>
+  </div>
+  <div class="support-box">
+    <p>If these tools save you time on your commute or inspire your own project,<br>a coffee goes a long way toward keeping the APIs running.</p>
+    <a class="kofi-btn" href="https://ko-fi.com/giladcameo" target="_blank" rel="noopener noreferrer" aria-label="Support on Ko-fi (opens in new tab)">☕ Buy Me a Coffee</a>
   </div>
 </section>
 
