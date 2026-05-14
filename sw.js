@@ -1,5 +1,5 @@
-const CACHE = 'berlin-transit-v1';
-const SHELL = ['./'];
+const CACHE = 'berlin-transit-v2';
+const SHELL = ['./', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

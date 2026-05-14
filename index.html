@@ -455,18 +455,47 @@ function fmtTime(iso) {
 }
 function showState(msg) {
   const board = document.getElementById('board');
-  board.innerHTML = msg === 'loading'
-    ? '<div class="state"><div class="spinner"></div>Loading departures…</div>'
+  const spinners = { loading: 'Loading departures…', locating: 'Detecting your location…' };
+  board.innerHTML = spinners[msg]
+    ? `<div class="state"><div class="spinner"></div>${spinners[msg]}</div>`
     : `<div class="state">${h(msg)}</div>`;
 }
 function h(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── Auto-locate on load, fall back to search ── */
+async function autoLocate() {
+  if (!navigator.geolocation) return;
+  showState('locating');
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej,
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+    const r = await fetch(
+      `https://v6.vbb.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=1&distance=1000`
+    );
+    const data = await r.json();
+    const stop = Array.isArray(data) && data[0];
+    if (stop) {
+      selectStation({ id: stop.id, name: stop.name });
+    } else {
+      showState('📍 No VBB stop found within 1 km.\nSearch for a station above.');
+    }
+  } catch {
+    showState('🔍\nSearch for a Berlin station\nto see live departures');
+    setTimeout(() => searchInput.focus(), 150);
+  }
+}
+
 /* ── Register Service Worker ── */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+autoLocate();
 </script>
 </body>
 </html>
