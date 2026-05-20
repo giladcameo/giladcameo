@@ -11,8 +11,8 @@
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      background: #f0f5fb;
+      color: #0d1f3c;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -21,8 +21,8 @@
 
     /* ── Header ──────────────────────────────────── */
     header {
-      background: #161b22;
-      border-bottom: 1px solid #21262d;
+      background: #ffffff;
+      border-bottom: 1px solid #c0d4e8;
       padding: 10px 20px;
       display: flex;
       align-items: center;
@@ -71,17 +71,17 @@
 
     .point-field input[type="text"] {
       flex: 1;
-      background: #0d1117;
-      border: 1px solid #30363d;
+      background: #ffffff;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
-      color: #e6edf3;
+      color: #0d1f3c;
       padding: 8px 12px;
       font-size: 13px;
       outline: none;
       transition: border-color .2s;
     }
     .point-field input[type="text"]:focus { border-color: #22c55e; }
-    .point-field input[type="text"]::placeholder { color: #484f58; }
+    .point-field input[type="text"]::placeholder { color: #9ab0c8; }
     .point-field input[type="text"].picking {
       border-color: #f59e0b;
       animation: pulse-border 1s infinite;
@@ -93,9 +93,9 @@
 
     .pick-btn {
       background: none;
-      border: 1px solid #30363d;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
-      color: #8b949e;
+      color: #5a7a9e;
       cursor: pointer;
       padding: 6px 8px;
       font-size: 14px;
@@ -111,8 +111,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      background: #0d1117;
-      border: 1px solid #30363d;
+      background: #f8fafc;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
       padding: 5px 10px;
       flex-shrink: 0;
@@ -121,7 +121,7 @@
     .time-ctrl input[type="time"] {
       background: transparent;
       border: none;
-      color: #fcd34d;
+      color: #b45309;
       font-size: 13px;
       font-family: monospace;
       font-weight: 700;
@@ -130,14 +130,14 @@
       cursor: pointer;
     }
     .time-ctrl input[type="time"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) opacity(.4);
+      filter: opacity(.5);
       cursor: pointer;
     }
     .now-btn {
       background: none;
-      border: 1px solid #30363d;
+      border: 1px solid #c0d4e8;
       border-radius: 4px;
-      color: #8b949e;
+      color: #5a7a9e;
       font-size: 10px;
       font-family: monospace;
       padding: 3px 7px;
@@ -145,11 +145,11 @@
       transition: color .15s, border-color .15s;
       letter-spacing: 1px;
     }
-    .now-btn:hover { color: #fcd34d; border-color: #fcd34d; }
+    .now-btn:hover { color: #b45309; border-color: #b45309; }
 
     .route-btn {
-      background: #22c55e;
-      color: #0d1117;
+      background: #16a34a;
+      color: #ffffff;
       border: none;
       border-radius: 6px;
       padding: 9px 18px;
@@ -162,15 +162,15 @@
     }
     .route-btn:hover { background: #4ade80; }
     .route-btn:active { transform: scale(.97); }
-    .route-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+    .route-btn:disabled { background: #c0d4e8; color: #9ab0c8; cursor: not-allowed; }
 
     /* ── Status bar ───────────────────────────────── */
     #statusBar {
-      background: #0d1117;
-      border-bottom: 1px solid #21262d;
+      background: #f0f5fb;
+      border-bottom: 1px solid #c0d4e8;
       padding: 6px 20px;
       font-size: 12px;
-      color: #8b949e;
+      color: #5a7a9e;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -179,7 +179,7 @@
     }
     .spinner {
       width: 12px; height: 12px;
-      border: 2px solid #21262d;
+      border: 2px solid #c0d4e8;
       border-top-color: #22c55e;
       border-radius: 50%;
       animation: spin .6s linear infinite;
@@ -199,8 +199,8 @@
     #panel {
       width: 280px;
       min-width: 280px;
-      background: #161b22;
-      border-right: 1px solid #21262d;
+      background: #ffffff;
+      border-right: 1px solid #c0d4e8;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
@@ -209,13 +209,13 @@
 
     .panel-section {
       padding: 14px 16px;
-      border-bottom: 1px solid #21262d;
+      border-bottom: 1px solid #c0d4e8;
     }
     .panel-section h3 {
       font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #484f58;
+      color: #9ab0c8;
       margin-bottom: 10px;
       font-family: monospace;
     }
@@ -226,14 +226,14 @@
       display: flex;
       justify-content: space-between;
       font-size: 12px;
-      color: #8b949e;
+      color: #5a7a9e;
       margin-bottom: 6px;
     }
     .shade-bar-label strong { color: #22c55e; font-size: 20px; }
     .shade-bar {
       height: 10px;
       border-radius: 5px;
-      background: #21262d;
+      background: #e0eaf4;
       overflow: hidden;
     }
     .shade-bar-fill {
@@ -249,21 +249,21 @@
       gap: 8px;
     }
     .stat-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
+      background: #f8fafc;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
       padding: 9px 11px;
     }
     .stat-box .val {
       font-size: 17px;
       font-weight: 700;
-      color: #e6edf3;
+      color: #0d1f3c;
       line-height: 1.1;
       font-family: monospace;
     }
     .stat-box .lbl {
       font-size: 9px;
-      color: #484f58;
+      color: #9ab0c8;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-top: 3px;
@@ -278,8 +278,8 @@
       margin-bottom: 10px;
     }
     .sun-box {
-      background: #0d1117;
-      border: 1px solid #21262d;
+      background: #f8fafc;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
       padding: 9px 11px;
     }
@@ -291,7 +291,7 @@
     }
     .sun-box .lbl {
       font-size: 9px;
-      color: #484f58;
+      color: #9ab0c8;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-top: 3px;
@@ -299,7 +299,7 @@
     }
     .night-note {
       font-size: 12px;
-      color: #6e7681;
+      color: #9ab0c8;
       font-style: italic;
       text-align: center;
       padding: 4px 0;
@@ -308,14 +308,14 @@
     /* Alternatives */
     .alt-list { display: flex; flex-direction: column; gap: 8px; }
     .alt-item {
-      background: #0d1117;
-      border: 1px solid #21262d;
+      background: #f8fafc;
+      border: 1px solid #c0d4e8;
       border-radius: 6px;
       padding: 10px 12px;
       cursor: pointer;
       transition: border-color .15s;
     }
-    .alt-item:hover { border-color: #30363d; }
+    .alt-item:hover { border-color: #aac4df; }
     .alt-item.selected { border-color: #22c55e; }
     .alt-item .alt-row {
       display: flex;
@@ -323,12 +323,12 @@
       align-items: center;
     }
     .alt-item .alt-shade { font-size: 13px; font-weight: 700; }
-    .alt-item .alt-dist { font-size: 11px; color: #8b949e; font-family: monospace; }
+    .alt-item .alt-dist { font-size: 11px; color: #5a7a9e; font-family: monospace; }
     .alt-item .shade-mini {
       margin-top: 6px;
       height: 4px;
       border-radius: 2px;
-      background: #21262d;
+      background: #e0eaf4;
       overflow: hidden;
     }
     .alt-item .shade-mini-fill { height: 100%; border-radius: 2px; }
@@ -340,7 +340,7 @@
       align-items: center;
       gap: 10px;
       font-size: 12px;
-      color: #8b949e;
+      color: #5a7a9e;
     }
     .legend-swatch {
       width: 28px; height: 6px;
@@ -359,7 +359,7 @@
       text-align: center;
     }
     #emptyState .icon { font-size: 36px; margin-bottom: 12px; }
-    #emptyState p { font-size: 13px; color: #484f58; line-height: 1.6; }
+    #emptyState p { font-size: 13px; color: #9ab0c8; line-height: 1.6; }
 
     /* ── Map ──────────────────────────────────────── */
     #map { flex: 1; z-index: 0; cursor: default; }
@@ -367,13 +367,13 @@
     #map.picking-cursor .leaflet-interactive { cursor: crosshair !important; }
 
     .leaflet-popup-content-wrapper {
-      background: #161b22;
-      color: #e6edf3;
-      border: 1px solid #30363d;
+      background: #ffffff;
+      color: #0d1f3c;
+      border: 1px solid #c0d4e8;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,.5);
     }
-    .leaflet-popup-tip { background: #161b22; }
+    .leaflet-popup-tip { background: #ffffff; }
     .leaflet-popup-content { margin: 10px 14px; font-size: 13px; }
 
     @media (max-width: 640px) {
@@ -538,7 +538,7 @@ let selectedRouteIdx = 0;
 // ── Map init ──────────────────────────────────────────────────────────────────
 const canvasRenderer = L.canvas({ padding: 0.5 });
 const map = L.map("map", { zoomControl: true }).setView([52.52, 13.405], 13);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
   attribution: "© OpenStreetMap © CARTO",
   maxZoom: 19,
 }).addTo(map);

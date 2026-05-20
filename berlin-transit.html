@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -209,7 +209,7 @@
   <div class="spacer"></div>
   <div class="clock" id="clock">--:--:--</div>
   <div class="pulse-wrap"><div class="pulse"></div><span>10s</span></div>
-  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
 </header>
 
 <!-- Filter chips (top-right) -->
@@ -280,7 +280,7 @@ let activeRouteLayer = null;
 let activeRouteTripId = null;
 let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
 let map, tileLayer, stationMarker=null, vehicleMarkers={};
-let isDark = true;
+let isDark = false;
 
 /* ── CLOCK ── */
 setInterval(()=>{
@@ -296,7 +296,7 @@ const TILES = {
 
 function initMap(){
   map = L.map('map',{zoomControl:true}).setView([52.52,13.405],12);
-  tileLayer = L.tileLayer(TILES.dark,{
+  tileLayer = L.tileLayer(TILES.light,{
     attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
   }).addTo(map);
 }

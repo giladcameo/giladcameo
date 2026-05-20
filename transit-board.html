@@ -5,24 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Berlin Transit Board</title>
   <link rel="manifest" href="manifest.json"/>
-  <meta name="theme-color" content="#001640"/>
+  <meta name="theme-color" content="#0077b6"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Berlin Transit"/>
   <link rel="apple-touch-icon" href="icon.png"/>
   <style>
 :root {
-  --bg:       #001030;
-  --panel:    #001d50;
-  --hdr:      #001640;
-  --next:     #0057b5;
-  --sep:      rgba(255,255,255,0.1);
-  --text:     #ffffff;
-  --sub:      rgba(255,255,255,0.5);
-  --green:    #5cff7a;
-  --red:      #ff5252;
-  --yellow:   #ffcc44;
+  --bg:       #f0f5fb;
+  --panel:    #ffffff;
+  --hdr:      #ffffff;
+  --next:     #0077b6;
+  --sep:      rgba(0,100,160,0.12);
+  --text:     #0d1f3c;
+  --sub:      #5a7a9e;
+  --green:    #15803d;
+  --red:      #dc2626;
+  --yellow:   #b45309;
   --font:     'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,21 +47,21 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 .search-wrap input {
   width: 100%;
   padding: 9px 32px 9px 36px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
+  background: #f0f5fb;
+  border: 1px solid #c0d4e8;
   border-radius: 6px;
-  color: #fff; font-family: var(--font); font-size: 14px;
+  color: var(--text); font-family: var(--font); font-size: 14px;
   outline: none; transition: border-color .15s, background .15s;
 }
-.search-wrap input::placeholder { color: rgba(255,255,255,.3); }
-.search-wrap input:focus { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.15); }
+.search-wrap input::placeholder { color: #9ab0c8; }
+.search-wrap input:focus { border-color: #0077b6; background: #ffffff; }
 .s-icon {
   position: absolute; left: 10px; pointer-events: none;
-  color: rgba(255,255,255,.35); width: 16px; height: 16px;
+  color: #9ab0c8; width: 16px; height: 16px;
 }
 .s-clear {
   position: absolute; right: 8px;
-  background: none; border: none; color: rgba(255,255,255,.4);
+  background: none; border: none; color: #9ab0c8;
   font-size: 15px; line-height: 1; cursor: pointer; padding: 2px 4px;
   opacity: 0; pointer-events: none; transition: opacity .15s;
 }
@@ -71,27 +71,27 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 .dropdown {
   position: absolute; top: calc(100% - 1px); left: 16px; right: 16px;
   z-index: 300;
-  background: #001a44;
-  border: 1px solid rgba(255,255,255,.18); border-top: none;
+  background: #ffffff;
+  border: 1px solid #c0d4e8; border-top: none;
   border-radius: 0 0 8px 8px;
   max-height: 320px; overflow-y: auto;
   display: none;
-  box-shadow: 0 12px 28px rgba(0,0,0,.6);
-  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+  box-shadow: 0 12px 28px rgba(0,100,160,.12);
+  scrollbar-width: thin; scrollbar-color: rgba(0,100,160,.15) transparent;
 }
 .dropdown.open { display: block; }
 .d-row {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 14px; cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid rgba(0,100,160,.07);
   transition: background .1s;
 }
 .d-row:last-child { border-bottom: none; }
-.d-row:hover { background: rgba(255,255,255,.09); }
+.d-row:hover { background: rgba(0,100,160,.04); }
 .d-name { flex: 1; font-size: 14px; }
 .d-tag {
-  font-size: 10px; color: rgba(255,255,255,.4);
-  border: 1px solid rgba(255,255,255,.15);
+  font-size: 10px; color: #5a7a9e;
+  border: 1px solid #c0d4e8;
   border-radius: 3px; padding: 1px 6px; white-space: nowrap;
 }
 .d-msg { padding: 14px; font-size: 12px; color: var(--sub); text-align: center; }
@@ -103,24 +103,15 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
   flex-shrink: 0; color: var(--text);
 }
 
-/* ══ COL LABELS ══ */
-.col-labels {
-  flex-shrink: 0;
-  display: grid; grid-template-columns: 52px 1fr 88px;
-  padding: 4px 20px;
-  background: #001234; border-bottom: 1px solid var(--sep);
-  font-size: 9px; letter-spacing: .2em;
-  text-transform: uppercase; color: var(--sub);
-}
-.col-labels span:last-child { text-align: right; }
+/* ══ COL LABELS ══ (see .col-labels rule near footer) */
 
 /* ══ BOARD ══ */
 .b-scroll {
   flex: 1; overflow-y: auto;
-  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
+  scrollbar-width: thin; scrollbar-color: rgba(0,100,160,.15) transparent;
 }
 .b-scroll::-webkit-scrollbar { width: 3px; }
-.b-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+.b-scroll::-webkit-scrollbar-thumb { background: rgba(0,100,160,.15); }
 
 /* Next row */
 .dep-next {
@@ -144,7 +135,7 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
   padding: 11px 20px; border-bottom: 1px solid var(--sep);
   transition: background .1s; animation: fadeIn .2s ease;
 }
-.dep-row:hover  { background: rgba(255,255,255,.05); }
+.dep-row:hover  { background: rgba(0,100,160,.04); }
 .dep-row .badge { width: 44px; height: 44px; font-size: 13px; border-radius: 5px; flex-shrink: 0; }
 .dep-row .d-info { flex: 1; min-width: 0; }
 .dep-row .d-dest { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -172,10 +163,36 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 }
 .spinner {
   width: 22px; height: 22px;
-  border: 2px solid rgba(255,255,255,.2); border-top-color: #fff;
+  border: 2px solid rgba(0,100,160,.15); border-top-color: #0077b6;
   border-radius: 50%; animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Location button */
+.loc-btn {
+  background: none;
+  border: 1px solid var(--sep);
+  border-radius: 6px;
+  color: var(--sub);
+  padding: 8px 9px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.loc-btn:hover { color: #0077b6; border-color: #0077b6; }
+.loc-btn.locating { color: #0077b6; border-color: #0077b6; animation: spin .7s linear infinite; }
+
+/* Col-labels */
+.col-labels {
+  flex-shrink: 0;
+  display: grid; grid-template-columns: 52px 1fr 88px;
+  padding: 4px 20px;
+  background: #f0f5fb; border-bottom: 1px solid var(--sep);
+  font-size: 9px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--sub);
+}
+.col-labels span:last-child { text-align: right; }
 
 /* Footer */
 footer {
@@ -184,7 +201,7 @@ footer {
   padding: 0 20px;
   padding-bottom: env(safe-area-inset-bottom);
   min-height: calc(26px + env(safe-area-inset-bottom));
-  background: #001234; border-top: 1px solid var(--sep);
+  background: #f0f5fb; border-top: 1px solid var(--sep);
   font-size: 10px; color: var(--sub);
 }
 footer span:first-child { flex: 1; }
@@ -203,6 +220,12 @@ footer span:first-child { flex: 1; }
       <input id="searchInput" type="text" placeholder="Search station…" autocomplete="off" spellcheck="false"/>
       <button class="s-clear" id="clearBtn" title="Clear">✕</button>
     </div>
+    <button class="loc-btn" id="locBtn" onclick="locateNearest()" title="Find nearest station">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+        <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/>
+      </svg>
+    </button>
     <div class="bh-clock" id="clock">--:--</div>
     <!-- Dropdown anchors to header -->
     <div class="dropdown" id="dropdown"></div>
@@ -461,6 +484,30 @@ function showState(msg) {
 }
 function h(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Auto-locate nearest station ── */
+async function locateNearest() {
+  const btn = document.getElementById('locBtn');
+  if (btn.classList.contains('locating')) return;
+  btn.classList.add('locating');
+  showState('loading');
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 30000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+    const r = await fetch(
+      `https://v6.vbb.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=1&distance=2000`
+    );
+    const stops = await r.json();
+    if (!Array.isArray(stops) || !stops.length) { showState('No stations found nearby'); return; }
+    selectStation({ id: stops[0].id, name: stops[0].name });
+  } catch (e) {
+    showState(e.code === 1 ? 'Location access denied' : 'Could not get your location');
+  } finally {
+    btn.classList.remove('locating');
+  }
 }
 
 /* ── Register Service Worker ── */
