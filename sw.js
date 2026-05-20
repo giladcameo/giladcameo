@@ -1,9 +1,12 @@
-const CACHE = 'berlin-transit-v1';
-const SHELL = ['./'];
+const CACHE = 'giladcameo-v3';
+const STATIC = [
+  './icon.png',
+  './manifest.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL))
+    caches.open(CACHE).then(c => c.addAll(STATIC))
   );
   self.skipWaiting();
 });
@@ -17,11 +20,10 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-/* Network-first for API calls, cache-first for shell */
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  /* Always go network-first for VBB API */
+  /* Always network-first for VBB API */
   if (url.includes('vbb.transport.rest')) {
     e.respondWith(
       fetch(e.request).catch(() =>
@@ -33,7 +35,15 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* Cache-first for the app shell */
+  /* Network-first for all HTML pages — always get the latest version */
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  /* Cache-first for static assets (images, manifest) */
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
