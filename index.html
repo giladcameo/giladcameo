@@ -8,8 +8,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #071e3d;
-      color: #e6edf3;
+      background: #f0f5fb;
+      color: #0d1f3c;
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
     }
@@ -21,16 +21,16 @@
       justify-content: space-between;
       padding: 0 40px;
       height: 56px;
-      border-bottom: 1px solid #1e3d6b;
-      background: #071e3d;
+      border-bottom: 1px solid #c0d4e8;
+      background: #ffffff;
+      box-shadow: 0 1px 8px rgba(0,100,160,0.07);
     }
     .logo {
       font-family: monospace;
       font-size: 16px;
       font-weight: 700;
-      color: #00e5ff;
+      color: #0077b6;
       letter-spacing: 2px;
-      text-shadow: 0 0 18px rgba(0,229,255,0.7);
     }
     nav ul {
       list-style: none;
@@ -38,14 +38,14 @@
       gap: 28px;
     }
     nav a {
-      color: #c8d6e5;
+      color: #3d5a80;
       text-decoration: none;
       font-size: 14px;
       transition: color 0.15s;
     }
-    nav a:hover { color: #00e5ff; }
+    nav a:hover { color: #0077b6; }
     a:focus-visible {
-      outline: 2px solid #00e5ff;
+      outline: 2px solid #0077b6;
       outline-offset: 3px;
       border-radius: 3px;
     }
@@ -62,9 +62,9 @@
       position: absolute;
       inset: 0;
       background-image:
-        radial-gradient(ellipse 70% 50% at 30% 60%, rgba(0,229,255,0.07) 0%, transparent 70%),
-        linear-gradient(rgba(0,229,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.05) 1px, transparent 1px);
+        radial-gradient(ellipse 70% 50% at 30% 60%, rgba(0,119,182,0.06) 0%, transparent 70%),
+        linear-gradient(rgba(0,119,182,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,119,182,0.07) 1px, transparent 1px);
       background-size: auto, 44px 44px, 44px 44px;
       pointer-events: none;
       mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
@@ -74,7 +74,7 @@
       font-size: 11px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #0077b6;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -84,8 +84,8 @@
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #3fb950;
-      box-shadow: 0 0 8px #3fb950;
+      background: #16a34a;
+      box-shadow: 0 0 8px #16a34a;
       animation: blink 2s infinite;
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
@@ -96,25 +96,26 @@
       font-weight: 800;
       line-height: 1.05;
       margin-bottom: 16px;
+      color: #0d1f3c;
     }
-    .hero h1 span { color: #00e5ff; text-shadow: 0 0 40px rgba(0,229,255,0.5); }
+    .hero h1 span { color: #0077b6; }
 
     .hero-sub {
       font-family: monospace;
       font-size: 13px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #c8d6e5;
+      color: #3d5a80;
       margin-bottom: 24px;
     }
     .hero-bio {
       font-size: 17px;
-      color: #c8d6e5;
+      color: #3d5a80;
       line-height: 1.8;
       max-width: 580px;
       margin-bottom: 32px;
     }
-    .hero-bio strong { color: #e6edf3; }
+    .hero-bio strong { color: #0d1f3c; }
 
     .tags {
       display: flex;
@@ -126,9 +127,10 @@
       font-size: 11px;
       letter-spacing: 1px;
       padding: 5px 14px;
-      border: 1px solid #1e3d6b;
-      color: #c8d6e5;
+      border: 1px solid #c0d4e8;
+      color: #3d5a80;
       border-radius: 20px;
+      background: #ffffff;
     }
 
     /* SECTION */
@@ -136,21 +138,21 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 60px 40px;
-      border-top: 1px solid rgba(0,229,255,0.15);
+      border-top: 1px solid #c0d4e8;
     }
     .section-label {
       font-family: monospace;
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #0077b6;
       margin-bottom: 8px;
     }
     .section h2 {
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 32px;
-      color: #e6edf3;
+      color: #0d1f3c;
     }
 
     /* CARDS */
@@ -167,20 +169,20 @@
     }
 
     .card {
-      background: #0d2548;
-      border: 1px solid #1e3d6b;
+      background: #ffffff;
+      border: 1px solid #c0d4e8;
       border-radius: 10px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.2s, transform 0.15s;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
       text-decoration: none;
       color: inherit;
     }
     .card:hover {
-      border-color: #00e5ff;
+      border-color: #0077b6;
       transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgba(0,229,255,0.18), 0 0 0 1px rgba(0,229,255,0.1);
+      box-shadow: 0 8px 32px rgba(0,119,182,0.15);
     }
 
     .thumb {
@@ -262,17 +264,18 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #0077b6;
       margin-bottom: 6px;
     }
     .card-body h3 {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 8px;
+      color: #0d1f3c;
     }
     .card-body p {
       font-size: 13px;
-      color: #c8d6e5;
+      color: #3d5a80;
       line-height: 1.7;
       flex: 1;
       margin-bottom: 16px;
@@ -289,9 +292,9 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       padding: 3px 10px;
-      background: #060a14;
-      border: 1px solid #1e3d6b;
-      color: #c8d6e5;
+      background: #e8f1fa;
+      border: 1px solid #c0d4e8;
+      color: #3d5a80;
       border-radius: 3px;
     }
     .card-btn {
@@ -303,15 +306,15 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       padding: 8px 18px;
-      border: 1px solid #00e5ff;
-      color: #00e5ff;
+      border: 1px solid #0077b6;
+      color: #0077b6;
       background: transparent;
       border-radius: 3px;
       text-decoration: none;
       align-self: flex-start;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
     }
-    .card-btn:hover { background: #00e5ff; color: #060a14; box-shadow: 0 0 20px rgba(0,229,255,0.5); }
+    .card-btn:hover { background: #0077b6; color: #ffffff; box-shadow: 0 4px 16px rgba(0,119,182,0.3); }
 
     .about-grid {
       display: grid;
@@ -324,12 +327,12 @@
       font-size: 11px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #0077b6;
       margin-bottom: 14px;
     }
     .about-grid p {
       font-size: 14px;
-      color: #c8d6e5;
+      color: #3d5a80;
       line-height: 1.8;
     }
     .about-grid ul {
@@ -340,40 +343,41 @@
     }
     .about-grid li {
       font-size: 14px;
-      color: #a8bcd4;
+      color: #5a7a9e;
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .about-grid li::before {
       content: '\25b8';
-      color: #00e5ff;
+      color: #0077b6;
       flex-shrink: 0;
     }
 
     footer {
-      border-top: 1px solid rgba(0,229,255,0.15);
+      border-top: 1px solid #c0d4e8;
       padding: 24px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
+      background: #ffffff;
     }
     footer span {
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #8ba3be;
+      color: #6a85a0;
     }
     footer a {
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #c8d6e5;
+      color: #3d5a80;
       text-decoration: none;
     }
-    footer a:hover { color: #00e5ff; }
+    footer a:hover { color: #0077b6; }
   </style>
 </head>
 <body>
@@ -572,7 +576,7 @@
   <div class="about-grid">
     <div>
       <h3>Interests</h3>
-      <p>Urban planner and developer based in <strong style="color:#e6edf3">Berlin</strong>. Technion graduate passionate about how cities move — I cycle whenever I can and take public transport everywhere else. Building data tools that help planners and commuters understand <strong style="color:#e6edf3">urban mobility</strong> through open data and code.</p>
+      <p>Urban planner and developer based in <strong style="color:#0d1f3c">Berlin</strong>. Technion graduate passionate about how cities move — I cycle whenever I can and take public transport everywhere else. Building data tools that help planners and commuters understand <strong style="color:#0d1f3c">urban mobility</strong> through open data and code.</p>
     </div>
     <div>
       <h3>Stack</h3>
