@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #071e3d;
+      background: #0d1117;
       color: #e6edf3;
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
@@ -21,16 +21,15 @@
       justify-content: space-between;
       padding: 0 40px;
       height: 56px;
-      border-bottom: 1px solid #1e3d6b;
-      background: #071e3d;
+      border-bottom: 1px solid #21262d;
+      background: #0d1117;
     }
     .logo {
       font-family: monospace;
       font-size: 16px;
       font-weight: 700;
-      color: #00e5ff;
+      color: #f0a800;
       letter-spacing: 2px;
-      text-shadow: 0 0 18px rgba(0,229,255,0.7);
     }
     nav ul {
       list-style: none;
@@ -38,43 +37,25 @@
       gap: 28px;
     }
     nav a {
-      color: #c8d6e5;
+      color: #8b949e;
       text-decoration: none;
       font-size: 14px;
       transition: color 0.15s;
     }
-    nav a:hover { color: #00e5ff; }
-    a:focus-visible {
-      outline: 2px solid #00e5ff;
-      outline-offset: 3px;
-      border-radius: 3px;
-    }
+    nav a:hover { color: #f0a800; }
 
     /* HERO */
     .hero {
       max-width: 900px;
       margin: 0 auto;
       padding: 80px 40px 60px;
-      position: relative;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        radial-gradient(ellipse 70% 50% at 30% 60%, rgba(0,229,255,0.07) 0%, transparent 70%),
-        linear-gradient(rgba(0,229,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.05) 1px, transparent 1px);
-      background-size: auto, 44px 44px, 44px 44px;
-      pointer-events: none;
-      mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
     }
     .hero-label {
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #f0a800;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -89,7 +70,6 @@
       animation: blink 2s infinite;
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    @media (prefers-reduced-motion: reduce) { .green-dot { animation: none; } }
 
     .hero h1 {
       font-size: 64px;
@@ -97,19 +77,19 @@
       line-height: 1.05;
       margin-bottom: 16px;
     }
-    .hero h1 span { color: #00e5ff; text-shadow: 0 0 40px rgba(0,229,255,0.5); }
+    .hero h1 span { color: #f0a800; }
 
     .hero-sub {
       font-family: monospace;
       font-size: 13px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #c8d6e5;
+      color: #8b949e;
       margin-bottom: 24px;
     }
     .hero-bio {
       font-size: 17px;
-      color: #c8d6e5;
+      color: #8b949e;
       line-height: 1.8;
       max-width: 580px;
       margin-bottom: 32px;
@@ -126,8 +106,8 @@
       font-size: 11px;
       letter-spacing: 1px;
       padding: 5px 14px;
-      border: 1px solid #1e3d6b;
-      color: #c8d6e5;
+      border: 1px solid #30363d;
+      color: #8b949e;
       border-radius: 20px;
     }
 
@@ -136,14 +116,14 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 60px 40px;
-      border-top: 1px solid rgba(0,229,255,0.15);
+      border-top: 1px solid #21262d;
     }
     .section-label {
       font-family: monospace;
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #f0a800;
       margin-bottom: 8px;
     }
     .section h2 {
@@ -167,8 +147,8 @@
     }
 
     .card {
-      background: #0d2548;
-      border: 1px solid #1e3d6b;
+      background: #161b22;
+      border: 1px solid #30363d;
       border-radius: 10px;
       overflow: hidden;
       display: flex;
@@ -178,9 +158,8 @@
       color: inherit;
     }
     .card:hover {
-      border-color: #00e5ff;
+      border-color: #f0a800;
       transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgba(0,229,255,0.18), 0 0 0 1px rgba(0,229,255,0.1);
     }
 
     .thumb {
@@ -191,15 +170,15 @@
       position: relative;
       overflow: hidden;
     }
-    .thumb-berlin { background: #040f28; }
-    .thumb-transit { background: #050e20; font-family: monospace; }
+    .thumb-berlin { background: #010409; }
+    .thumb-transit { background: #080907; font-family: monospace; }
 
     .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .thumb-grid {
       position: absolute; inset: 0;
       background-image:
-        linear-gradient(rgba(0,229,255,0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.07) 1px, transparent 1px);
+        linear-gradient(rgba(88,166,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,166,255,0.06) 1px, transparent 1px);
       background-size: 28px 28px;
     }
     .thumb-label {
@@ -209,26 +188,26 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: rgba(0,229,255,0.9);
+      color: rgba(88,166,255,0.6);
     }
 
     .tb-wrap { width: 100%; }
     .tb-top {
-      background: #071e3d;
-      border-bottom: 1px solid #1e3d6b;
+      background: #0f110e;
+      border-bottom: 1px solid #1c1f18;
       padding: 6px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #00e5ff; }
-    .tb-top-time { font-size: 14px; font-weight: 700; color: #7ee8ff; }
+    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #f0a800; }
+    .tb-top-time { font-size: 14px; font-weight: 700; color: #ffc840; }
     .tb-row-item {
       display: grid;
       grid-template-columns: 38px 1fr 36px 28px;
       align-items: center;
       padding: 5px 12px;
-      border-bottom: 1px solid #1e3d6b;
+      border-bottom: 1px solid #1c1f18;
     }
     .tb-badge-item {
       display: inline-flex;
@@ -240,8 +219,8 @@
       padding: 2px 4px;
       min-width: 24px;
     }
-    .tb-d  { font-size: 9px; color: #7ee8ff; letter-spacing: 0.5px; padding: 0 4px; }
-    .tb-t  { font-size: 9px; font-weight: 700; color: #00e5ff; text-align: center; }
+    .tb-d  { font-size: 9px; color: #ffc840; letter-spacing: 0.5px; padding: 0 4px; }
+    .tb-t  { font-size: 9px; font-weight: 700; color: #f0a800; text-align: center; }
     .tb-e  { font-size: 9px; font-weight: 700; text-align: right; }
     .tb-scanline {
       position: absolute; inset: 0; pointer-events: none;
@@ -262,7 +241,8 @@
       font-size: 9px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #f0a800;
+      opacity: 0.6;
       margin-bottom: 6px;
     }
     .card-body h3 {
@@ -272,7 +252,7 @@
     }
     .card-body p {
       font-size: 13px;
-      color: #c8d6e5;
+      color: #8b949e;
       line-height: 1.7;
       flex: 1;
       margin-bottom: 16px;
@@ -289,9 +269,9 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       padding: 3px 10px;
-      background: #060a14;
-      border: 1px solid #1e3d6b;
-      color: #c8d6e5;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      color: #8b949e;
       border-radius: 3px;
     }
     .card-btn {
@@ -303,15 +283,15 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       padding: 8px 18px;
-      border: 1px solid #00e5ff;
-      color: #00e5ff;
+      border: 1px solid #f0a800;
+      color: #f0a800;
       background: transparent;
       border-radius: 3px;
       text-decoration: none;
       align-self: flex-start;
       transition: background 0.15s, color 0.15s;
     }
-    .card-btn:hover { background: #00e5ff; color: #060a14; box-shadow: 0 0 20px rgba(0,229,255,0.5); }
+    .card-btn:hover { background: #f0a800; color: #0d1117; }
 
     .about-grid {
       display: grid;
@@ -324,12 +304,12 @@
       font-size: 11px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #00e5ff;
+      color: #f0a800;
       margin-bottom: 14px;
     }
     .about-grid p {
       font-size: 14px;
-      color: #c8d6e5;
+      color: #8b949e;
       line-height: 1.8;
     }
     .about-grid ul {
@@ -340,19 +320,19 @@
     }
     .about-grid li {
       font-size: 14px;
-      color: #a8bcd4;
+      color: #8b949e;
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .about-grid li::before {
       content: '\25b8';
-      color: #00e5ff;
+      color: #f0a800;
       flex-shrink: 0;
     }
 
     footer {
-      border-top: 1px solid rgba(0,229,255,0.15);
+      border-top: 1px solid #21262d;
       padding: 24px 40px;
       display: flex;
       justify-content: space-between;
@@ -364,32 +344,32 @@
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #8ba3be;
+      color: #30363d;
     }
     footer a {
       font-family: monospace;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #c8d6e5;
+      color: #8b949e;
       text-decoration: none;
     }
-    footer a:hover { color: #00e5ff; }
+    footer a:hover { color: #f0a800; }
   </style>
 </head>
 <body>
 
-<nav aria-label="Main navigation">
+<nav>
   <div class="logo">GC.</div>
   <ul>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
+    <li><a href="https://github.com/giladcameo" target="_blank">GitHub</a></li>
   </ul>
 </nav>
 
 <div class="hero">
   <div class="hero-label">
-    <span class="green-dot" aria-hidden="true"></span>
+    <span class="green-dot"></span>
     Open to collaboration
   </div>
   <h1>Gilad<br><span>Cameo</span></h1>
@@ -402,22 +382,22 @@
   <div class="tags">
     <span class="tag">Urban Planning</span>
     <span class="tag">Transportation</span>
-    <span class="tag">AI-assisted Dev</span>
-    <span class="tag">QGIS &middot; ArcGIS</span>
+    <span class="tag">Python &middot; Pandas</span>
+    <span class="tag">AI Data Analysis</span>
     <span class="tag">Open Data</span>
-    <span class="tag">Geospatial</span>
+    <span class="tag">JavaScript</span>
   </div>
 </div>
 
-<section class="section" id="projects" aria-labelledby="projects-heading">
-  <div class="section-label" aria-hidden="true">// projects</div>
-  <h2 id="projects-heading">Live Tools</h2>
+<div class="section" id="projects">
+  <div class="section-label">// projects</div>
+  <h2>Live Tools</h2>
   <div class="cards">
 
-    <a class="card" href="berlin-transit.html" aria-label="Berlin Transit Live — Open App">
-      <div class="thumb thumb-berlin" aria-hidden="true">
+    <a class="card" href="berlin-transit.html">
+      <div class="thumb thumb-berlin">
         <div class="thumb-grid"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
           <polyline points="0,80 60,80 110,60 180,60 250,55 340,45" stroke="#224f9e" stroke-width="3.5" fill="none"/>
           <polyline points="20,120 80,120 130,100 200,95 280,80 380,75" stroke="#007734" stroke-width="3" fill="none"/>
           <polyline points="50,50 110,90 175,120 260,130 360,130" stroke="#cc2222" stroke-width="3" fill="none"/>
@@ -425,7 +405,7 @@
           <circle cx="110" cy="60" r="4.5" fill="#e6edf3"/>
           <circle cx="200" cy="95" r="4.5" fill="#e6edf3"/>
           <circle cx="175" cy="120" r="4.5" fill="#e6edf3"/>
-          <circle cx="200" cy="62" r="6" fill="#00e5ff"/>
+          <circle cx="200" cy="62" r="6" fill="#f0a800"/>
           <circle cx="280" cy="80" r="4.5" fill="#e6edf3"/>
         </svg>
         <div class="thumb-label">Berlin &middot; Live Map</div>
@@ -444,8 +424,8 @@
       </div>
     </a>
 
-    <a class="card" href="transit-board.html" aria-label="Transit Board Near Me — Open App">
-      <div class="thumb thumb-transit" aria-hidden="true">
+    <a class="card" href="transit-board.html">
+      <div class="thumb thumb-transit">
         <div class="tb-wrap">
           <div class="tb-top">
             <span class="tb-top-loc">&#9685; Tel Aviv &middot; Allenby</span>
@@ -461,19 +441,19 @@
             <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">4</span>
             <span class="tb-d">Bat Yam</span>
             <span class="tb-t">14:38</span>
-            <span class="tb-e" style="color:#7ee8ff;">6'</span>
+            <span class="tb-e" style="color:#ffaa00;">6'</span>
           </div>
           <div class="tb-row-item">
             <span class="tb-badge-item" style="background:#224f9e;color:#fff;">11</span>
             <span class="tb-d">Tel Aviv Central</span>
             <span class="tb-t">14:41</span>
-            <span class="tb-e" style="color:#00e5ff;">9'</span>
+            <span class="tb-e" style="color:#5a3d00;">9'</span>
           </div>
           <div class="tb-row-item">
             <span class="tb-badge-item" style="background:#ef7c00;color:#fff;">480</span>
             <span class="tb-d">Jerusalem</span>
             <span class="tb-t">14:50</span>
-            <span class="tb-e" style="color:#00e5ff;">18'</span>
+            <span class="tb-e" style="color:#5a3d00;">18'</span>
           </div>
         </div>
         <div class="tb-scanline"></div>
@@ -499,8 +479,8 @@
           <circle cx="200" cy="80" r="60" stroke="rgba(56,189,248,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
           <circle cx="200" cy="80" r="38" stroke="rgba(56,189,248,0.4)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
           <circle cx="200" cy="80" r="18" stroke="rgba(56,189,248,0.6)" stroke-width="1.5" fill="none"/>
-          <circle cx="200" cy="80" r="5" fill="#7ee8ff"/>
-          <circle cx="200" cy="80" r="8" fill="none" stroke="#7ee8ff" stroke-width="1.5"/>
+          <circle cx="200" cy="80" r="5" fill="#38bdf8"/>
+          <circle cx="200" cy="80" r="8" fill="none" stroke="#38bdf8" stroke-width="1.5"/>
           <circle cx="238" cy="58" r="3.5" fill="#ef4444"/>
           <circle cx="228" cy="102" r="3.5" fill="#22c55e"/>
           <circle cx="162" cy="74" r="3.5" fill="#f97316"/>
@@ -564,31 +544,31 @@
     </a>
 
   </div>
-</section>
+</div>
 
-<section class="section" id="about" aria-labelledby="about-heading">
-  <div class="section-label" aria-hidden="true">// about</div>
-  <h2 id="about-heading">Background</h2>
+<div class="section" id="about">
+  <div class="section-label">// about</div>
+  <h2>Background</h2>
   <div class="about-grid">
     <div>
       <h3>Interests</h3>
-      <p>Urban planner and developer based in <strong style="color:#e6edf3">Berlin</strong>. Technion graduate passionate about how cities move — I cycle whenever I can and take public transport everywhere else. Building data tools that help planners and commuters understand <strong style="color:#e6edf3">urban mobility</strong> through open data and code.</p>
+      <p>Focused on urban mobility and public transport &mdash; how cities move, how data can reveal patterns, and how better tools help planners and commuters. Currently learning Python and pandas, and using AI for data analysis to extract insights from transit datasets.</p>
     </div>
     <div>
       <h3>Stack</h3>
       <ul>
-        <li>AI-assisted development</li>
-        <li>QGIS &middot; ArcGIS</li>
+        <li>Python &middot; Pandas &middot; Data Analysis &middot; AI</li>
+        <li>JavaScript &middot; HTML &middot; CSS</li>
         <li>OpenStreetMap &middot; GTFS &middot; Open APIs</li>
         <li>Leaflet &middot; Geospatial Tools</li>
       </ul>
     </div>
   </div>
-</section>
+</div>
 
 <footer>
   <span>Gilad Cameo &middot; 2025</span>
-  <a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
+  <a href="https://github.com/giladcameo" target="_blank">github.com/giladcameo</a>
 </footer>
 
 </body>
