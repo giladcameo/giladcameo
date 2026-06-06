@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Transit Board · Near Me</title>
+  <title>Berlin Transit Board</title>
   <style>
 :root {
   --bg:            #080907;
@@ -225,9 +225,9 @@ footer {
 <body>
 <div id="splash">
   <div>
-    <div class="brand-main">TRANSIT<br>BOARD</div>
+    <div class="brand-main">BERLIN<br>TRANSIT</div>
   </div>
-  <div class="brand-sub">Real-time departures near you</div>
+  <div class="brand-sub">Live departures · BVG · S-Bahn</div>
   <div class="splash-divider"></div>
   <button class="loc-btn" id="locBtn" onclick="requestLocation()">◉&nbsp;&nbsp;LOCATE&nbsp;ME</button>
   <div class="splash-note" id="splashNote">
@@ -266,7 +266,7 @@ footer {
 </div>
 <script>
 'use strict';
-let userLat,userLon,countryCode;
+let userLat,userLon;
 let stops=[],currentStop=null,refreshTimer=null;
 const REFRESH_MS=30000;
 setInterval(()=>{
@@ -297,6 +297,7 @@ function requestLocation(){
     {enableHighAccuracy:true,timeout:15000,maximumAge:60000}
   );
 }
+window.addEventListener('DOMContentLoaded',requestLocation);
 function launchBoard(){
   const splash=document.getElementById('splash');
   splash.classList.add('hidden');
@@ -307,13 +308,10 @@ function launchBoard(){
   onLocation();
 }
 async function onLocation(){
+  document.getElementById('locName').textContent='Berlin';
+  document.getElementById('ftrApi').textContent='VBB · Berlin & Brandenburg';
   try{
-    const geo=await reverseGeocode(userLat,userLon);
-    countryCode=geo.cc;
-    const place=[geo.city||geo.town||geo.village,geo.country].filter(Boolean).join(', ');
-    document.getElementById('locName').textContent=place||'Unknown location';
-    document.getElementById('ftrApi').textContent='Data: '+apiLabel(countryCode);
-    stops=await findStops(userLat,userLon,countryCode);
+    stops=await findStopsVBB(userLat,userLon);
     renderStopsBar(stops);
     if(stops.length)selectStop(stops[0]);
     else showState('No transit stops found nearby.\nTry moving closer to a stop.');
@@ -321,77 +319,12 @@ async function onLocation(){
     showState('Error loading stops: '+e.message);
   }
 }
-async function reverseGeocode(lat,lon){
+async function findStopsVBB(lat,lon){
   const r=await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
-    {headers:{'User-Agent':'TransitBoard/1.0 (giladcameo)'}}
-  );
-  const d=await r.json();
-  return{
-    cc:(d.address?.country_code||'xx').toUpperCase(),
-    country:d.address?.country||'',
-    city:d.address?.city,
-    town:d.address?.town,
-    village:d.address?.village,
-  };
-}
-function apiLabel(cc){
-  return{DE:'DB · transport.rest',AT:'DB · transport.rest',
-         CH:'transport.opendata.ch',IL:'Open Bus · Hasadna'}[cc]
-        ||'OpenStreetMap Overpass';
-}
-async function findStops(lat,lon,cc){
-  if(cc==='DE'||cc==='AT')return findStopsDB(lat,lon);
-  if(cc==='CH')return findStopsSwiss(lat,lon);
-  if(cc==='IL')return findStopsIsrael(lat,lon);
-  return findStopsOverpass(lat,lon);
-}
-async function findStopsDB(lat,lon){
-  const r=await fetch(
-    `https://v6.db.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=10&distance=1500`
+    `https://v6.vbb.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=10&distance=1500`
   );
   const data=await r.json();
-  return(Array.isArray(data)?data:[]).map(s=>({id:s.id,name:s.name,src:'db'}));
-}
-async function findStopsSwiss(lat,lon){
-  const r=await fetch(
-    `https://transport.opendata.ch/v1/locations?x=${lon}&y=${lat}&type=station&limit=10`
-  );
-  const{stations=[]}=await r.json();
-  return stations.filter(s=>s.id).map(s=>({id:s.id,name:s.name,src:'ch'}));
-}
-async function findStopsIsrael(lat,lon){
-  const D=0.006;
-  const r=await fetch(
-    `https://open-bus-stride-api.hasadna.org.il/gtfs-stops/list?`+
-    `stop_lat_from=${lat-D}&stop_lat_to=${lat+D}`+
-    `&stop_lon_from=${lon-D}&stop_lon_to=${lon+D}&limit=15`
-  );
-  const data=await r.json();
-  const items=Array.isArray(data)?data:(data.items||[]);
-  return items
-    .filter(s=>s.stop_name||s.stop_name_heb)
-    .map(s=>({id:String(s.stop_code||s.id),name:s.stop_name||s.stop_name_heb,src:'il'}));
-}
-async function findStopsOverpass(lat,lon){
-  const body=
-    `[out:json][timeout:10];(`+
-    `node["public_transport"="stop_position"](around:500,${lat},${lon});`+
-    `node["highway"="bus_stop"](around:500,${lat},${lon});`+
-    `node["railway"="station"](around:500,${lat},${lon});`+
-    `node["railway"="tram_stop"](around:500,${lat},${lon});`+
-    `);out body;`;
-  const r=await fetch('https://overpass-api.de/api/interpreter',{
-    method:'POST',body:'data='+encodeURIComponent(body)
-  });
-  const data=await r.json();
-  const seen=new Set();
-  return(data.elements||[])
-    .filter(e=>{
-      const n=e.tags?.name;if(!n||seen.has(n))return false;seen.add(n);return true;
-    })
-    .slice(0,8)
-    .map(e=>({id:String(e.tags?.ref||e.id),name:e.tags?.name,src:'osm'}));
+  return(Array.isArray(data)?data:[]).map(s=>({id:s.id,name:s.name}));
 }
 function renderStopsBar(list){
   const bar=document.getElementById('stopsBar');
@@ -423,19 +356,7 @@ async function loadDepartures(){
   const dot=document.getElementById('liveDot');
   dot.classList.add('on');
   try{
-    let deps;
-    if(currentStop.src==='db')deps=await fetchDepsDB(currentStop.id);
-    else if(currentStop.src==='ch')deps=await fetchDepsCH(currentStop.id);
-    else if(currentStop.src==='il')deps=await fetchDepsIL(currentStop.id);
-    else{
-      showState(
-        'Real-time data is not yet supported for this region.\n'+
-        'Stop: '+currentStop.name+'\n\n'+
-        'Supported: Germany · Austria · Switzerland · Israel'
-      );
-      dot.classList.remove('on');
-      return;
-    }
+    const deps=await fetchDepsVBB(currentStop.id);
     renderBoard(deps);
     const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
     document.getElementById('ftrRefresh').textContent='Updated '+t;
@@ -445,9 +366,9 @@ async function loadDepartures(){
   dot.classList.remove('on');
   refreshTimer=setTimeout(loadDepartures,REFRESH_MS);
 }
-async function fetchDepsDB(id){
+async function fetchDepsVBB(id){
   const r=await fetch(
-    `https://v6.db.transport.rest/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
+    `https://v6.vbb.transport.rest/stops/${encodeURIComponent(id)}/departures?duration=60&results=20`
   );
   const data=await r.json();
   const arr=data.departures||(Array.isArray(data)?data:[]);
@@ -455,38 +376,6 @@ async function fetchDepsDB(id){
     line:d.line?.name,product:d.line?.product,
     dest:d.direction||d.destination?.name,
     planned:d.plannedWhen,actual:d.when,
-  }));
-}
-async function fetchDepsCH(id){
-  const r=await fetch(
-    `https://transport.opendata.ch/v1/stationboard?id=${encodeURIComponent(id)}&limit=20`
-  );
-  const{stationboard=[]}=await r.json();
-  return stationboard.map(d=>({
-    line:d.number,product:d.category?.toLowerCase(),
-    dest:d.to,
-    planned:d.stop?.departure,
-    actual:d.stop?.prognosis?.departure||d.stop?.departure,
-  }));
-}
-async function fetchDepsIL(stopCode){
-  const now=new Date();
-  const to=new Date(now.getTime()+90*60000);
-  const r=await fetch(
-    `https://open-bus-stride-api.hasadna.org.il/gtfs-stop-times/list?`+
-    `stop_code=${encodeURIComponent(stopCode)}`+
-    `&arrival_time_from=${encodeURIComponent(now.toISOString())}`+
-    `&arrival_time_to=${encodeURIComponent(to.toISOString())}`+
-    `&limit=20&order_by=arrival_time`
-  );
-  const data=await r.json();
-  const items=Array.isArray(data)?data:(data.items||[]);
-  return items.map(d=>({
-    line:d.route_short_name||d.agency_id||'?',
-    product:'bus',
-    dest:d.trip_headsign||d.stop_headsign||'?',
-    planned:d.arrival_time||d.departure_time,
-    actual:d.actual_arrival_time||d.arrival_time,
   }));
 }
 function renderBoard(deps){
