@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דשבורד התראות פיקוד העורף</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #071e3d;
+      --surface:   #0d2a4a;
+      --border:    #1e3d6b;
+      --cyan:      #00e5ff;
+      --cyan-dim:  rgba(0,229,255,0.15);
+      --red:       #ff3b3b;
+      --red-dim:   rgba(255,59,59,0.15);
+      --orange:    #ff9800;
+      --green:     #00e676;
+      --text:      #e6edf3;
+      --muted:     #7a9bbf;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, 'Arial Hebrew', sans-serif;
+      min-height: 100vh;
+      direction: rtl;
+    }
+
+    /* ─── NAV ─────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .logo {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      text-shadow: 0 0 18px rgba(0,229,255,0.7);
+    }
+    .nav-links { display: flex; gap: 24px; list-style: none; }
+    .nav-links a { color: #c8d6e5; text-decoration: none; font-size: 14px; transition: color .15s; }
+    .nav-links a:hover { color: var(--cyan); }
+
+    /* ─── STATUS BAR ──────────────────────────── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .4; }
+    }
+    .status-bar span { color: var(--text); }
+    .status-bar .time-display {
+      margin-right: auto;
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--cyan);
+    }
+
+    /* ─── LAYOUT ──────────────────────────────── */
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      padding: 20px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ─── ALERT BANNER (active alert) ─────────── */
+    .alert-banner {
+      grid-column: 1 / -1;
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--red-dim);
+      border: 2px solid var(--red);
+      border-radius: 10px;
+      animation: flash-border 0.6s infinite alternate;
+    }
+    .alert-banner.active { display: flex; }
+    @keyframes flash-border {
+      from { border-color: var(--red); box-shadow: 0 0 0 rgba(255,59,59,0); }
+      to   { border-color: #ff8a8a;   box-shadow: 0 0 20px rgba(255,59,59,0.4); }
+    }
+    .alert-icon {
+      font-size: 36px;
+      animation: shake 0.4s infinite alternate;
+    }
+    @keyframes shake {
+      from { transform: rotate(-5deg); }
+      to   { transform: rotate(5deg); }
+    }
+    .alert-banner-text h2 {
+      font-size: 22px;
+      color: var(--red);
+      font-weight: 700;
+    }
+    .alert-banner-text p { font-size: 14px; color: #ffbaba; margin-top: 4px; }
+    .alert-banner-locations {
+      margin-right: auto;
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .loc-chip {
+      padding: 4px 12px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* ─── MAIN PANEL ──────────────────────────── */
+    .main-panel { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ─── CARD ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header h3 { font-size: 15px; font-weight: 600; }
+    .card-header .badge {
+      margin-right: auto;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-red    { background: var(--red-dim);  color: var(--red);  border: 1px solid var(--red); }
+    .badge-green  { background: rgba(0,230,118,.12); color: var(--green); border: 1px solid var(--green); }
+    .badge-orange { background: rgba(255,152,0,.12); color: var(--orange); border: 1px solid var(--orange); }
+
+    /* ─── STATS ROW ───────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-box .val {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--cyan);
+      text-shadow: 0 0 12px rgba(0,229,255,.5);
+    }
+    .stat-box .val.red { color: var(--red); text-shadow: 0 0 12px rgba(255,59,59,.5); }
+    .stat-box .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ─── ALERT FEED ──────────────────────────── */
+    .alert-feed { display: flex; flex-direction: column; gap: 8px; }
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: background .2s;
+    }
+    .alert-item:hover { background: rgba(255,255,255,.03); }
+    .alert-item.new {
+      background: var(--red-dim);
+      border-color: rgba(255,59,59,.3);
+      animation: fade-new 3s forwards;
+    }
+    @keyframes fade-new {
+      0%   { background: rgba(255,59,59,.25); }
+      100% { background: var(--red-dim); }
+    }
+    .alert-type-icon { font-size: 22px; flex-shrink: 0; }
+    .alert-info { flex: 1; }
+    .alert-info .location { font-size: 14px; font-weight: 600; }
+    .alert-info .threat   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .alert-meta { text-align: left; flex-shrink: 0; }
+    .alert-meta .time  { font-size: 12px; color: var(--muted); font-family: monospace; }
+    .alert-meta .level {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .level-high   { background: var(--red-dim);           color: var(--red);    border: 1px solid var(--red); }
+    .level-medium { background: rgba(255,152,0,.15);       color: var(--orange); border: 1px solid var(--orange); }
+    .level-low    { background: rgba(255,235,59,.12);      color: #ffee58;       border: 1px solid #ffee58; }
+
+    /* ─── SIDEBAR ─────────────────────────────── */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ─── MAP PANEL ───────────────────────────── */
+    .map-wrap { position: relative; }
+    .israel-map {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .region-list { display: flex; flex-direction: column; gap: 6px; }
+    .region-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      transition: background .2s;
+    }
+    .region-row.alert-active {
+      background: var(--red-dim);
+      border-color: rgba(255,59,59,.4);
+    }
+    .region-row.alert-active .region-name { color: var(--red); font-weight: 600; }
+    .region-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-red    { background: var(--red);    box-shadow: 0 0 6px var(--red);    animation: pulse-red 1s infinite; }
+    .dot-green  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+    .dot-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: pulse-red 1.5s infinite; }
+    @keyframes pulse-red {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.4); }
+    }
+    .region-count {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ─── SHELTER INFO ────────────────────────── */
+    .shelter-steps { display: flex; flex-direction: column; gap: 10px; }
+    .shelter-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px;
+      background: rgba(0,229,255,.05);
+      border-radius: 8px;
+      border: 1px solid rgba(0,229,255,.15);
+      font-size: 13px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--cyan-dim);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ─── SOUND TOGGLE ────────────────────────── */
+    .sound-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      transition: border-color .2s, color .2s;
+      user-select: none;
+    }
+    .sound-toggle:hover { border-color: var(--cyan); color: var(--text); }
+    .sound-toggle .icon { font-size: 18px; }
+
+    /* ─── FOOTER ──────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    footer a { color: var(--cyan); text-decoration: none; }
+
+    /* ─── AUDIO INDICATOR ─────────────────────── */
+    .siren-playing {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255,59,59,.2);
+      border: 1px solid var(--red);
+      border-radius: 20px;
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .siren-playing.active { display: flex; }
+    .siren-bars { display: flex; gap: 2px; align-items: flex-end; height: 16px; }
+    .siren-bars span {
+      width: 3px;
+      background: var(--red);
+      border-radius: 2px;
+      animation: bar-anim 0.5s infinite alternate;
+    }
+    .siren-bars span:nth-child(1) { height: 6px;  animation-delay: 0s; }
+    .siren-bars span:nth-child(2) { height: 12px; animation-delay: .15s; }
+    .siren-bars span:nth-child(3) { height: 9px;  animation-delay: .1s; }
+    .siren-bars span:nth-child(4) { height: 14px; animation-delay: .25s; }
+    .siren-bars span:nth-child(5) { height: 7px;  animation-delay: .05s; }
+    @keyframes bar-anim {
+      from { transform: scaleY(.4); }
+      to   { transform: scaleY(1); }
+    }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">PIKUD HA'OREF</div>
+  <ul class="nav-links">
+    <li><a href="index.html">בית</a></li>
+    <li><a href="#" onclick="triggerTestAlert()">בדיקת התראה</a></li>
+    <li><a href="https://www.oref.org.il" target="_blank" rel="noopener">אתר רשמי</a></li>
+  </ul>
+</nav>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span>מחובר לשרת ההתראות</span>
+  &bull;
+  <span id="last-update">עדכון אחרון: --:--:--</span>
+  <div class="siren-playing" id="siren-indicator">
+    <div class="siren-bars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    אזעקה פעילה
+  </div>
+  <div class="time-display" id="clock">--:--:--</div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <!-- ALERT BANNER -->
+  <div class="alert-banner" id="alert-banner">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-banner-text">
+      <h2>צבע אדום — היכנסו למרחב מוגן</h2>
+      <p id="banner-threat">איום: ירי רקטות — זמן לביטחון: <strong id="banner-shelter-time">30 שניות</strong></p>
+    </div>
+    <div class="alert-banner-locations" id="banner-locations"></div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="val red" id="stat-active">0</div>
+        <div class="label">התראות פעילות</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" id="stat-today">0</div>
+        <div class="label">התראות היום</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" id="stat-week">0</div>
+        <div class="label">התראות השבוע</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" id="stat-regions">0</div>
+        <div class="label">אזורים מושפעים</div>
+      </div>
+    </div>
+
+    <!-- LIVE ALERT FEED -->
+    <div class="card">
+      <div class="card-header">
+        <span>📡</span>
+        <h3>היסטוריית התראות בזמן אמת</h3>
+        <div class="badge badge-green" id="feed-status">עדכני</div>
+      </div>
+      <div class="alert-feed" id="alert-feed">
+        <div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">
+          ממתין להתראות...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- SOUND TOGGLE -->
+    <div class="sound-toggle" id="sound-btn" onclick="toggleSound()">
+      <span class="icon" id="sound-icon">🔔</span>
+      <span id="sound-label">קול אזעקה: מופעל</span>
+    </div>
+
+    <!-- REGION STATUS -->
+    <div class="card">
+      <div class="card-header">
+        <span>🗺️</span>
+        <h3>מצב אזורים</h3>
+        <div class="badge badge-green" id="regions-badge">רגוע</div>
+      </div>
+      <div class="region-list" id="region-list"></div>
+    </div>
+
+    <!-- SHELTER INSTRUCTIONS -->
+    <div class="card">
+      <div class="card-header">
+        <span>🛡️</span>
+        <h3>הנחיות ביטחון</h3>
+      </div>
+      <div class="shelter-steps">
+        <div class="shelter-step">
+          <div class="step-num">1</div>
+          <div>היכנסו למרחב המוגן (ממ"ד / מקלט) מיד עם שמיעת האזעקה</div>
+        </div>
+        <div class="shelter-step">
+          <div class="step-num">2</div>
+          <div>סגרו את דלת הממ"ד ושכבו על הרצפה אם אין ממ"ד זמין</div>
+        </div>
+        <div class="shelter-step">
+          <div class="step-num">3</div>
+          <div>הישארו במרחב המוגן 10 דקות לאחר סיום האזעקה</div>
+        </div>
+        <div class="shelter-step">
+          <div class="step-num">4</div>
+          <div>עקבו אחרי הנחיות פיקוד העורף בערוצים הרשמיים</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHELTER TIMES -->
+    <div class="card">
+      <div class="card-header">
+        <span>⏱️</span>
+        <h3>זמני אזהרה לפי אזור</h3>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span>עוטף עזה</span><span style="color:var(--red);font-weight:700;font-family:monospace;">0 שניות</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span>אשקלון / אשדוד</span><span style="color:var(--orange);font-weight:700;font-family:monospace;">30 שניות</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span>באר שבע</span><span style="color:var(--orange);font-weight:700;font-family:monospace;">60 שניות</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span>גוש דן / תל אביב</span><span style="color:#ffee58;font-weight:700;font-family:monospace;">90 שניות</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <span>ירושלים</span><span style="color:#ffee58;font-weight:700;font-family:monospace;">90 שניות</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  דשבורד זה הוא כלי להמחשה בלבד &bull; לקבלת מידע רשמי ומדויק פנו ל<a href="https://www.oref.org.il" target="_blank">אתר פיקוד העורף</a> &bull; מספר חירום: <strong>104</strong>
+</footer>
+
+<!-- AUDIO (Web Audio API siren) -->
+<audio id="siren-audio" preload="auto"></audio>
+
+<script>
+  /* ─── DATA ──────────────────────────────────── */
+  const THREAT_TYPES = [
+    { label: 'ירי רקטות וטילים', icon: '🚀', level: 'high',   shelter: 30  },
+    { label: 'כטב"מ עוין',        icon: '✈️', level: 'high',   shelter: 60  },
+    { label: 'חדירת מחבלים',      icon: '⚠️', level: 'high',   shelter: 0   },
+    { label: 'רעידת אדמה',         icon: '🌍', level: 'medium', shelter: 0   },
+    { label: 'חומרים מסוכנים',    icon: '☣️', level: 'medium', shelter: 120 },
+  ];
+
+  const REGIONS = [
+    { name: 'עוטף עזה',          code: 'gaza',     alerts: 0, status: 'green' },
+    { name: 'שפלת יהודה',         code: 'shephelah',alerts: 0, status: 'green' },
+    { name: 'אשקלון / אשדוד',    code: 'ashkelon', alerts: 0, status: 'green' },
+    { name: 'באר שבע',            code: 'beer-sheva',alerts:0, status: 'green' },
+    { name: 'גוש דן / תל אביב', code: 'gush-dan', alerts: 0, status: 'green' },
+    { name: 'ירושלים',            code: 'jerusalem',alerts: 0, status: 'green' },
+    { name: 'הצפון',              code: 'north',    alerts: 0, status: 'green' },
+    { name: 'עמק יזרעאל',        code: 'jezreel',  alerts: 0, status: 'green' },
+  ];
+
+  const LOCATIONS = {
+    'gaza':      ['שדרות', 'נחל עוז', 'ניר עם', 'בארי', 'כפר עזה', 'נהל עוז', 'צאלים'],
+    'shephelah': ['קריית גת', 'לכיש', 'בית שמש', 'נתיבות'],
+    'ashkelon':  ['אשקלון', 'אשדוד', 'יבנה', 'גדרה'],
+    'beer-sheva':['באר שבע', 'רהט', 'דימונה', 'ערד'],
+    'gush-dan':  ['תל אביב', 'רמת גן', 'בת ים', 'חולון', 'פתח תקווה', 'ראשון לציון'],
+    'jerusalem': ['ירושלים', 'מעלה אדומים', 'בית אל'],
+    'north':     ['נהריה', 'עכו', 'קריית שמונה', 'מטולה', 'צפת'],
+    'jezreel':   ['עפולה', 'מגידו', 'רמת דוד', 'גדעונה'],
+  };
+
+  /* ─── STATE ─────────────────────────────────── */
+  let soundEnabled = true;
+  let alertsToday  = 0;
+  let alertsWeek   = 47;   // seed with some historical data
+  let feedItems    = [];
+  let activeAlerts = [];
+  let audioCtx     = null;
+
+  /* ─── AUDIO ─────────────────────────────────── */
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playSiren() {
+    if (!soundEnabled) return;
+    try {
+      const ctx  = getAudioCtx();
+      const dur  = 3;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        osc.connect(gain);
+        const t0 = ctx.currentTime + i * 1;
+        osc.frequency.setValueAtTime(600, t0);
+        osc.frequency.exponentialRampToValueAtTime(1200, t0 + 0.4);
+        osc.frequency.exponentialRampToValueAtTime(600,  t0 + 0.8);
+        osc.start(t0);
+        osc.stop(t0 + 0.9);
+      }
+    } catch(e) { /* audio may be blocked */ }
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-icon').textContent  = soundEnabled ? '🔔' : '🔕';
+    document.getElementById('sound-label').textContent = soundEnabled ? 'קול אזעקה: מופעל' : 'קול אזעקה: כבוי';
+  }
+
+  /* ─── CLOCK ─────────────────────────────────── */
+  function updateClock() {
+    const now = new Date();
+    const pad  = n => String(n).padStart(2,'0');
+    const str  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    document.getElementById('clock').textContent = str;
+    document.getElementById('last-update').textContent = `עדכון אחרון: ${str}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ─── RENDER ─────────────────────────────────── */
+  function renderRegions() {
+    const list    = document.getElementById('region-list');
+    const badge   = document.getElementById('regions-badge');
+    const anyAlert = REGIONS.some(r => r.status !== 'green');
+
+    badge.textContent  = anyAlert ? 'בכוננות' : 'רגוע';
+    badge.className    = anyAlert ? 'badge badge-red' : 'badge badge-green';
+
+    list.innerHTML = REGIONS.map(r => `
+      <div class="region-row ${r.status === 'green' ? '' : 'alert-active'}">
+        <div class="region-dot dot-${r.status === 'green' ? 'green' : r.status === 'orange' ? 'orange' : 'red'}"></div>
+        <span class="region-name">${r.name}</span>
+        <span class="region-count">${r.alerts > 0 ? r.alerts + ' התראות' : 'שקט'}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const active = activeAlerts.length;
+    const affectedRegions = REGIONS.filter(r => r.status !== 'green').length;
+    document.getElementById('stat-active').textContent  = active;
+    document.getElementById('stat-today').textContent   = alertsToday;
+    document.getElementById('stat-week').textContent    = alertsWeek;
+    document.getElementById('stat-regions').textContent = affectedRegions;
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById('alert-feed');
+    if (feedItems.length === 0) {
+      feed.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">ממתין להתראות...</div>';
+      return;
+    }
+    feed.innerHTML = feedItems.slice(0, 30).map((item, idx) => `
+      <div class="alert-item ${idx === 0 ? 'new' : ''}">
+        <div class="alert-type-icon">${item.icon}</div>
+        <div class="alert-info">
+          <div class="location">${item.location}</div>
+          <div class="threat">${item.threat}</div>
+        </div>
+        <div class="alert-meta">
+          <div class="time">${item.time}</div>
+          <div class="level level-${item.level}">${item.level === 'high' ? 'גבוה' : item.level === 'medium' ? 'בינוני' : 'נמוך'}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderBanner() {
+    const banner = document.getElementById('alert-banner');
+    const siren  = document.getElementById('siren-indicator');
+    if (activeAlerts.length === 0) {
+      banner.classList.remove('active');
+      siren.classList.remove('active');
+      return;
+    }
+    banner.classList.add('active');
+    siren.classList.add('active');
+
+    const threat = activeAlerts[0];
+    document.getElementById('banner-shelter-time').textContent = threat.shelterTime > 0
+      ? threat.shelterTime + ' שניות' : 'מיידי';
+    document.getElementById('banner-threat').innerHTML =
+      `איום: ${threat.threat} &nbsp;—&nbsp; זמן לביטחון: <strong id="banner-shelter-time">${threat.shelterTime > 0 ? threat.shelterTime + ' שניות' : 'מיידי'}</strong>`;
+
+    const locsEl = document.getElementById('banner-locations');
+    const locs   = activeAlerts.map(a => a.location);
+    locsEl.innerHTML = locs.map(l => `<span class="loc-chip">${l}</span>`).join('');
+  }
+
+  /* ─── ADD ALERT ──────────────────────────────── */
+  function addAlert(regionCode, forced) {
+    const region   = REGIONS.find(r => r.code === regionCode) || REGIONS[0];
+    const locs     = LOCATIONS[regionCode] || LOCATIONS['gaza'];
+    const location = locs[Math.floor(Math.random() * locs.length)];
+    const threat   = forced || THREAT_TYPES[Math.floor(Math.random() * (forced ? 1 : THREAT_TYPES.length))];
+
+    const now = new Date();
+    const pad  = n => String(n).padStart(2,'0');
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const item = { location, threat: threat.label, icon: threat.icon, level: threat.level, time, shelterTime: threat.shelter };
+
+    feedItems.unshift(item);
+    alertsToday++;
+    alertsWeek++;
+
+    // update region
+    region.alerts++;
+    region.status = threat.level === 'high' ? 'red' : 'orange';
+
+    // active alert (expires after 90s)
+    activeAlerts.push(item);
+    playSiren();
+    setTimeout(() => {
+      activeAlerts = activeAlerts.filter(a => a !== item);
+      // only clear region if no more actives for that region
+      if (!activeAlerts.some(a => LOCATIONS[regionCode]?.includes(a.location))) {
+        region.status = 'green';
+      }
+      renderAll();
+    }, 90000);
+
+    renderAll();
+  }
+
+  function renderAll() {
+    renderStats();
+    renderRegions();
+    renderFeed();
+    renderBanner();
+  }
+
+  /* ─── TEST ALERT ─────────────────────────────── */
+  window.triggerTestAlert = function() {
+    const regions = Object.keys(LOCATIONS);
+    const region  = regions[Math.floor(Math.random() * regions.length)];
+    addAlert(region);
+  };
+
+  /* ─── DEMO SIMULATION ─────────────────────────── */
+  // seed a few past alerts
+  function seedHistory() {
+    const seeds = [
+      { region: 'gaza',      threat: THREAT_TYPES[0] },
+      { region: 'ashkelon', threat: THREAT_TYPES[0] },
+      { region: 'north',    threat: THREAT_TYPES[1] },
+      { region: 'gush-dan', threat: THREAT_TYPES[0] },
+    ];
+    seeds.forEach(s => {
+      const locs  = LOCATIONS[s.region];
+      const loc   = locs[Math.floor(Math.random() * locs.length)];
+      const region = REGIONS.find(r => r.code === s.region);
+      const now   = new Date(Date.now() - Math.random() * 3600000);
+      const pad   = n => String(n).padStart(2,'0');
+      const time  = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      feedItems.push({ location: loc, threat: s.threat.label, icon: s.threat.icon, level: s.threat.level, time, shelterTime: s.threat.shelter });
+      alertsToday++;
+    });
+    renderAll();
+  }
+
+  // random alerts every 2–8 minutes (demo)
+  function scheduleNext() {
+    const delay = (120 + Math.random() * 360) * 1000;
+    setTimeout(() => {
+      const regionCodes = Object.keys(LOCATIONS);
+      addAlert(regionCodes[Math.floor(Math.random() * regionCodes.length)]);
+      scheduleNext();
+    }, delay);
+  }
+
+  seedHistory();
+  scheduleNext();
+</script>
+</body>
+</html>
