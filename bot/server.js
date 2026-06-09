@@ -10,8 +10,19 @@ app.use(cors());
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const PORT = process.env.PORT || 3000;
+const WEBAPP_SECRET = process.env.WEBAPP_SECRET; // protects /api/* endpoints
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+/* ---- Auth middleware for web app API ---- */
+function requireSecret(req, res, next) {
+  if (!WEBAPP_SECRET) return next(); // skip if not configured (dev mode)
+  const auth = req.headers['authorization'] || '';
+  if (auth !== `Bearer ${WEBAPP_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
 
 /* ---- Telegram helpers ---- */
 async function tgSend(chatId, text, extra = {}) {
@@ -213,14 +224,32 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-/* ---- REST API for web app sync ---- */
-app.get('/api/log', (req, res) => {
+/* ---- REST API for web app (all require WEBAPP_SECRET) ---- */
+
+// Proxy: send a Telegram message on behalf of the web app
+// The browser never needs the bot token — it passes through here.
+app.post('/api/send', requireSecret, async (req, res) => {
+  const { chat_id, text } = req.body;
+  if (!chat_id || !text) return res.status(400).json({ error: 'Missing chat_id or text' });
+  try {
+    const { data } = await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      chat_id: String(chat_id),
+      text,
+      parse_mode: 'HTML',
+    });
+    res.json({ ok: data.ok });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.response?.data?.description || e.message });
+  }
+});
+
+app.get('/api/log', requireSecret, (req, res) => {
   const { chat_id, date } = req.query;
   if (!chat_id || !date) return res.status(400).json({ error: 'Missing chat_id or date' });
   res.json(store.getLog(String(chat_id), date));
 });
 
-app.get('/api/log-week', (req, res) => {
+app.get('/api/log-week', requireSecret, (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'Missing chat_id' });
   const logs = {};
