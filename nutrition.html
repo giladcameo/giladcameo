@@ -310,19 +310,23 @@
     <div class="card">
       <div class="card-title">// setup (one-time)</div>
       <ol class="step-list">
-        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Open Telegram and message <code>@BotFather</code>. Send <code>/newbot</code> and follow the steps. You'll get a <strong>Bot Token</strong> like <code>7123456789:AAF...</code></div></li>
-        <li class="step-item"><div class="step-num">2</div><div class="step-txt">Start a chat with your new bot (click the link BotFather gives you). Send any message to it.</div></li>
-        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Find your <strong>Chat ID</strong>: message <code>@userinfobot</code> — it replies with your numeric ID (e.g. <code>123456789</code>).</div></li>
-        <li class="step-item"><div class="step-num">4</div><div class="step-txt">Paste both below and click <strong>Test Connection</strong>.</div></li>
+        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Message <code>@BotFather</code> → <code>/newbot</code> → get your <strong>Bot Token</strong>. Add it as <code>TELEGRAM_TOKEN</code> in Railway. <strong>Never paste it here.</strong></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-txt">Start a chat with your bot, then message <code>@userinfobot</code> to get your <strong>Chat ID</strong> (numeric, e.g. <code>123456789</code>).</div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Generate a <strong>Web App Secret</strong> (used instead of the token — safe to store in browser):<br><code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code><br>Add it as <code>WEBAPP_SECRET</code> in Railway <em>and</em> paste it below.</div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-txt">Enter your Railway server URL, Chat ID, and Secret below → click <strong>Test</strong>.</div></li>
       </ol>
       <div class="form-grid" style="margin-bottom:16px">
         <div class="fg" style="grid-column:1/-1">
-          <label for="tg-token">Bot Token</label>
-          <input type="text" id="tg-token" placeholder="7123456789:AAFxxxxxxxxxx" autocomplete="off" spellcheck="false">
+          <label for="tg-server-setup">Bot Server URL</label>
+          <input type="text" id="tg-server-setup" placeholder="https://your-app.railway.app" spellcheck="false">
         </div>
         <div class="fg">
           <label for="tg-chat">Chat ID</label>
           <input type="text" id="tg-chat" placeholder="123456789">
+        </div>
+        <div class="fg">
+          <label for="tg-secret">Web App Secret</label>
+          <input type="password" id="tg-secret" placeholder="(from WEBAPP_SECRET env var)" autocomplete="off">
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -330,7 +334,8 @@
         <button class="btn btn-green" id="btn-tg-save">Save</button>
       </div>
       <div class="info-box" style="margin-top:16px;margin-bottom:0">
-        Your token is stored only in your browser's localStorage — it never leaves your device.
+        The <strong>Bot Token</strong> and <strong>Anthropic API key</strong> live only in Railway env vars — never in the browser.
+        The Web App Secret is a separate lightweight password just for this page.
       </div>
     </div>
 
@@ -795,16 +800,18 @@ function tgGet(k){ return localStorage.getItem('nc_tg_'+k)||''; }
 function tgSet(k,v){ localStorage.setItem('nc_tg_'+k,v); }
 
 async function sendTelegram(text){
-  const token=tgGet('token'), chatId=tgGet('chat');
-  if(!token||!chatId) return {ok:false,err:'Not configured'};
+  const chatId=tgGet('chat');
+  const secret=tgGet('secret');
+  const serverUrl=(tgGet('server')||'').replace(/\/+$/,'');
+  if(!chatId||!serverUrl) return {ok:false,err:'Not configured — fill in the Telegram tab'};
   try{
-    const r=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    const r=await fetch(`${serverUrl}/api/send`,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:chatId,text,parse_mode:'HTML'})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+secret},
+      body:JSON.stringify({chat_id:chatId,text})
     });
     const d=await r.json();
-    return {ok:d.ok, err:d.description||''};
+    return {ok:d.ok, err:d.error||''};
   }catch(e){ return {ok:false,err:e.message}; }
 }
 
@@ -907,10 +914,14 @@ function updateTgStatus(state,txt){
 
 /* Load saved TG settings into form */
 (function loadTgSettings(){
-  const token=tgGet('token'), chatId=tgGet('chat');
-  if(token) document.getElementById('tg-token').value=token;
+  const serverUrl=tgGet('server'), chatId=tgGet('chat'), secret=tgGet('secret');
+  if(serverUrl){
+    document.getElementById('tg-server-setup').value=serverUrl;
+    document.getElementById('tg-server').value=serverUrl;
+  }
   if(chatId) document.getElementById('tg-chat').value=chatId;
-  if(token&&chatId) updateTgStatus('ok','Connected · bot token and chat ID saved');
+  if(secret) document.getElementById('tg-secret').value=secret;
+  if(serverUrl&&chatId) updateTgStatus('ok','Connected · server URL, Chat ID, and secret saved');
   TG_REMINDERS.forEach(type=>{
     const def={morning:'08:00',lunch:'12:30',dinner:'18:30',summary:'21:00'};
     document.getElementById('tg-t-'+type).value=tgGet('t_'+type)||def[type];
@@ -919,18 +930,22 @@ function updateTgStatus(state,txt){
 })();
 
 document.getElementById('btn-tg-save').addEventListener('click',()=>{
-  const token=document.getElementById('tg-token').value.trim();
+  const serverUrl=(document.getElementById('tg-server-setup').value||'').trim().replace(/\/+$/,'');
   const chat=document.getElementById('tg-chat').value.trim();
-  if(!token||!chat){ updateTgStatus('err','Please fill in both fields'); return; }
-  tgSet('token',token); tgSet('chat',chat);
+  const secret=document.getElementById('tg-secret').value.trim();
+  if(!serverUrl||!chat){ updateTgStatus('err','Server URL and Chat ID are required'); return; }
+  tgSet('server',serverUrl); tgSet('chat',chat); if(secret) tgSet('secret',secret);
+  document.getElementById('tg-server').value=serverUrl;
   updateTgStatus('ok','Saved — click Test Connection to verify');
 });
 
 document.getElementById('btn-tg-test').addEventListener('click',async()=>{
-  const token=document.getElementById('tg-token').value.trim();
+  const serverUrl=(document.getElementById('tg-server-setup').value||'').trim().replace(/\/+$/,'');
   const chat=document.getElementById('tg-chat').value.trim();
-  if(!token||!chat){ updateTgStatus('err','Please fill in both fields first'); return; }
-  tgSet('token',token); tgSet('chat',chat);
+  const secret=document.getElementById('tg-secret').value.trim();
+  if(!serverUrl||!chat){ updateTgStatus('err','Please fill in Server URL and Chat ID first'); return; }
+  tgSet('server',serverUrl); tgSet('chat',chat); if(secret) tgSet('secret',secret);
+  document.getElementById('tg-server').value=serverUrl;
   updateTgStatus('','Testing…');
   const res=await sendTelegram('✅ <b>Nutrition Tracker connected!</b>\n\nYour daily summaries and reminders will appear here.');
   if(res.ok) updateTgStatus('ok','Connected successfully!');
@@ -985,8 +1000,9 @@ async function syncFromServer(week){
 
   setSyncStatus('Syncing…');
   try{
+    const secret=tgGet('secret');
     const endpoint=week?`${serverUrl}/api/log-week?chat_id=${chatId}`:`${serverUrl}/api/log?chat_id=${chatId}&date=${currentDay}`;
-    const res=await fetch(endpoint);
+    const res=await fetch(endpoint,{headers:{'Authorization':'Bearer '+secret}});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data=await res.json();
 
