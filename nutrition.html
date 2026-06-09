@@ -383,14 +383,34 @@
       <button class="btn btn-green btn-sm" id="btn-tg-save-rem" style="margin-top:16px">Save Reminder Settings</button>
     </div>
 
-    <!-- Chat Logging (future) -->
+    <!-- Bot Server + Photo Logging -->
     <div class="card">
-      <div class="card-title">// log food via chat (coming soon)</div>
-      <div class="future-box">
-        <strong>Goal:</strong> send <em>"ate 2 eggs and oatmeal"</em> to your bot → it logs automatically.<br><br>
-        This requires a small backend server to receive Telegram webhook messages.
-        A ready-to-deploy Node.js server will be added here — deployable to Railway or Render for free.
-        The web app will sync with it automatically.
+      <div class="card-title">// photo logging via bot server</div>
+      <div class="info-box" style="margin-bottom:16px">
+        <strong>How it works:</strong> deploy the included <code>bot/server.js</code> to Railway (free $5/month credit).
+        Then send a photo to your bot → Claude Vision analyzes it → logged automatically.
+        Enter the server URL below to sync the log back to this web app.
+      </div>
+
+      <div class="card-title" style="margin-bottom:12px">// deploy to Railway (5 min)</div>
+      <ol class="step-list" style="margin-bottom:20px">
+        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Go to <strong>railway.app</strong> → New Project → Deploy from GitHub repo → select <strong>giladcameo/giladcameo</strong></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-txt">In Railway settings set Start Command: <code>cd bot &amp;&amp; npm install &amp;&amp; node server.js</code></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Add environment variables: <code>TELEGRAM_TOKEN</code> and <code>ANTHROPIC_API_KEY</code></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-txt">After deploy, open <code>https://your-app.railway.app/setup-webhook?url=https://your-app.railway.app/webhook</code> once to register the webhook</div></li>
+        <li class="step-item"><div class="step-num">5</div><div class="step-txt">Paste the Railway URL below and click <strong>Sync from Bot</strong></div></li>
+      </ol>
+
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg" style="grid-column:1/-1">
+          <label for="tg-server">Bot Server URL</label>
+          <input type="text" id="tg-server" placeholder="https://your-app.railway.app" spellcheck="false">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-tg" id="btn-sync-today">Sync Today from Bot</button>
+        <button class="btn btn-tg btn-sm" id="btn-sync-week">Sync Last 7 Days</button>
+        <span id="sync-status" style="font-family:monospace;font-size:11px;color:#8ba3be"></span>
       </div>
     </div>
 
@@ -941,11 +961,70 @@ document.getElementById('btn-tg-save-rem').addEventListener('click',()=>{
 
 /* Hook into tab switch to refresh preview */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
-  if(btn.dataset.tab==='tg'){
-    const orig=btn.onclick;
-    btn.addEventListener('click',updateTgPreview);
-  }
+  if(btn.dataset.tab==='tg') btn.addEventListener('click',updateTgPreview);
 });
+
+/* ---- Server sync ---- */
+(function loadServerUrl(){
+  const url=tgGet('server');
+  if(url) document.getElementById('tg-server').value=url;
+})();
+
+function setSyncStatus(txt, ok){
+  const el=document.getElementById('sync-status');
+  el.textContent=txt;
+  el.style.color=ok===true?'#3fb950':ok===false?'#ef4444':'#8ba3be';
+}
+
+async function syncFromServer(week){
+  const chatId=tgGet('chat');
+  const serverUrl=(document.getElementById('tg-server').value||'').replace(/\/+$/,'');
+  if(!chatId){ setSyncStatus('No Chat ID — fill it in above',false); return; }
+  if(!serverUrl){ setSyncStatus('Enter your bot server URL',false); return; }
+  tgSet('server',serverUrl);
+
+  setSyncStatus('Syncing…');
+  try{
+    const endpoint=week?`${serverUrl}/api/log-week?chat_id=${chatId}`:`${serverUrl}/api/log?chat_id=${chatId}&date=${currentDay}`;
+    const res=await fetch(endpoint);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+
+    if(week){
+      let count=0;
+      Object.entries(data).forEach(([date, log])=>{
+        const existing=getLog(date);
+        // Merge: add bot entries not already in localStorage (by id)
+        let changed=false;
+        ['Breakfast','Lunch','Dinner','Snacks'].forEach(m=>{
+          const botFoods=(log[m]||[]).filter(f=>f.id);
+          const existingIds=new Set((existing[m]||[]).map(f=>f.id).filter(Boolean));
+          const newFoods=botFoods.filter(f=>!existingIds.has(f.id));
+          if(newFoods.length){ existing[m]=[...(existing[m]||[]),...newFoods]; changed=true; count+=newFoods.length; }
+        });
+        if(changed) saveLog(date,existing);
+      });
+      setSyncStatus(`Synced ${count} new item${count!==1?'s':''} from last 7 days`,true);
+    } else {
+      const existing=getLog(currentDay);
+      let count=0;
+      ['Breakfast','Lunch','Dinner','Snacks'].forEach(m=>{
+        const botFoods=(data[m]||[]).filter(f=>f.id);
+        const existingIds=new Set((existing[m]||[]).map(f=>f.id).filter(Boolean));
+        const newFoods=botFoods.filter(f=>!existingIds.has(f.id));
+        if(newFoods.length){ existing[m]=[...(existing[m]||[]),...newFoods]; count+=newFoods.length; }
+      });
+      saveLog(currentDay,existing);
+      renderToday();
+      setSyncStatus(`Synced ${count} new item${count!==1?'s':''} from bot`,true);
+    }
+  } catch(e){
+    setSyncStatus('Sync failed: '+e.message,false);
+  }
+}
+
+document.getElementById('btn-sync-today').addEventListener('click',()=>syncFromServer(false));
+document.getElementById('btn-sync-week').addEventListener('click',()=>syncFromServer(true));
 
 /* Run lazy reminder check on load */
 checkLazyReminders();
