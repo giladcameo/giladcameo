@@ -137,6 +137,34 @@
       .wrap{padding:20px 16px 80px}
       .tabs{width:100%;overflow-x:auto}
     }
+    /* TELEGRAM */
+    .tg-status{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px;margin-bottom:20px}
+    .tg-dot{width:9px;height:9px;border-radius:50%;background:#4a5568;flex-shrink:0;transition:background .3s}
+    .tg-dot.ok{background:var(--green);box-shadow:0 0 8px rgba(63,185,80,0.7)}
+    .tg-dot.err{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,0.6)}
+    .step-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+    .step-item{display:flex;gap:12px;align-items:flex-start}
+    .step-num{font-family:monospace;font-size:10px;color:var(--accent);background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .step-txt{font-size:13px;color:var(--text2);line-height:1.7}
+    .step-txt code{font-family:monospace;background:var(--bg3);padding:1px 7px;border-radius:3px;color:var(--accent);font-size:12px;user-select:all}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(30,61,107,0.4);gap:12px}
+    .toggle-row:last-child{border-bottom:none}
+    .toggle-lbl{font-size:13px;flex:1}
+    .toggle-sub{font-size:11px;color:var(--text3);font-family:monospace;margin-top:2px}
+    .toggle-ctrl{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .time-inp{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;font-family:monospace;width:82px;outline:none}
+    .time-inp:focus{border-color:var(--accent)}
+    .tg-cb{width:38px;height:22px;-webkit-appearance:none;appearance:none;background:var(--bg3);border:1px solid var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s,border-color .2s;flex-shrink:0}
+    .tg-cb:checked{background:var(--green);border-color:var(--green)}
+    .tg-cb::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+    .tg-cb:checked::after{left:19px}
+    .info-box{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.14);border-radius:8px;padding:16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.8}
+    .info-box strong{color:var(--accent)}
+    .future-box{background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.2);border-radius:8px;padding:16px;font-size:13px;color:var(--text2);line-height:1.8}
+    .future-box strong{color:var(--green)}
+    .tg-msg-preview{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:12px;color:var(--text2);line-height:1.8;white-space:pre-wrap;margin-top:12px}
+    .btn-tg{border-color:#2aabee;color:#2aabee}
+    .btn-tg:hover{background:#2aabee;color:#fff;box-shadow:0 0 20px rgba(42,171,238,0.4)}
   </style>
 </head>
 <body>
@@ -155,6 +183,7 @@
     <button class="tab-btn" role="tab" data-tab="today">Today</button>
     <button class="tab-btn" role="tab" data-tab="planner">Planner</button>
     <button class="tab-btn" role="tab" data-tab="shop">Shopping</button>
+    <button class="tab-btn" role="tab" data-tab="tg">Telegram</button>
   </div>
 
   <!-- CALCULATOR -->
@@ -266,6 +295,105 @@
       <button class="btn btn-sm btn-mute" id="btn-uncheck">Uncheck All</button>
     </div>
     <div class="card" id="shop-out"></div>
+  </div>
+
+  <!-- TELEGRAM -->
+  <div id="tab-tg" class="tab-panel">
+
+    <!-- Status -->
+    <div class="tg-status">
+      <div class="tg-dot" id="tg-dot"></div>
+      <span id="tg-status-txt">Not connected — enter your bot token and chat ID below</span>
+    </div>
+
+    <!-- Setup -->
+    <div class="card">
+      <div class="card-title">// setup (one-time)</div>
+      <ol class="step-list">
+        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Open Telegram and message <code>@BotFather</code>. Send <code>/newbot</code> and follow the steps. You'll get a <strong>Bot Token</strong> like <code>7123456789:AAF...</code></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-txt">Start a chat with your new bot (click the link BotFather gives you). Send any message to it.</div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Find your <strong>Chat ID</strong>: message <code>@userinfobot</code> — it replies with your numeric ID (e.g. <code>123456789</code>).</div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-txt">Paste both below and click <strong>Test Connection</strong>.</div></li>
+      </ol>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg" style="grid-column:1/-1">
+          <label for="tg-token">Bot Token</label>
+          <input type="text" id="tg-token" placeholder="7123456789:AAFxxxxxxxxxx" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="fg">
+          <label for="tg-chat">Chat ID</label>
+          <input type="text" id="tg-chat" placeholder="123456789">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-tg" id="btn-tg-test">Test Connection →</button>
+        <button class="btn btn-green" id="btn-tg-save">Save</button>
+      </div>
+      <div class="info-box" style="margin-top:16px;margin-bottom:0">
+        Your token is stored only in your browser's localStorage — it never leaves your device.
+      </div>
+    </div>
+
+    <!-- Send Summary -->
+    <div class="card">
+      <div class="card-title">// send to telegram now</div>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px">Preview of the message that will be sent for today:</p>
+      <div class="tg-msg-preview" id="tg-preview"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-tg" id="btn-tg-send-day">Send Today's Summary</button>
+        <button class="btn btn-tg btn-sm" id="btn-tg-send-plan">Send Weekly Plan</button>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <div class="card">
+      <div class="card-title">// automatic reminders</div>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px">
+        When you open this page, it checks if a scheduled message should be sent (within a 90-min window of each time).
+        No server needed — works whenever the page is loaded.
+      </p>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Morning reminder</div><div class="toggle-sub">Sends your daily calorie target</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-morning" value="08:00">
+          <input type="checkbox" class="tg-cb" id="tg-en-morning">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Lunch check-in</div><div class="toggle-sub">Shows calories logged so far</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-lunch" value="12:30">
+          <input type="checkbox" class="tg-cb" id="tg-en-lunch">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Dinner check-in</div><div class="toggle-sub">Remaining calories for the day</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-dinner" value="18:30">
+          <input type="checkbox" class="tg-cb" id="tg-en-dinner">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Daily summary</div><div class="toggle-sub">Full report with all meals</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-summary" value="21:00">
+          <input type="checkbox" class="tg-cb" id="tg-en-summary">
+        </div>
+      </div>
+      <button class="btn btn-green btn-sm" id="btn-tg-save-rem" style="margin-top:16px">Save Reminder Settings</button>
+    </div>
+
+    <!-- Chat Logging (future) -->
+    <div class="card">
+      <div class="card-title">// log food via chat (coming soon)</div>
+      <div class="future-box">
+        <strong>Goal:</strong> send <em>"ate 2 eggs and oatmeal"</em> to your bot → it logs automatically.<br><br>
+        This requires a small backend server to receive Telegram webhook messages.
+        A ready-to-deploy Node.js server will be added here — deployable to Railway or Render for free.
+        The web app will sync with it automatically.
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -637,6 +765,190 @@ function doAddFood(food){
 /* ---- INIT ---- */
 renderToday();
 renderPlanner();
+
+/* =========================================================
+   TELEGRAM
+   ========================================================= */
+const TG_REMINDERS = ['morning','lunch','dinner','summary'];
+
+function tgGet(k){ return localStorage.getItem('nc_tg_'+k)||''; }
+function tgSet(k,v){ localStorage.setItem('nc_tg_'+k,v); }
+
+async function sendTelegram(text){
+  const token=tgGet('token'), chatId=tgGet('chat');
+  if(!token||!chatId) return {ok:false,err:'Not configured'};
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:chatId,text,parse_mode:'HTML'})
+    });
+    const d=await r.json();
+    return {ok:d.ok, err:d.description||''};
+  }catch(e){ return {ok:false,err:e.message}; }
+}
+
+function buildDaySummary(date){
+  const log=getLog(date||currentDay);
+  let tCal=0,tProt=0,tCarbs=0,tFat=0;
+  const mealLines=MEALS.map(m=>{
+    const foods=log[m]||[];
+    const mc=Math.round(foods.reduce((s,f)=>s+f.cal,0));
+    tCal+=mc;
+    foods.forEach(f=>{tProt+=f.protein;tCarbs+=f.carbs;tFat+=f.fat;});
+    const icon={Breakfast:'🍳',Lunch:'🥗',Dinner:'🍽',Snacks:'🍎'}[m];
+    return foods.length?`${icon} <b>${m}:</b> ${mc} kcal`:`${icon} <b>${m}:</b> —`;
+  });
+  tCal=Math.round(tCal); tProt=Math.round(tProt); tCarbs=Math.round(tCarbs); tFat=Math.round(tFat);
+  const tgt=profile?profile.target:0;
+  const pct=tgt?Math.round(tCal/tgt*100):0;
+  const rem=tgt?tgt-tCal:0;
+  const dateLabel=fmtDate(date||currentDay);
+  let msg=`📊 <b>Nutrition Summary — ${dateLabel}</b>\n\n`;
+  msg+=`🔥 <b>Calories:</b> ${tCal}${tgt?' / '+tgt+' kcal ('+pct+'%)':' kcal'}\n`;
+  if(profile){
+    msg+=`💪 <b>Protein:</b> ${tProt}g / ${profile.protG}g\n`;
+    msg+=`🍞 <b>Carbs:</b> ${tCarbs}g / ${profile.carbG}g\n`;
+    msg+=`🥑 <b>Fat:</b> ${tFat}g / ${profile.fatG}g\n`;
+  }
+  msg+=`\n${mealLines.join('\n')}\n`;
+  if(tgt) msg+=`\n${rem>=0?'✅ Remaining: '+rem+' kcal':'⚠️ Over target: '+Math.abs(rem)+' kcal'}`;
+  return msg;
+}
+
+function buildWeeklyPlan(){
+  let msg='📅 <b>Weekly Meal Plan</b>\n\n';
+  DAYS.forEach(day=>{
+    let tot=0; MEALS.forEach(m=>(plan[day][m]||[]).forEach(f=>tot+=f.cal));
+    msg+=`<b>${day}</b> (${Math.round(tot)} kcal)\n`;
+    MEALS.forEach(m=>{
+      const fs=plan[day][m]||[];
+      if(fs.length) msg+=`  ${m}: ${fs.map(f=>f.name).join(', ')}\n`;
+    });
+    msg+='\n';
+  });
+  return msg.trim();
+}
+
+function buildReminderMsg(type){
+  const log=getLog(currentDay);
+  let tCal=0;
+  MEALS.forEach(m=>(log[m]||[]).forEach(f=>tCal+=f.cal));
+  tCal=Math.round(tCal);
+  const tgt=profile?profile.target:0;
+  const pct=tgt?Math.round(tCal/tgt*100):0;
+  const rem=tgt?tgt-tCal:0;
+  switch(type){
+    case 'morning':
+      return `🌅 <b>Good morning!</b>\n\nTime to start tracking.\nYour target today: <b>${tgt||'—'} kcal</b>\n\nBreakfast is the most important meal — don't skip it!`;
+    case 'lunch':
+      return `🕛 <b>Lunch check-in</b>\n\nSo far today: <b>${tCal} kcal</b>${tgt?' ('+pct+'% of target)':''}\n${tgt&&rem>0?'Remaining: '+rem+' kcal':''}`;
+    case 'dinner':
+      return `🌙 <b>Dinner time!</b>\n\nLogged today: <b>${tCal} kcal</b>${tgt?' / '+tgt+' kcal':''}\n${tgt&&rem>0?'You have <b>'+rem+' kcal</b> left for dinner & snacks.':tgt?'⚠️ Already over target by '+Math.abs(rem)+' kcal.':''}`;
+    case 'summary':
+      return buildDaySummary();
+  }
+}
+
+function getSentToday(){ return JSON.parse(localStorage.getItem('nc_tg_sent_'+todayStr())||'{}'); }
+function markSent(type){ const s=getSentToday(); s[type]=true; localStorage.setItem('nc_tg_sent_'+todayStr(),JSON.stringify(s)); }
+
+async function checkLazyReminders(){
+  const token=tgGet('token'), chatId=tgGet('chat');
+  if(!token||!chatId) return;
+  const now=new Date();
+  const hm=now.getHours()*60+now.getMinutes();
+  const sent=getSentToday();
+  const WINDOW=90;
+  for(const type of TG_REMINDERS){
+    const enabled=tgGet('en_'+type)==='1';
+    if(!enabled||sent[type]) continue;
+    const timeStr=tgGet('t_'+type)||{morning:'08:00',lunch:'12:30',dinner:'18:30',summary:'21:00'}[type];
+    const [h,m]=timeStr.split(':').map(Number);
+    const scheduled=h*60+m;
+    if(hm>=scheduled && hm<=scheduled+WINDOW){
+      const msg=buildReminderMsg(type);
+      const res=await sendTelegram(msg);
+      if(res.ok) markSent(type);
+    }
+  }
+}
+
+function updateTgPreview(){
+  document.getElementById('tg-preview').textContent=
+    buildDaySummary().replace(/<[^>]+>/g,'');
+}
+
+function updateTgStatus(state,txt){
+  const dot=document.getElementById('tg-dot');
+  dot.className='tg-dot'+(state==='ok'?' ok':state==='err'?' err':'');
+  document.getElementById('tg-status-txt').textContent=txt;
+}
+
+/* Load saved TG settings into form */
+(function loadTgSettings(){
+  const token=tgGet('token'), chatId=tgGet('chat');
+  if(token) document.getElementById('tg-token').value=token;
+  if(chatId) document.getElementById('tg-chat').value=chatId;
+  if(token&&chatId) updateTgStatus('ok','Connected · bot token and chat ID saved');
+  TG_REMINDERS.forEach(type=>{
+    const def={morning:'08:00',lunch:'12:30',dinner:'18:30',summary:'21:00'};
+    document.getElementById('tg-t-'+type).value=tgGet('t_'+type)||def[type];
+    document.getElementById('tg-en-'+type).checked=tgGet('en_'+type)==='1';
+  });
+})();
+
+document.getElementById('btn-tg-save').addEventListener('click',()=>{
+  const token=document.getElementById('tg-token').value.trim();
+  const chat=document.getElementById('tg-chat').value.trim();
+  if(!token||!chat){ updateTgStatus('err','Please fill in both fields'); return; }
+  tgSet('token',token); tgSet('chat',chat);
+  updateTgStatus('ok','Saved — click Test Connection to verify');
+});
+
+document.getElementById('btn-tg-test').addEventListener('click',async()=>{
+  const token=document.getElementById('tg-token').value.trim();
+  const chat=document.getElementById('tg-chat').value.trim();
+  if(!token||!chat){ updateTgStatus('err','Please fill in both fields first'); return; }
+  tgSet('token',token); tgSet('chat',chat);
+  updateTgStatus('','Testing…');
+  const res=await sendTelegram('✅ <b>Nutrition Tracker connected!</b>\n\nYour daily summaries and reminders will appear here.');
+  if(res.ok) updateTgStatus('ok','Connected successfully!');
+  else updateTgStatus('err','Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-send-day').addEventListener('click',async()=>{
+  const msg=buildDaySummary();
+  const res=await sendTelegram(msg);
+  if(res.ok) alert('Summary sent to Telegram!');
+  else alert('Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-send-plan').addEventListener('click',async()=>{
+  const msg=buildWeeklyPlan();
+  const res=await sendTelegram(msg);
+  if(res.ok) alert('Weekly plan sent to Telegram!');
+  else alert('Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-save-rem').addEventListener('click',()=>{
+  TG_REMINDERS.forEach(type=>{
+    tgSet('t_'+type, document.getElementById('tg-t-'+type).value);
+    tgSet('en_'+type, document.getElementById('tg-en-'+type).checked?'1':'0');
+  });
+  alert('Reminder settings saved!');
+});
+
+/* Hook into tab switch to refresh preview */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  if(btn.dataset.tab==='tg'){
+    const orig=btn.onclick;
+    btn.addEventListener('click',updateTgPreview);
+  }
+});
+
+/* Run lazy reminder check on load */
+checkLazyReminders();
 </script>
 </body>
 </html>
