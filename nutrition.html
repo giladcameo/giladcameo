@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nutrition Tracker · Gilad Cameo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#071e3d; --bg2:#0d2548; --bg3:#060a14;
+      --border:#1e3d6b; --accent:#00e5ff;
+      --text:#e6edf3; --text2:#c8d6e5; --text3:#8ba3be;
+      --green:#3fb950; --red:#ef4444;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; }
+    nav { display:flex; align-items:center; justify-content:space-between; padding:0 40px; height:56px; border-bottom:1px solid var(--border); background:var(--bg); position:sticky; top:0; z-index:100; }
+    .logo { font-family:monospace; font-size:16px; font-weight:700; color:var(--accent); letter-spacing:2px; text-decoration:none; text-shadow:0 0 18px rgba(0,229,255,0.7); }
+    nav a { color:var(--text2); text-decoration:none; font-size:14px; transition:color .15s; }
+    nav a:hover { color:var(--accent); }
+    .wrap { max-width:960px; margin:0 auto; padding:32px 24px 80px; }
+    .pg-label { font-family:monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+    .pg-h1 { font-size:28px; font-weight:700; margin-bottom:24px; }
+    /* TABS */
+    .tabs { display:flex; gap:2px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:4px; margin-bottom:28px; width:fit-content; flex-wrap:wrap; }
+    .tab-btn { font-family:monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; padding:8px 20px; background:transparent; border:none; color:var(--text3); cursor:pointer; border-radius:5px; transition:background .15s,color .15s; }
+    .tab-btn:hover { color:var(--text2); }
+    .tab-btn.active { background:var(--bg2); color:var(--accent); border:1px solid var(--border); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    /* CARDS */
+    .card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:24px; margin-bottom:20px; }
+    .card-title { font-family:monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+    /* FORM */
+    .form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:16px; margin-bottom:20px; }
+    .fg { display:flex; flex-direction:column; gap:6px; }
+    label { font-family:monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); }
+    input[type=number],input[type=text],select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:6px; font-size:14px; font-family:inherit; outline:none; width:100%; transition:border-color .15s; }
+    input:focus,select:focus { border-color:var(--accent); }
+    select option { background:var(--bg2); }
+    .btn { font-family:monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; padding:10px 24px; background:transparent; border:1px solid var(--accent); color:var(--accent); border-radius:5px; cursor:pointer; transition:background .15s,color .15s,box-shadow .15s; }
+    .btn:hover { background:var(--accent); color:var(--bg3); box-shadow:0 0 20px rgba(0,229,255,0.4); }
+    .btn-sm { padding:6px 14px; font-size:9px; }
+    .btn-green { border-color:var(--green); color:var(--green); }
+    .btn-green:hover { background:var(--green); color:var(--bg3); box-shadow:none; }
+    .btn-mute { border-color:#4a5568; color:var(--text3); }
+    .btn-mute:hover { background:#4a5568; color:var(--text); box-shadow:none; }
+    /* GOAL ROW */
+    .goal-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .goal-btn { font-family:monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:8px 18px; background:var(--bg3); border:1px solid var(--border); color:var(--text3); border-radius:5px; cursor:pointer; transition:all .15s; }
+    .goal-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,229,255,0.08); }
+    /* CALC RESULTS */
+    .calc-result { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:16px; margin-top:24px; }
+    .c-stat { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center; }
+    .c-val { font-size:28px; font-weight:800; color:var(--accent); font-family:monospace; }
+    .c-lbl { font-size:10px; font-family:monospace; letter-spacing:1px; text-transform:uppercase; color:var(--text3); margin-top:4px; }
+    .macro-split { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:16px; }
+    .m-stat { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:14px; text-align:center; }
+    .m-val { font-size:22px; font-weight:700; font-family:monospace; }
+    .m-lbl { font-size:10px; font-family:monospace; letter-spacing:1px; text-transform:uppercase; color:var(--text3); margin-top:3px; }
+    /* DATE NAV */
+    .date-nav { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+    .dnav-btn { background:var(--bg3); border:1px solid var(--border); color:var(--text2); padding:6px 16px; border-radius:5px; cursor:pointer; font-size:18px; line-height:1; transition:border-color .15s; }
+    .dnav-btn:hover { border-color:var(--accent); }
+    .date-lbl { font-family:monospace; font-size:12px; letter-spacing:2px; color:var(--accent); min-width:160px; text-align:center; }
+    /* RING */
+    .today-overview { display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+    .ring-wrap { position:relative; width:140px; height:140px; flex-shrink:0; }
+    .ring-wrap svg { transform:rotate(-90deg); }
+    .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .ring-val { font-size:26px; font-weight:800; font-family:monospace; color:var(--accent); }
+    .ring-sub { font-size:9px; font-family:monospace; letter-spacing:1px; text-transform:uppercase; color:var(--text3); }
+    /* MACRO BARS */
+    .macros-today { flex:1; min-width:200px; }
+    .mbar-row { margin-bottom:12px; }
+    .mbar-lbl { display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; }
+    .mbar-track { height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+    .mbar-fill { height:100%; border-radius:3px; transition:width .4s ease; }
+    /* MEALS */
+    .meal-sec { background:var(--bg2); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+    .meal-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); }
+    .meal-title { font-family:monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
+    .meal-total { font-family:monospace; font-size:11px; color:var(--text3); }
+    .meal-body { padding:12px 20px 16px; }
+    .food-item { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid rgba(30,61,107,0.4); }
+    .food-item:last-of-type { border-bottom:none; }
+    .food-nm { font-size:13px; }
+    .food-mx { font-size:11px; color:var(--text3); font-family:monospace; }
+    .food-kcal { font-size:13px; font-family:monospace; color:var(--accent); font-weight:700; min-width:50px; text-align:right; }
+    .food-rm { background:none; border:none; color:#4a5568; cursor:pointer; font-size:18px; padding:0 4px; transition:color .15s; line-height:1; }
+    .food-rm:hover { color:var(--red); }
+    /* PLANNER */
+    .planner-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; overflow-x:auto; padding-bottom:8px; }
+    .p-day { background:var(--bg2); border:1px solid var(--border); border-radius:8px; min-width:115px; }
+    .p-day-hdr { background:var(--bg3); padding:8px 10px; border-bottom:1px solid var(--border); border-radius:7px 7px 0 0; text-align:center; }
+    .p-day-nm { font-family:monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
+    .p-day-tot { font-size:10px; font-family:monospace; color:var(--text3); margin-top:2px; }
+    .p-slot { padding:7px; border-bottom:1px solid rgba(30,61,107,0.4); }
+    .p-slot:last-child { border-bottom:none; }
+    .p-slot-ttl { font-size:8px; font-family:monospace; letter-spacing:1px; text-transform:uppercase; color:var(--text3); margin-bottom:4px; }
+    .p-chip { display:flex; align-items:center; justify-content:space-between; background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.12); border-radius:4px; padding:3px 6px; font-size:9px; margin-bottom:3px; }
+    .p-chip-nm { color:var(--text2); max-width:65px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .p-chip-kcal { color:var(--accent); font-family:monospace; margin-left:3px; }
+    .p-chip-rm { background:none; border:none; color:#4a5568; cursor:pointer; font-size:11px; padding:0; line-height:1; }
+    .p-chip-rm:hover { color:var(--red); }
+    .p-add-btn { background:none; border:1px dashed rgba(30,61,107,0.8); color:var(--text3); border-radius:4px; padding:4px; font-size:9px; cursor:pointer; width:100%; text-align:center; transition:border-color .15s,color .15s; font-family:monospace; }
+    .p-add-btn:hover { border-color:var(--accent); color:var(--accent); }
+    /* SHOPPING */
+    .shop-cat { margin-bottom:20px; }
+    .shop-cat-ttl { font-family:monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    .shop-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(30,61,107,0.3); }
+    .shop-item:last-child { border-bottom:none; }
+    .shop-cb { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+    .shop-nm { font-size:13px; cursor:pointer; transition:color .15s; }
+    .shop-item.checked .shop-nm { color:var(--text3); text-decoration:line-through; }
+    .empty { text-align:center; padding:40px 20px; color:var(--text3); font-family:monospace; font-size:12px; letter-spacing:1px; line-height:2; }
+    /* MODAL */
+    .overlay { position:fixed; inset:0; background:rgba(4,10,22,0.88); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .overlay.hidden { display:none; }
+    .modal { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:28px; width:90%; max-width:480px; max-height:82vh; overflow-y:auto; }
+    .modal-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .modal-ttl { font-family:monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
+    .modal-x { background:none; border:none; color:var(--text3); cursor:pointer; font-size:20px; line-height:1; transition:color .15s; }
+    .modal-x:hover { color:var(--text); }
+    .srch-inp { width:100%; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:10px 14px; border-radius:6px; font-size:14px; font-family:inherit; outline:none; margin-bottom:10px; }
+    .srch-inp:focus { border-color:var(--accent); }
+    .srch-results { max-height:260px; overflow-y:auto; }
+    .srch-item { display:flex; align-items:center; justify-content:space-between; padding:10px 10px; border-radius:6px; cursor:pointer; transition:background .1s; }
+    .srch-item:hover { background:rgba(0,229,255,0.06); }
+    .srch-nm { font-size:13px; }
+    .srch-info { font-size:10px; color:var(--text3); font-family:monospace; }
+    .divider { border:none; border-top:1px solid var(--border); margin:14px 0; }
+    .c-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:640px){
+      .today-overview{flex-direction:column}
+      .macro-split{grid-template-columns:1fr 1fr}
+      nav{padding:0 20px}
+      .wrap{padding:20px 16px 80px}
+      .tabs{width:100%;overflow-x:auto}
+    }
+    /* TELEGRAM */
+    .tg-status{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px;margin-bottom:20px}
+    .tg-dot{width:9px;height:9px;border-radius:50%;background:#4a5568;flex-shrink:0;transition:background .3s}
+    .tg-dot.ok{background:var(--green);box-shadow:0 0 8px rgba(63,185,80,0.7)}
+    .tg-dot.err{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,0.6)}
+    .step-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+    .step-item{display:flex;gap:12px;align-items:flex-start}
+    .step-num{font-family:monospace;font-size:10px;color:var(--accent);background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .step-txt{font-size:13px;color:var(--text2);line-height:1.7}
+    .step-txt code{font-family:monospace;background:var(--bg3);padding:1px 7px;border-radius:3px;color:var(--accent);font-size:12px;user-select:all}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(30,61,107,0.4);gap:12px}
+    .toggle-row:last-child{border-bottom:none}
+    .toggle-lbl{font-size:13px;flex:1}
+    .toggle-sub{font-size:11px;color:var(--text3);font-family:monospace;margin-top:2px}
+    .toggle-ctrl{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .time-inp{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;font-family:monospace;width:82px;outline:none}
+    .time-inp:focus{border-color:var(--accent)}
+    .tg-cb{width:38px;height:22px;-webkit-appearance:none;appearance:none;background:var(--bg3);border:1px solid var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s,border-color .2s;flex-shrink:0}
+    .tg-cb:checked{background:var(--green);border-color:var(--green)}
+    .tg-cb::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+    .tg-cb:checked::after{left:19px}
+    .info-box{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.14);border-radius:8px;padding:16px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.8}
+    .info-box strong{color:var(--accent)}
+    .future-box{background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.2);border-radius:8px;padding:16px;font-size:13px;color:var(--text2);line-height:1.8}
+    .future-box strong{color:var(--green)}
+    .tg-msg-preview{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:12px;color:var(--text2);line-height:1.8;white-space:pre-wrap;margin-top:12px}
+    .btn-tg{border-color:#2aabee;color:#2aabee}
+    .btn-tg:hover{background:#2aabee;color:#fff;box-shadow:0 0 20px rgba(42,171,238,0.4)}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">GC.</a>
+  <a href="index.html">← Portfolio</a>
+</nav>
+
+<div class="wrap">
+  <div class="pg-label">// nutrition</div>
+  <h1 class="pg-h1">Nutrition Tracker</h1>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" data-tab="calc">Calculator</button>
+    <button class="tab-btn" role="tab" data-tab="today">Today</button>
+    <button class="tab-btn" role="tab" data-tab="planner">Planner</button>
+    <button class="tab-btn" role="tab" data-tab="shop">Shopping</button>
+    <button class="tab-btn" role="tab" data-tab="tg">Telegram</button>
+  </div>
+
+  <!-- CALCULATOR -->
+  <div id="tab-calc" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">// profile setup</div>
+      <div class="form-grid">
+        <div class="fg"><label for="i-age">Age</label><input type="number" id="i-age" min="10" max="120" placeholder="28"></div>
+        <div class="fg"><label for="i-sex">Sex</label><select id="i-sex"><option value="m">Male</option><option value="f">Female</option></select></div>
+        <div class="fg"><label for="i-wt">Weight (kg)</label><input type="number" id="i-wt" min="30" max="300" step="0.1" placeholder="75"></div>
+        <div class="fg"><label for="i-ht">Height (cm)</label><input type="number" id="i-ht" min="100" max="250" placeholder="178"></div>
+      </div>
+      <div class="fg" style="margin-bottom:20px">
+        <label for="i-act">Activity Level</label>
+        <select id="i-act">
+          <option value="1.2">Sedentary (desk job, no exercise)</option>
+          <option value="1.375">Light (1–3 days/week)</option>
+          <option value="1.55" selected>Moderate (3–5 days/week)</option>
+          <option value="1.725">Active (6–7 days/week)</option>
+          <option value="1.9">Very Active (athlete / physical job)</option>
+        </select>
+      </div>
+      <div class="card-title">// goal</div>
+      <div class="goal-row" id="goal-row">
+        <button class="goal-btn" data-goal="-500">Cut (−500 kcal)</button>
+        <button class="goal-btn" data-goal="-250">Mild Cut (−250 kcal)</button>
+        <button class="goal-btn active" data-goal="0">Maintain</button>
+        <button class="goal-btn" data-goal="250">Mild Bulk (+250)</button>
+        <button class="goal-btn" data-goal="500">Bulk (+500)</button>
+      </div>
+      <button class="btn" id="btn-calc">Calculate →</button>
+      <div id="calc-out" style="display:none">
+        <div class="calc-result">
+          <div class="c-stat"><div class="c-val" id="r-bmr">—</div><div class="c-lbl">BMR kcal</div></div>
+          <div class="c-stat"><div class="c-val" id="r-tdee">—</div><div class="c-lbl">TDEE kcal</div></div>
+          <div class="c-stat"><div class="c-val" id="r-target" style="color:#3fb950">—</div><div class="c-lbl">Target kcal</div></div>
+        </div>
+        <div class="card-title" style="margin-top:20px">// daily macros</div>
+        <div class="macro-split">
+          <div class="m-stat"><div class="m-val" id="r-prot" style="color:#f97316">—g</div><div class="m-lbl">Protein</div></div>
+          <div class="m-stat"><div class="m-val" id="r-carbs" style="color:#3b82f6">—g</div><div class="m-lbl">Carbs</div></div>
+          <div class="m-stat"><div class="m-val" id="r-fat" style="color:#a855f7">—g</div><div class="m-lbl">Fat</div></div>
+        </div>
+        <button class="btn btn-green" id="btn-save" style="margin-top:16px">Save Profile →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY -->
+  <div id="tab-today" class="tab-panel">
+    <div class="date-nav">
+      <button class="dnav-btn" id="btn-prev">‹</button>
+      <div class="date-lbl" id="date-lbl"></div>
+      <button class="dnav-btn" id="btn-next">›</button>
+    </div>
+    <div class="card">
+      <div class="today-overview">
+        <div class="ring-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="58" fill="none" stroke="#0d1a2a" stroke-width="14"/>
+            <circle id="cal-ring" cx="70" cy="70" r="58" fill="none" stroke="#00e5ff" stroke-width="14"
+              stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"
+              style="transition:stroke-dashoffset .5s ease"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="ring-cal">0</div>
+            <div class="ring-sub">kcal</div>
+          </div>
+        </div>
+        <div class="macros-today">
+          <div class="mbar-row">
+            <div class="mbar-lbl"><span style="color:#f97316">Protein</span><span id="b-prot-txt" style="font-family:monospace;font-size:11px;color:#8ba3be"></span></div>
+            <div class="mbar-track"><div class="mbar-fill" id="b-prot" style="background:#f97316;width:0%"></div></div>
+          </div>
+          <div class="mbar-row">
+            <div class="mbar-lbl"><span style="color:#3b82f6">Carbs</span><span id="b-carbs-txt" style="font-family:monospace;font-size:11px;color:#8ba3be"></span></div>
+            <div class="mbar-track"><div class="mbar-fill" id="b-carbs" style="background:#3b82f6;width:0%"></div></div>
+          </div>
+          <div class="mbar-row">
+            <div class="mbar-lbl"><span style="color:#a855f7">Fat</span><span id="b-fat-txt" style="font-family:monospace;font-size:11px;color:#8ba3be"></span></div>
+            <div class="mbar-track"><div class="mbar-fill" id="b-fat" style="background:#a855f7;width:0%"></div></div>
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:#8ba3be;font-family:monospace" id="cal-rem"></div>
+        </div>
+      </div>
+    </div>
+    <div id="meal-secs"></div>
+  </div>
+
+  <!-- PLANNER -->
+  <div id="tab-planner" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="card-title" style="margin:0">// weekly meal plan</div>
+        <p style="font-size:12px;color:#8ba3be;margin-top:4px">Click + to add foods to each day's meals</p>
+      </div>
+      <button class="btn btn-sm btn-mute" id="btn-clear-plan">Clear Plan</button>
+    </div>
+    <div class="planner-grid" id="planner-grid"></div>
+  </div>
+
+  <!-- SHOPPING -->
+  <div id="tab-shop" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="card-title" style="margin:0">// shopping list</div>
+        <p style="font-size:12px;color:#8ba3be;margin-top:4px">Generated from your weekly meal plan</p>
+      </div>
+      <button class="btn btn-sm btn-mute" id="btn-uncheck">Uncheck All</button>
+    </div>
+    <div class="card" id="shop-out"></div>
+  </div>
+
+  <!-- TELEGRAM -->
+  <div id="tab-tg" class="tab-panel">
+
+    <!-- Status -->
+    <div class="tg-status">
+      <div class="tg-dot" id="tg-dot"></div>
+      <span id="tg-status-txt">Not connected — enter your bot token and chat ID below</span>
+    </div>
+
+    <!-- Setup -->
+    <div class="card">
+      <div class="card-title">// setup (one-time)</div>
+      <ol class="step-list">
+        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Message <code>@BotFather</code> → <code>/newbot</code> → get your <strong>Bot Token</strong>. Add it as <code>TELEGRAM_TOKEN</code> in Railway. <strong>Never paste it here.</strong></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-txt">Start a chat with your bot, then message <code>@userinfobot</code> to get your <strong>Chat ID</strong> (numeric, e.g. <code>123456789</code>).</div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Generate a <strong>Web App Secret</strong> (used instead of the token — safe to store in browser):<br><code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code><br>Add it as <code>WEBAPP_SECRET</code> in Railway <em>and</em> paste it below.</div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-txt">Enter your Railway server URL, Chat ID, and Secret below → click <strong>Test</strong>.</div></li>
+      </ol>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg" style="grid-column:1/-1">
+          <label for="tg-server-setup">Bot Server URL</label>
+          <input type="text" id="tg-server-setup" placeholder="https://your-app.railway.app" spellcheck="false">
+        </div>
+        <div class="fg">
+          <label for="tg-chat">Chat ID</label>
+          <input type="text" id="tg-chat" placeholder="123456789">
+        </div>
+        <div class="fg">
+          <label for="tg-secret">Web App Secret</label>
+          <input type="password" id="tg-secret" placeholder="(from WEBAPP_SECRET env var)" autocomplete="off">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-tg" id="btn-tg-test">Test Connection →</button>
+        <button class="btn btn-green" id="btn-tg-save">Save</button>
+      </div>
+      <div class="info-box" style="margin-top:16px;margin-bottom:0">
+        The <strong>Bot Token</strong> and <strong>Anthropic API key</strong> live only in Railway env vars — never in the browser.
+        The Web App Secret is a separate lightweight password just for this page.
+      </div>
+    </div>
+
+    <!-- Send Summary -->
+    <div class="card">
+      <div class="card-title">// send to telegram now</div>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px">Preview of the message that will be sent for today:</p>
+      <div class="tg-msg-preview" id="tg-preview"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-tg" id="btn-tg-send-day">Send Today's Summary</button>
+        <button class="btn btn-tg btn-sm" id="btn-tg-send-plan">Send Weekly Plan</button>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <div class="card">
+      <div class="card-title">// automatic reminders</div>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px">
+        When you open this page, it checks if a scheduled message should be sent (within a 90-min window of each time).
+        No server needed — works whenever the page is loaded.
+      </p>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Morning reminder</div><div class="toggle-sub">Sends your daily calorie target</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-morning" value="08:00">
+          <input type="checkbox" class="tg-cb" id="tg-en-morning">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Lunch check-in</div><div class="toggle-sub">Shows calories logged so far</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-lunch" value="12:30">
+          <input type="checkbox" class="tg-cb" id="tg-en-lunch">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Dinner check-in</div><div class="toggle-sub">Remaining calories for the day</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-dinner" value="18:30">
+          <input type="checkbox" class="tg-cb" id="tg-en-dinner">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-lbl">Daily summary</div><div class="toggle-sub">Full report with all meals</div></div>
+        <div class="toggle-ctrl">
+          <input type="time" class="time-inp" id="tg-t-summary" value="21:00">
+          <input type="checkbox" class="tg-cb" id="tg-en-summary">
+        </div>
+      </div>
+      <button class="btn btn-green btn-sm" id="btn-tg-save-rem" style="margin-top:16px">Save Reminder Settings</button>
+    </div>
+
+    <!-- Bot Server + Photo Logging -->
+    <div class="card">
+      <div class="card-title">// photo logging via bot server</div>
+      <div class="info-box" style="margin-bottom:16px">
+        <strong>How it works:</strong> deploy the included <code>bot/server.js</code> to Railway (free $5/month credit).
+        Then send a photo to your bot → Claude Vision analyzes it → logged automatically.
+        Enter the server URL below to sync the log back to this web app.
+      </div>
+
+      <div class="card-title" style="margin-bottom:12px">// deploy to Railway (5 min)</div>
+      <ol class="step-list" style="margin-bottom:20px">
+        <li class="step-item"><div class="step-num">1</div><div class="step-txt">Go to <strong>railway.app</strong> → New Project → Deploy from GitHub repo → select <strong>giladcameo/giladcameo</strong></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-txt">In Railway settings set Start Command: <code>cd bot &amp;&amp; npm install &amp;&amp; node server.js</code></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-txt">Add environment variables: <code>TELEGRAM_TOKEN</code> and <code>ANTHROPIC_API_KEY</code></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-txt">After deploy, open <code>https://your-app.railway.app/setup-webhook?url=https://your-app.railway.app/webhook</code> once to register the webhook</div></li>
+        <li class="step-item"><div class="step-num">5</div><div class="step-txt">Paste the Railway URL below and click <strong>Sync from Bot</strong></div></li>
+      </ol>
+
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg" style="grid-column:1/-1">
+          <label for="tg-server">Bot Server URL</label>
+          <input type="text" id="tg-server" placeholder="https://your-app.railway.app" spellcheck="false">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-tg" id="btn-sync-today">Sync Today from Bot</button>
+        <button class="btn btn-tg btn-sm" id="btn-sync-week">Sync Last 7 Days</button>
+        <span id="sync-status" style="font-family:monospace;font-size:11px;color:#8ba3be"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-hdr">
+      <div class="modal-ttl">// add food</div>
+      <button class="modal-x" id="modal-x" aria-label="Close">✕</button>
+    </div>
+    <input class="srch-inp" type="text" id="srch" placeholder="Search food database…" autocomplete="off">
+    <div class="srch-results" id="srch-res"></div>
+    <hr class="divider">
+    <div class="modal-ttl" style="margin-bottom:12px">// custom food</div>
+    <div class="fg" style="margin-bottom:10px">
+      <label for="c-nm">Food name</label>
+      <input type="text" id="c-nm" placeholder="e.g. Shakshuka">
+    </div>
+    <div class="c-grid">
+      <div class="fg"><label for="c-cal">Calories</label><input type="number" id="c-cal" placeholder="kcal" min="0"></div>
+      <div class="fg"><label for="c-prot">Protein (g)</label><input type="number" id="c-prot" placeholder="g" min="0" step="0.1"></div>
+      <div class="fg"><label for="c-carbs">Carbs (g)</label><input type="number" id="c-carbs" placeholder="g" min="0" step="0.1"></div>
+      <div class="fg"><label for="c-fat">Fat (g)</label><input type="number" id="c-fat" placeholder="g" min="0" step="0.1"></div>
+    </div>
+    <button class="btn btn-green" id="btn-custom" style="margin-top:14px;width:100%">Add Custom +</button>
+  </div>
+</div>
+
+<script>
+const FOOD_DB = [
+  {name:'Chicken Breast (100g)',cal:165,protein:31,carbs:0,fat:3.6,cat:'Protein'},
+  {name:'Eggs (1 large)',cal:72,protein:6,carbs:0.4,fat:5,cat:'Protein'},
+  {name:'Tuna (can, 85g)',cal:100,protein:22,carbs:0,fat:1,cat:'Protein'},
+  {name:'Salmon (100g)',cal:208,protein:20,carbs:0,fat:13,cat:'Protein'},
+  {name:'Ground Beef 90% (100g)',cal:215,protein:26,carbs:0,fat:12,cat:'Protein'},
+  {name:'Turkey Breast (100g)',cal:135,protein:30,carbs:0,fat:1,cat:'Protein'},
+  {name:'Greek Yogurt (150g)',cal:88,protein:15,carbs:5,fat:0.5,cat:'Dairy'},
+  {name:'Cottage Cheese (100g)',cal:98,protein:11,carbs:3.4,fat:4.3,cat:'Dairy'},
+  {name:'Milk 3% (250ml)',cal:146,protein:8,carbs:12,fat:8,cat:'Dairy'},
+  {name:'Cheese (30g)',cal:110,protein:7,carbs:0.5,fat:9,cat:'Dairy'},
+  {name:'Labneh (100g)',cal:183,protein:8,carbs:6,fat:14,cat:'Dairy'},
+  {name:'White Rice (100g cooked)',cal:130,protein:2.7,carbs:28,fat:0.3,cat:'Grains'},
+  {name:'Brown Rice (100g cooked)',cal:112,protein:2.6,carbs:23,fat:0.9,cat:'Grains'},
+  {name:'Oats (50g dry)',cal:189,protein:6.5,carbs:34,fat:3.5,cat:'Grains'},
+  {name:'Whole Wheat Bread (1 slice)',cal:80,protein:4,carbs:15,fat:1,cat:'Grains'},
+  {name:'White Bread (1 slice)',cal:79,protein:2.7,carbs:15,fat:1,cat:'Grains'},
+  {name:'Pasta (100g cooked)',cal:131,protein:5,carbs:25,fat:1.1,cat:'Grains'},
+  {name:'Quinoa (100g cooked)',cal:120,protein:4.4,carbs:21,fat:1.9,cat:'Grains'},
+  {name:'Pita Bread (1 piece)',cal:165,protein:5.5,carbs:33,fat:0.7,cat:'Grains'},
+  {name:'Sweet Potato (100g)',cal:86,protein:1.6,carbs:20,fat:0.1,cat:'Vegetables'},
+  {name:'Broccoli (100g)',cal:34,protein:2.8,carbs:7,fat:0.4,cat:'Vegetables'},
+  {name:'Spinach (100g)',cal:23,protein:2.9,carbs:3.6,fat:0.4,cat:'Vegetables'},
+  {name:'Tomato (1 medium)',cal:22,protein:1.1,carbs:4.8,fat:0.2,cat:'Vegetables'},
+  {name:'Cucumber (100g)',cal:16,protein:0.7,carbs:3.6,fat:0.1,cat:'Vegetables'},
+  {name:'Bell Pepper (1 medium)',cal:31,protein:1,carbs:7.6,fat:0.3,cat:'Vegetables'},
+  {name:'Carrot (1 medium)',cal:25,protein:0.6,carbs:5.8,fat:0.1,cat:'Vegetables'},
+  {name:'Onion (100g)',cal:40,protein:1.1,carbs:9.3,fat:0.1,cat:'Vegetables'},
+  {name:'Eggplant (100g)',cal:25,protein:1,carbs:6,fat:0.2,cat:'Vegetables'},
+  {name:'Apple (1 medium)',cal:95,protein:0.5,carbs:25,fat:0.3,cat:'Fruit'},
+  {name:'Banana (1 medium)',cal:105,protein:1.3,carbs:27,fat:0.4,cat:'Fruit'},
+  {name:'Orange (1 medium)',cal:62,protein:1.2,carbs:15,fat:0.2,cat:'Fruit'},
+  {name:'Grapes (100g)',cal:69,protein:0.7,carbs:18,fat:0.2,cat:'Fruit'},
+  {name:'Strawberries (100g)',cal:32,protein:0.7,carbs:7.7,fat:0.3,cat:'Fruit'},
+  {name:'Avocado (half)',cal:120,protein:1.5,carbs:6.4,fat:11,cat:'Fruit'},
+  {name:'Blueberries (100g)',cal:57,protein:0.7,carbs:14,fat:0.3,cat:'Fruit'},
+  {name:'Watermelon (100g)',cal:30,protein:0.6,carbs:7.6,fat:0.2,cat:'Fruit'},
+  {name:'Olive Oil (1 tbsp)',cal:119,protein:0,carbs:0,fat:13.5,cat:'Fats'},
+  {name:'Butter (1 tbsp)',cal:102,protein:0.1,carbs:0,fat:11.5,cat:'Fats'},
+  {name:'Almond Butter (2 tbsp)',cal:190,protein:7,carbs:7,fat:17,cat:'Fats'},
+  {name:'Peanut Butter (2 tbsp)',cal:188,protein:8,carbs:7,fat:16,cat:'Fats'},
+  {name:'Almonds (30g)',cal:174,protein:6,carbs:6,fat:15,cat:'Fats'},
+  {name:'Walnuts (30g)',cal:196,protein:4.6,carbs:4,fat:19.5,cat:'Fats'},
+  {name:'Lentils (100g cooked)',cal:116,protein:9,carbs:20,fat:0.4,cat:'Legumes'},
+  {name:'Chickpeas (100g cooked)',cal:164,protein:8.9,carbs:27,fat:2.6,cat:'Legumes'},
+  {name:'Black Beans (100g cooked)',cal:132,protein:8.9,carbs:24,fat:0.5,cat:'Legumes'},
+  {name:'Hummus (2 tbsp)',cal:70,protein:2,carbs:6,fat:5,cat:'Legumes'},
+  {name:'Shakshuka (1 serving)',cal:280,protein:16,carbs:18,fat:16,cat:'Meals'},
+  {name:'Falafel (3 pieces)',cal:180,protein:7,carbs:22,fat:8,cat:'Meals'},
+  {name:'Shawarma Wrap',cal:520,protein:35,carbs:45,fat:18,cat:'Meals'},
+  {name:'Tabbouleh (100g)',cal:80,protein:2,carbs:12,fat:3,cat:'Meals'},
+  {name:'Baba Ganoush (2 tbsp)',cal:60,protein:1.5,carbs:5,fat:4,cat:'Meals'},
+  {name:'Coffee (black)',cal:2,protein:0,carbs:0,fat:0,cat:'Drinks'},
+  {name:'Orange Juice (200ml)',cal:84,protein:1.4,carbs:19,fat:0.4,cat:'Drinks'},
+  {name:'Protein Shake (1 scoop)',cal:120,protein:25,carbs:5,fat:1.5,cat:'Supplements'},
+  {name:'Whole Milk Latte (250ml)',cal:150,protein:7,carbs:15,fat:7,cat:'Drinks'},
+];
+
+const MEALS = ['Breakfast','Lunch','Dinner','Snacks'];
+const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+let profile    = JSON.parse(localStorage.getItem('nc_profile') || 'null');
+let currentDay = todayStr();
+let plan       = JSON.parse(localStorage.getItem('nc_plan') || 'null') || initPlan();
+let shopChecked= JSON.parse(localStorage.getItem('nc_shop_ck') || '{}');
+let selectedGoal = 0;
+let modalCtx   = null;
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function initPlan(){ const p={}; DAYS.forEach(d=>{p[d]={}; MEALS.forEach(m=>p[d][m]=[])}); return p; }
+function getLog(d){ return JSON.parse(localStorage.getItem('nc_log_'+d)||'null') || (()=>{const l={}; MEALS.forEach(m=>l[m]=[]); return l;})(); }
+function saveLog(d,l){ localStorage.setItem('nc_log_'+d, JSON.stringify(l)); }
+function savePlan(){ localStorage.setItem('nc_plan', JSON.stringify(plan)); }
+function saveProfile(){ localStorage.setItem('nc_profile', JSON.stringify(profile)); }
+
+/* ---- TABS ---- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='today') renderToday();
+    if(btn.dataset.tab==='planner') renderPlanner();
+    if(btn.dataset.tab==='shop') renderShop();
+  });
+});
+
+/* ---- CALCULATOR ---- */
+document.querySelectorAll('.goal-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.goal-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    selectedGoal = parseInt(b.dataset.goal);
+  });
+});
+
+document.getElementById('btn-calc').addEventListener('click',()=>{
+  const age=+document.getElementById('i-age').value;
+  const sex=document.getElementById('i-sex').value;
+  const wt=+document.getElementById('i-wt').value;
+  const ht=+document.getElementById('i-ht').value;
+  const act=+document.getElementById('i-act').value;
+  if(!age||!wt||!ht){ alert('Please fill in Age, Weight and Height.'); return; }
+  const bmr = Math.round((10*wt)+(6.25*ht)-(5*age)+(sex==='m'?5:-161));
+  const tdee = Math.round(bmr*act);
+  const target = tdee+selectedGoal;
+  const protG = Math.round(target*0.30/4);
+  const carbG = Math.round(target*0.40/4);
+  const fatG  = Math.round(target*0.30/9);
+  document.getElementById('r-bmr').textContent=bmr;
+  document.getElementById('r-tdee').textContent=tdee;
+  document.getElementById('r-target').textContent=target;
+  document.getElementById('r-prot').textContent=protG+'g';
+  document.getElementById('r-carbs').textContent=carbG+'g';
+  document.getElementById('r-fat').textContent=fatG+'g';
+  document.getElementById('calc-out').style.display='block';
+  window._cr={bmr,tdee,target,protG,carbG,fatG,age,sex,wt,ht,act};
+});
+
+document.getElementById('btn-save').addEventListener('click',()=>{
+  if(!window._cr) return;
+  const r=window._cr;
+  profile={age:r.age,sex:r.sex,wt:r.wt,ht:r.ht,act:r.act,target:r.target,protG:r.protG,carbG:r.carbG,fatG:r.fatG,goal:selectedGoal};
+  saveProfile();
+  renderToday();
+  alert('Profile saved! Switch to the Today tab to start logging.');
+});
+
+if(profile){
+  document.getElementById('i-age').value=profile.age;
+  document.getElementById('i-sex').value=profile.sex;
+  document.getElementById('i-wt').value=profile.wt;
+  document.getElementById('i-ht').value=profile.ht;
+  document.getElementById('i-act').value=profile.act;
+  document.getElementById('btn-calc').click();
+  document.querySelectorAll('.goal-btn').forEach(b=>{
+    if(parseInt(b.dataset.goal)===profile.goal){ b.classList.add('active'); selectedGoal=profile.goal; }
+    else b.classList.remove('active');
+  });
+}
+
+/* ---- TODAY ---- */
+function fmtDate(s){
+  const d=new Date(s+'T12:00:00');
+  return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+}
+
+document.getElementById('btn-prev').addEventListener('click',()=>{
+  const d=new Date(currentDay+'T12:00:00'); d.setDate(d.getDate()-1);
+  currentDay=d.toISOString().slice(0,10); renderToday();
+});
+document.getElementById('btn-next').addEventListener('click',()=>{
+  const d=new Date(currentDay+'T12:00:00'); d.setDate(d.getDate()+1);
+  currentDay=d.toISOString().slice(0,10); renderToday();
+});
+
+function renderToday(){
+  const log=getLog(currentDay);
+  document.getElementById('date-lbl').textContent = currentDay===todayStr() ? 'Today · '+fmtDate(currentDay) : fmtDate(currentDay);
+
+  let tCal=0,tProt=0,tCarbs=0,tFat=0;
+  MEALS.forEach(m=>(log[m]||[]).forEach(f=>{tCal+=f.cal;tProt+=f.protein;tCarbs+=f.carbs;tFat+=f.fat;}));
+  tCal=Math.round(tCal); tProt=Math.round(tProt*10)/10; tCarbs=Math.round(tCarbs*10)/10; tFat=Math.round(tFat*10)/10;
+
+  const tgt=profile?profile.target:2000;
+  const circ=364.4, pct=Math.min(tCal/tgt,1);
+  const ring=document.getElementById('cal-ring');
+  ring.style.strokeDashoffset=circ*(1-pct);
+  ring.style.stroke=tCal>tgt?'#ef4444':'#00e5ff';
+  document.getElementById('ring-cal').textContent=tCal;
+
+  if(profile){
+    document.getElementById('b-prot').style.width=Math.min(tProt/profile.protG*100,100)+'%';
+    document.getElementById('b-carbs').style.width=Math.min(tCarbs/profile.carbG*100,100)+'%';
+    document.getElementById('b-fat').style.width=Math.min(tFat/profile.fatG*100,100)+'%';
+    document.getElementById('b-prot-txt').textContent=tProt+' / '+profile.protG+'g';
+    document.getElementById('b-carbs-txt').textContent=tCarbs+' / '+profile.carbG+'g';
+    document.getElementById('b-fat-txt').textContent=tFat+' / '+profile.fatG+'g';
+    const rem=tgt-tCal;
+    document.getElementById('cal-rem').textContent=rem>=0?rem+' kcal remaining':Math.abs(rem)+' kcal over target';
+    document.getElementById('cal-rem').style.color=rem>=0?'#8ba3be':'#ef4444';
+  } else {
+    ['b-prot-txt','b-carbs-txt','b-fat-txt'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('cal-rem').textContent='Set up a profile in the Calculator tab first';
+  }
+
+  const con=document.getElementById('meal-secs'); con.innerHTML='';
+  MEALS.forEach(meal=>{
+    const foods=log[meal]||[];
+    const mc=Math.round(foods.reduce((s,f)=>s+f.cal,0));
+    const sec=document.createElement('div'); sec.className='meal-sec';
+    sec.innerHTML=`
+      <div class="meal-hdr">
+        <span class="meal-title">${meal}</span>
+        <span class="meal-total">${mc} kcal</span>
+      </div>
+      <div class="meal-body">
+        ${foods.map((f,i)=>`
+          <div class="food-item">
+            <div><div class="food-nm">${f.name}</div><div class="food-mx">P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g</div></div>
+            <div class="food-kcal">${f.cal}</div>
+            <button class="food-rm" data-meal="${meal}" data-idx="${i}" aria-label="Remove">×</button>
+          </div>`).join('')}
+        <div style="margin-top:10px">
+          <button class="btn btn-sm" data-om data-meal="${meal}">+ Add food</button>
+        </div>
+      </div>`;
+    con.appendChild(sec);
+  });
+
+  con.querySelectorAll('.food-rm').forEach(b=>b.addEventListener('click',()=>{
+    const l=getLog(currentDay); l[b.dataset.meal].splice(+b.dataset.idx,1); saveLog(currentDay,l); renderToday();
+  }));
+  con.querySelectorAll('[data-om]').forEach(b=>b.addEventListener('click',()=>openModal({mode:'today',meal:b.dataset.meal})));
+}
+
+/* ---- PLANNER ---- */
+function renderPlanner(){
+  const grid=document.getElementById('planner-grid'); grid.innerHTML='';
+  DAYS.forEach(day=>{
+    const dd=plan[day]||{};
+    let tot=0; MEALS.forEach(m=>(dd[m]||[]).forEach(f=>tot+=f.cal));
+    const col=document.createElement('div'); col.className='p-day';
+    col.innerHTML=`
+      <div class="p-day-hdr">
+        <div class="p-day-nm">${day}</div>
+        <div class="p-day-tot">${Math.round(tot)} kcal</div>
+      </div>
+      ${MEALS.map(meal=>{
+        const fs=dd[meal]||[];
+        return `<div class="p-slot">
+          <div class="p-slot-ttl">${meal}</div>
+          ${fs.map((f,i)=>`
+            <div class="p-chip">
+              <span class="p-chip-nm" title="${f.name}">${f.name}</span>
+              <span style="display:flex;align-items:center;gap:2px;flex-shrink:0">
+                <span class="p-chip-kcal">${f.cal}</span>
+                <button class="p-chip-rm" data-day="${day}" data-meal="${meal}" data-idx="${i}" aria-label="Remove">×</button>
+              </span>
+            </div>`).join('')}
+          <button class="p-add-btn" data-op data-day="${day}" data-meal="${meal}">+ add</button>
+        </div>`;
+      }).join('')}`;
+    grid.appendChild(col);
+  });
+  grid.querySelectorAll('.p-chip-rm').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    plan[b.dataset.day][b.dataset.meal].splice(+b.dataset.idx,1); savePlan(); renderPlanner();
+  }));
+  grid.querySelectorAll('[data-op]').forEach(b=>b.addEventListener('click',()=>openModal({mode:'planner',day:b.dataset.day,meal:b.dataset.meal})));
+}
+
+document.getElementById('btn-clear-plan').addEventListener('click',()=>{
+  if(confirm('Clear the entire meal plan?')){ plan=initPlan(); savePlan(); renderPlanner(); }
+});
+
+/* ---- SHOPPING ---- */
+function renderShop(){
+  const out=document.getElementById('shop-out');
+  const items={};
+  DAYS.forEach(d=>MEALS.forEach(m=>(plan[d][m]||[]).forEach(f=>{
+    if(!items[f.name]) items[f.name]={...f,count:0};
+    items[f.name].count++;
+  })));
+
+  if(!Object.keys(items).length){ out.innerHTML='<div class="empty">Add foods to your meal plan<br>to generate a shopping list.</div>'; return; }
+
+  const byCat={};
+  Object.values(items).forEach(it=>{ const c=it.cat||'Other'; if(!byCat[c]) byCat[c]=[]; byCat[c].push(it); });
+
+  out.innerHTML=Object.entries(byCat).sort(([a],[b])=>a.localeCompare(b)).map(([cat,its])=>`
+    <div class="shop-cat">
+      <div class="shop-cat-ttl">${cat}</div>
+      ${its.map(it=>{
+        const id='sc_'+it.name.replace(/\W+/g,'_');
+        const ck=shopChecked[id]||false;
+        return `<div class="shop-item${ck?' checked':''}" id="row_${id}">
+          <input type="checkbox" class="shop-cb" id="${id}" ${ck?'checked':''} data-id="${id}">
+          <label class="shop-nm" for="${id}">${it.name}${it.count>1?' <span style="color:#8ba3be;font-size:11px">×'+it.count+'</span>':''}</label>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  out.querySelectorAll('.shop-cb').forEach(cb=>cb.addEventListener('change',()=>{
+    shopChecked[cb.dataset.id]=cb.checked;
+    localStorage.setItem('nc_shop_ck',JSON.stringify(shopChecked));
+    document.getElementById('row_'+cb.dataset.id).classList.toggle('checked',cb.checked);
+  }));
+}
+
+document.getElementById('btn-uncheck').addEventListener('click',()=>{ shopChecked={}; localStorage.setItem('nc_shop_ck','{}'); renderShop(); });
+
+/* ---- MODAL ---- */
+function openModal(ctx){
+  modalCtx=ctx;
+  document.getElementById('overlay').classList.remove('hidden');
+  ['srch','c-nm','c-cal','c-prot','c-carbs','c-fat'].forEach(id=>document.getElementById(id).value='');
+  renderSearch('');
+  setTimeout(()=>document.getElementById('srch').focus(),50);
+}
+function closeModal(){ document.getElementById('overlay').classList.add('hidden'); modalCtx=null; }
+
+document.getElementById('modal-x').addEventListener('click',closeModal);
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('overlay')) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+document.getElementById('srch').addEventListener('input',e=>renderSearch(e.target.value));
+
+function renderSearch(q){
+  const res=document.getElementById('srch-res');
+  const lq=q.trim().toLowerCase();
+  const hits=lq.length<1?FOOD_DB.slice(0,20):FOOD_DB.filter(f=>f.name.toLowerCase().includes(lq)).slice(0,30);
+  res.innerHTML=hits.length
+    ?hits.map(f=>`<div class="srch-item" data-nm="${f.name}"><span class="srch-nm">${f.name}</span><span class="srch-info">${f.cal} kcal · P${f.protein}g C${f.carbs}g F${f.fat}g</span></div>`).join('')
+    :'<div style="padding:12px;font-size:12px;color:#8ba3be">No results</div>';
+  res.querySelectorAll('.srch-item').forEach(el=>el.addEventListener('click',()=>{
+    const food=FOOD_DB.find(f=>f.name===el.dataset.nm); if(food) doAddFood(food);
+  }));
+}
+
+document.getElementById('btn-custom').addEventListener('click',()=>{
+  const name=document.getElementById('c-nm').value.trim();
+  const cal=+document.getElementById('c-cal').value;
+  if(!name||!cal){ alert('Name and calories are required.'); return; }
+  doAddFood({name,cal,protein:+document.getElementById('c-prot').value||0,carbs:+document.getElementById('c-carbs').value||0,fat:+document.getElementById('c-fat').value||0,cat:'Custom'});
+});
+
+function doAddFood(food){
+  if(!modalCtx) return;
+  if(modalCtx.mode==='today'){
+    const l=getLog(currentDay); if(!l[modalCtx.meal]) l[modalCtx.meal]=[]; l[modalCtx.meal].push({...food}); saveLog(currentDay,l); renderToday();
+  } else {
+    if(!plan[modalCtx.day][modalCtx.meal]) plan[modalCtx.day][modalCtx.meal]=[];
+    plan[modalCtx.day][modalCtx.meal].push({...food}); savePlan(); renderPlanner();
+  }
+  closeModal();
+}
+
+/* ---- INIT ---- */
+renderToday();
+renderPlanner();
+
+/* =========================================================
+   TELEGRAM
+   ========================================================= */
+const TG_REMINDERS = ['morning','lunch','dinner','summary'];
+
+function tgGet(k){ return localStorage.getItem('nc_tg_'+k)||''; }
+function tgSet(k,v){ localStorage.setItem('nc_tg_'+k,v); }
+
+async function sendTelegram(text){
+  const chatId=tgGet('chat');
+  const secret=tgGet('secret');
+  const serverUrl=(tgGet('server')||'').replace(/\/+$/,'');
+  if(!chatId||!serverUrl) return {ok:false,err:'Not configured — fill in the Telegram tab'};
+  try{
+    const r=await fetch(`${serverUrl}/api/send`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+secret},
+      body:JSON.stringify({chat_id:chatId,text})
+    });
+    const d=await r.json();
+    return {ok:d.ok, err:d.error||''};
+  }catch(e){ return {ok:false,err:e.message}; }
+}
+
+function buildDaySummary(date){
+  const log=getLog(date||currentDay);
+  let tCal=0,tProt=0,tCarbs=0,tFat=0;
+  const mealLines=MEALS.map(m=>{
+    const foods=log[m]||[];
+    const mc=Math.round(foods.reduce((s,f)=>s+f.cal,0));
+    tCal+=mc;
+    foods.forEach(f=>{tProt+=f.protein;tCarbs+=f.carbs;tFat+=f.fat;});
+    const icon={Breakfast:'🍳',Lunch:'🥗',Dinner:'🍽',Snacks:'🍎'}[m];
+    return foods.length?`${icon} <b>${m}:</b> ${mc} kcal`:`${icon} <b>${m}:</b> —`;
+  });
+  tCal=Math.round(tCal); tProt=Math.round(tProt); tCarbs=Math.round(tCarbs); tFat=Math.round(tFat);
+  const tgt=profile?profile.target:0;
+  const pct=tgt?Math.round(tCal/tgt*100):0;
+  const rem=tgt?tgt-tCal:0;
+  const dateLabel=fmtDate(date||currentDay);
+  let msg=`📊 <b>Nutrition Summary — ${dateLabel}</b>\n\n`;
+  msg+=`🔥 <b>Calories:</b> ${tCal}${tgt?' / '+tgt+' kcal ('+pct+'%)':' kcal'}\n`;
+  if(profile){
+    msg+=`💪 <b>Protein:</b> ${tProt}g / ${profile.protG}g\n`;
+    msg+=`🍞 <b>Carbs:</b> ${tCarbs}g / ${profile.carbG}g\n`;
+    msg+=`🥑 <b>Fat:</b> ${tFat}g / ${profile.fatG}g\n`;
+  }
+  msg+=`\n${mealLines.join('\n')}\n`;
+  if(tgt) msg+=`\n${rem>=0?'✅ Remaining: '+rem+' kcal':'⚠️ Over target: '+Math.abs(rem)+' kcal'}`;
+  return msg;
+}
+
+function buildWeeklyPlan(){
+  let msg='📅 <b>Weekly Meal Plan</b>\n\n';
+  DAYS.forEach(day=>{
+    let tot=0; MEALS.forEach(m=>(plan[day][m]||[]).forEach(f=>tot+=f.cal));
+    msg+=`<b>${day}</b> (${Math.round(tot)} kcal)\n`;
+    MEALS.forEach(m=>{
+      const fs=plan[day][m]||[];
+      if(fs.length) msg+=`  ${m}: ${fs.map(f=>f.name).join(', ')}\n`;
+    });
+    msg+='\n';
+  });
+  return msg.trim();
+}
+
+function buildReminderMsg(type){
+  const log=getLog(currentDay);
+  let tCal=0;
+  MEALS.forEach(m=>(log[m]||[]).forEach(f=>tCal+=f.cal));
+  tCal=Math.round(tCal);
+  const tgt=profile?profile.target:0;
+  const pct=tgt?Math.round(tCal/tgt*100):0;
+  const rem=tgt?tgt-tCal:0;
+  switch(type){
+    case 'morning':
+      return `🌅 <b>Good morning!</b>\n\nTime to start tracking.\nYour target today: <b>${tgt||'—'} kcal</b>\n\nBreakfast is the most important meal — don't skip it!`;
+    case 'lunch':
+      return `🕛 <b>Lunch check-in</b>\n\nSo far today: <b>${tCal} kcal</b>${tgt?' ('+pct+'% of target)':''}\n${tgt&&rem>0?'Remaining: '+rem+' kcal':''}`;
+    case 'dinner':
+      return `🌙 <b>Dinner time!</b>\n\nLogged today: <b>${tCal} kcal</b>${tgt?' / '+tgt+' kcal':''}\n${tgt&&rem>0?'You have <b>'+rem+' kcal</b> left for dinner & snacks.':tgt?'⚠️ Already over target by '+Math.abs(rem)+' kcal.':''}`;
+    case 'summary':
+      return buildDaySummary();
+  }
+}
+
+function getSentToday(){ return JSON.parse(localStorage.getItem('nc_tg_sent_'+todayStr())||'{}'); }
+function markSent(type){ const s=getSentToday(); s[type]=true; localStorage.setItem('nc_tg_sent_'+todayStr(),JSON.stringify(s)); }
+
+async function checkLazyReminders(){
+  const token=tgGet('token'), chatId=tgGet('chat');
+  if(!token||!chatId) return;
+  const now=new Date();
+  const hm=now.getHours()*60+now.getMinutes();
+  const sent=getSentToday();
+  const WINDOW=90;
+  for(const type of TG_REMINDERS){
+    const enabled=tgGet('en_'+type)==='1';
+    if(!enabled||sent[type]) continue;
+    const timeStr=tgGet('t_'+type)||{morning:'08:00',lunch:'12:30',dinner:'18:30',summary:'21:00'}[type];
+    const [h,m]=timeStr.split(':').map(Number);
+    const scheduled=h*60+m;
+    if(hm>=scheduled && hm<=scheduled+WINDOW){
+      const msg=buildReminderMsg(type);
+      const res=await sendTelegram(msg);
+      if(res.ok) markSent(type);
+    }
+  }
+}
+
+function updateTgPreview(){
+  document.getElementById('tg-preview').textContent=
+    buildDaySummary().replace(/<[^>]+>/g,'');
+}
+
+function updateTgStatus(state,txt){
+  const dot=document.getElementById('tg-dot');
+  dot.className='tg-dot'+(state==='ok'?' ok':state==='err'?' err':'');
+  document.getElementById('tg-status-txt').textContent=txt;
+}
+
+/* Load saved TG settings into form */
+(function loadTgSettings(){
+  const serverUrl=tgGet('server'), chatId=tgGet('chat'), secret=tgGet('secret');
+  if(serverUrl){
+    document.getElementById('tg-server-setup').value=serverUrl;
+    document.getElementById('tg-server').value=serverUrl;
+  }
+  if(chatId) document.getElementById('tg-chat').value=chatId;
+  if(secret) document.getElementById('tg-secret').value=secret;
+  if(serverUrl&&chatId) updateTgStatus('ok','Connected · server URL, Chat ID, and secret saved');
+  TG_REMINDERS.forEach(type=>{
+    const def={morning:'08:00',lunch:'12:30',dinner:'18:30',summary:'21:00'};
+    document.getElementById('tg-t-'+type).value=tgGet('t_'+type)||def[type];
+    document.getElementById('tg-en-'+type).checked=tgGet('en_'+type)==='1';
+  });
+})();
+
+document.getElementById('btn-tg-save').addEventListener('click',()=>{
+  const serverUrl=(document.getElementById('tg-server-setup').value||'').trim().replace(/\/+$/,'');
+  const chat=document.getElementById('tg-chat').value.trim();
+  const secret=document.getElementById('tg-secret').value.trim();
+  if(!serverUrl||!chat){ updateTgStatus('err','Server URL and Chat ID are required'); return; }
+  tgSet('server',serverUrl); tgSet('chat',chat); if(secret) tgSet('secret',secret);
+  document.getElementById('tg-server').value=serverUrl;
+  updateTgStatus('ok','Saved — click Test Connection to verify');
+});
+
+document.getElementById('btn-tg-test').addEventListener('click',async()=>{
+  const serverUrl=(document.getElementById('tg-server-setup').value||'').trim().replace(/\/+$/,'');
+  const chat=document.getElementById('tg-chat').value.trim();
+  const secret=document.getElementById('tg-secret').value.trim();
+  if(!serverUrl||!chat){ updateTgStatus('err','Please fill in Server URL and Chat ID first'); return; }
+  tgSet('server',serverUrl); tgSet('chat',chat); if(secret) tgSet('secret',secret);
+  document.getElementById('tg-server').value=serverUrl;
+  updateTgStatus('','Testing…');
+  const res=await sendTelegram('✅ <b>Nutrition Tracker connected!</b>\n\nYour daily summaries and reminders will appear here.');
+  if(res.ok) updateTgStatus('ok','Connected successfully!');
+  else updateTgStatus('err','Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-send-day').addEventListener('click',async()=>{
+  const msg=buildDaySummary();
+  const res=await sendTelegram(msg);
+  if(res.ok) alert('Summary sent to Telegram!');
+  else alert('Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-send-plan').addEventListener('click',async()=>{
+  const msg=buildWeeklyPlan();
+  const res=await sendTelegram(msg);
+  if(res.ok) alert('Weekly plan sent to Telegram!');
+  else alert('Failed: '+res.err);
+});
+
+document.getElementById('btn-tg-save-rem').addEventListener('click',()=>{
+  TG_REMINDERS.forEach(type=>{
+    tgSet('t_'+type, document.getElementById('tg-t-'+type).value);
+    tgSet('en_'+type, document.getElementById('tg-en-'+type).checked?'1':'0');
+  });
+  alert('Reminder settings saved!');
+});
+
+/* Hook into tab switch to refresh preview */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  if(btn.dataset.tab==='tg') btn.addEventListener('click',updateTgPreview);
+});
+
+/* ---- Server sync ---- */
+(function loadServerUrl(){
+  const url=tgGet('server');
+  if(url) document.getElementById('tg-server').value=url;
+})();
+
+function setSyncStatus(txt, ok){
+  const el=document.getElementById('sync-status');
+  el.textContent=txt;
+  el.style.color=ok===true?'#3fb950':ok===false?'#ef4444':'#8ba3be';
+}
+
+async function syncFromServer(week){
+  const chatId=tgGet('chat');
+  const serverUrl=(document.getElementById('tg-server').value||'').replace(/\/+$/,'');
+  if(!chatId){ setSyncStatus('No Chat ID — fill it in above',false); return; }
+  if(!serverUrl){ setSyncStatus('Enter your bot server URL',false); return; }
+  tgSet('server',serverUrl);
+
+  setSyncStatus('Syncing…');
+  try{
+    const secret=tgGet('secret');
+    const endpoint=week?`${serverUrl}/api/log-week?chat_id=${chatId}`:`${serverUrl}/api/log?chat_id=${chatId}&date=${currentDay}`;
+    const res=await fetch(endpoint,{headers:{'Authorization':'Bearer '+secret}});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+
+    if(week){
+      let count=0;
+      Object.entries(data).forEach(([date, log])=>{
+        const existing=getLog(date);
+        // Merge: add bot entries not already in localStorage (by id)
+        let changed=false;
+        ['Breakfast','Lunch','Dinner','Snacks'].forEach(m=>{
+          const botFoods=(log[m]||[]).filter(f=>f.id);
+          const existingIds=new Set((existing[m]||[]).map(f=>f.id).filter(Boolean));
+          const newFoods=botFoods.filter(f=>!existingIds.has(f.id));
+          if(newFoods.length){ existing[m]=[...(existing[m]||[]),...newFoods]; changed=true; count+=newFoods.length; }
+        });
+        if(changed) saveLog(date,existing);
+      });
+      setSyncStatus(`Synced ${count} new item${count!==1?'s':''} from last 7 days`,true);
+    } else {
+      const existing=getLog(currentDay);
+      let count=0;
+      ['Breakfast','Lunch','Dinner','Snacks'].forEach(m=>{
+        const botFoods=(data[m]||[]).filter(f=>f.id);
+        const existingIds=new Set((existing[m]||[]).map(f=>f.id).filter(Boolean));
+        const newFoods=botFoods.filter(f=>!existingIds.has(f.id));
+        if(newFoods.length){ existing[m]=[...(existing[m]||[]),...newFoods]; count+=newFoods.length; }
+      });
+      saveLog(currentDay,existing);
+      renderToday();
+      setSyncStatus(`Synced ${count} new item${count!==1?'s':''} from bot`,true);
+    }
+  } catch(e){
+    setSyncStatus('Sync failed: '+e.message,false);
+  }
+}
+
+document.getElementById('btn-sync-today').addEventListener('click',()=>syncFromServer(false));
+document.getElementById('btn-sync-week').addEventListener('click',()=>syncFromServer(true));
+
+/* Run lazy reminder check on load */
+checkLazyReminders();
+</script>
+</body>
+</html>
