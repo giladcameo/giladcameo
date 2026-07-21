@@ -573,6 +573,17 @@ async function run() {
 document.getElementById("addressInput").addEventListener("keydown", e => {
   if (e.key === "Enter") run();
 });
+
+/* ── Register Service Worker ── */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
