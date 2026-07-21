@@ -357,6 +357,17 @@ initMap();
 renderFavs();
 renderFilters();
 loadStation(stationId,stationName);
+
+/* ── Register Service Worker ── */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 <script src="paywall.js" data-app="berlin-transit" data-minutes="10"></script>
 </body>

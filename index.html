@@ -610,5 +610,16 @@
   <a href="https://github.com/giladcameo" target="_blank">github.com/giladcameo</a>
 </footer>
 
+<script>
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
 </body>
 </html>
