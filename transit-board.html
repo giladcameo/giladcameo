@@ -449,6 +449,17 @@ function h(s){
   return String(s||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+/* ── Register Service Worker ── */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 <script src="paywall.js" data-app="transit-board" data-minutes="10"></script>
 </body>
 </html>
