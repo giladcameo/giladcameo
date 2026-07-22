@@ -1,4 +1,4 @@
-const CACHE = 'giladcameo-v3';
+const CACHE = 'giladcameo-v4';
 const STATIC = [
   './icon.png',
   './manifest.json'
