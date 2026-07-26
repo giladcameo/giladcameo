@@ -42,6 +42,10 @@
     .pulse-wrap{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
     .pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+    .views-badge{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);
+      font-variant-numeric:tabular-nums;opacity:0;transition:opacity .3s}
+    .views-badge.ready{opacity:1}
+    .views-badge svg{flex-shrink:0}
 
     /* FILTER BAR — floating top-right */
     .filter-bar{
@@ -208,6 +212,10 @@
   <div class="logo-text">Berlin Transit Live</div>
   <div class="spacer"></div>
   <div class="clock" id="clock">--:--:--</div>
+  <div class="views-badge" id="viewsBadge" title="Total visits to this app">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span id="viewsCount">···</span>
+  </div>
   <div class="pulse-wrap"><div class="pulse"></div><span>10s</span></div>
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
 </header>
@@ -686,6 +694,25 @@ function togglePanel(){
   // Resize map after panel transition
   setTimeout(()=> map && map.invalidateSize(), 320);
 }
+
+/* ── View counter (real, shared across all visitors — backed by abacus.jasoncameron.dev) ── */
+(function(){
+  const NS = 'gcameo-com', KEY = 'berlin-transit-views';
+  const el = document.getElementById('viewsCount');
+  const badge = document.getElementById('viewsBadge');
+  const fmt = n => n.toLocaleString('en-US');
+  // Only count once per browser session — avoids inflating the total on
+  // every SW auto-reload or manual refresh within the same tab.
+  const alreadyCounted = sessionStorage.getItem('bt_view_counted') === '1';
+  const url = alreadyCounted
+    ? `https://abacus.jasoncameron.dev/get/${NS}/${KEY}`
+    : `https://abacus.jasoncameron.dev/hit/${NS}/${KEY}`;
+  fetch(url).then(r => r.json()).then(data => {
+    el.textContent = fmt(data.value);
+    badge.classList.add('ready');
+    if (!alreadyCounted) sessionStorage.setItem('bt_view_counted', '1');
+  }).catch(() => { badge.style.display = 'none'; });
+})();
 
 /* ── INIT ── */
 initMap();
