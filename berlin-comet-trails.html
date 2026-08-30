@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berlin: Comet Trails of Trains &amp; Buses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --bg: #05070c;
+    --panel: #0c1018;
+    --panel-border: #1c2433;
+    --ink: #dbe4f0;
+    --ink-dim: #7c8aa0;
+    --accent: #5fe0ff;
+    --accent2: #ff6fb0;
+    --warn: #ffb454;
+    --ok: #7cf29a;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  body{
+    background-image:
+      radial-gradient(1px 1px at 8% 15%, rgba(255,255,255,.35), transparent),
+      radial-gradient(1px 1px at 22% 65%, rgba(255,255,255,.25), transparent),
+      radial-gradient(1.5px 1.5px at 40% 30%, rgba(255,255,255,.3), transparent),
+      radial-gradient(1px 1px at 63% 80%, rgba(255,255,255,.2), transparent),
+      radial-gradient(1px 1px at 78% 20%, rgba(255,255,255,.3), transparent),
+      radial-gradient(1.5px 1.5px at 90% 55%, rgba(255,255,255,.25), transparent),
+      radial-gradient(1px 1px at 12% 90%, rgba(255,255,255,.2), transparent);
+  }
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+  header{ margin-bottom: 22px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px; letter-spacing: .12em;
+    color: var(--accent); text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  h1{ font-size: 30px; font-weight: 700; margin: 0 0 6px; line-height:1.25; }
+  h1 span{ color: var(--accent); }
+  .sub{ color: var(--ink-dim); font-size: 14.5px; max-width: 62ch; line-height:1.6; margin:0; }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 18px;
+  }
+  .controls{ display:flex; flex-wrap:wrap; gap: 14px; align-items:flex-end; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size: 12px; color: var(--ink-dim); }
+  select, button{
+    font-family:'Inter', sans-serif;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    background: #10151f;
+    color: var(--ink);
+    padding: 9px 12px;
+  }
+  button{
+    cursor:pointer; font-weight:600;
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--accent), #3aa8c9);
+    color: #04121a;
+    transition: transform .1s ease, filter .15s ease;
+  }
+  button:hover{ filter: brightness(1.08); }
+  button:active{ transform: translateY(1px); }
+  button.secondary{
+    background: #10151f; color: var(--ink); border: 1px solid var(--panel-border);
+  }
+  button:disabled{ opacity:.45; cursor:not-allowed; filter:none; }
+
+  .statusline{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    margin-top: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .statusline b{ color: var(--ink); }
+  .statusline .warn{ color: var(--warn); }
+  .statusline .ok{ color: var(--ok); }
+
+  .stage{
+    margin-top: 18px;
+    display:flex; justify-content:center;
+    background: radial-gradient(ellipse at center, #0a0f18 0%, #05070c 75%);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 14px;
+    overflow:auto;
+  }
+  canvas{ border-radius: 8px; display:block; }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap: 10px 18px;
+    margin-top: 14px; font-size: 12.5px; color: var(--ink-dim);
+  }
+  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:6px; box-shadow: 0 0 6px currentColor; }
+
+  details{ margin-top: 14px; }
+  summary{ cursor:pointer; color: var(--ink-dim); font-size: 12.5px; }
+  pre{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    background: #0a0e16; border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 10px; overflow:auto; max-height: 220px;
+    color: var(--ink-dim);
+  }
+
+  .video-result{ margin-top: 14px; display:none; flex-direction:column; gap:10px; align-items:flex-start; }
+  .video-result video{ border-radius: 10px; border: 1px solid var(--panel-border); max-width: 100%; }
+
+  #pickerMap{ height: 420px; border-radius: 10px; overflow: hidden; margin-top: 12px; }
+  .leaflet-container{ background: #0c1018; font-family: 'Inter', sans-serif; }
+  .area-info{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); }
+
+  footer{ margin-top: 28px; color: var(--ink-dim); font-size: 12px; line-height:1.7; }
+  footer a{ color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Live Transit &middot; Comet Trails &middot; Berlin</p>
+    <h1>Berlin <span>Alive</span>: Public Transit in Motion</h1>
+    <p class="sub">
+      This tool records live vehicle positions across Berlin straight in your browser via VBB (v6.vbb.transport.rest/radar),
+      draws them as fading comet trails over a dark basemap, and lets you export it all as smooth video (WebM) to download.
+    </p>
+  </header>
+
+  <div class="panel">
+    <p class="sub" style="margin:0 0 4px;">
+      Drag and zoom the map to choose the area and scale for the animation, then confirm.
+    </p>
+    <div id="pickerMap"></div>
+    <div class="controls" style="margin-top:14px;">
+      <button id="useAreaBtn">Use This Area</button>
+      <span class="area-info" id="areaInfo"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label for="videoSeconds">Video length (seconds)</label>
+        <select id="videoSeconds">
+          <option value="8">8</option>
+          <option value="15">15</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="60">60</option>
+        </select>
+      </div>
+      <button id="fetchBtn">Start Live Capture</button>
+      <button id="demoBtn" class="secondary">Try Demo Data</button>
+      <button id="loadFileBtn" class="secondary">Load Captured File</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none;">
+      <button id="playBtn" class="secondary" disabled>Play Preview</button>
+      <button id="videoBtn" disabled>Export Video (WebM)</button>
+    </div>
+    <div class="statusline" id="status">Waiting to fetch data...</div>
+    <details>
+      <summary>Technical debug details (raw API request, fields received)</summary>
+      <pre id="debug">—</pre>
+    </details>
+  </div>
+
+  <div class="stage">
+    <canvas id="mainCanvas" width="900" height="700"></canvas>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="video-result panel" id="videoResult">
+    <div class="statusline ok">Video ready:</div>
+    <video id="videoPreview" controls loop></video>
+    <a id="videoDownload" download="berlin-comet-trails.webm">
+      <button class="secondary">Download Video File</button>
+    </a>
+  </div>
+
+  <footer>
+    Basemap: Esri World Dark Gray Base. Transit data: v6.vbb.transport.rest (wraps the VBB API, Verkehrsverbund Berlin-Brandenburg), an open-source project by derhuerst.
+    If capture isn't collecting any data, there may not be any active vehicles in the selected area right now — try a different area on the picker map, or use the demo data button to check out the visual effect in the meantime.
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- geography ----------
+  // Default: central Berlin (S-Bahn ring area). The picker map below lets the user change
+  // this to any area/zoom before capturing.
+  let BBOX = { minLat: 52.46, maxLat: 52.58, minLon: 13.28, maxLon: 13.50 };
+  let ZOOM = 12;
+  const TILE = 256;
+  const MAX_TILES = 260; // safety cap so a huge area at high zoom doesn't blow up canvas/export size
+  const API_BASE = "https://v6.vbb.transport.rest";
+
+  function lon2x(lon, z){ return (lon + 180) / 360 * Math.pow(2, z); }
+  function lat2y(lat, z){
+    const rad = lat * Math.PI / 180;
+    return (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * Math.pow(2, z);
+  }
+
+  function tileCountAt(bbox, z){
+    const x0 = Math.floor(lon2x(bbox.minLon, z)), x1 = Math.floor(lon2x(bbox.maxLon, z));
+    const y0 = Math.floor(lat2y(bbox.maxLat, z)), y1 = Math.floor(lat2y(bbox.minLat, z));
+    return (x1 - x0 + 1) * (y1 - y0 + 1);
+  }
+
+  function pickSafeZoom(bbox, requestedZoom){
+    let z = Math.min(16, Math.max(3, Math.round(requestedZoom)));
+    while (z > 3 && tileCountAt(bbox, z) > MAX_TILES) z--;
+    return z;
+  }
+
+  let tileX0, tileX1, tileY0, tileY1, CANVAS_W, CANVAS_H, originPxX, originPxY;
+
+  function computeGeometry(){
+    tileX0 = Math.floor(lon2x(BBOX.minLon, ZOOM));
+    tileX1 = Math.floor(lon2x(BBOX.maxLon, ZOOM));
+    tileY0 = Math.floor(lat2y(BBOX.maxLat, ZOOM)); // north = smaller y
+    tileY1 = Math.floor(lat2y(BBOX.minLat, ZOOM)); // south = larger y
+    CANVAS_W = (tileX1 - tileX0 + 1) * TILE;
+    CANVAS_H = (tileY1 - tileY0 + 1) * TILE;
+    originPxX = tileX0 * TILE;
+    originPxY = tileY0 * TILE;
+  }
+  computeGeometry();
+
+  function project(lat, lon){
+    return {
+      x: lon2x(lon, ZOOM) * TILE - originPxX,
+      y: lat2y(lat, ZOOM) * TILE - originPxY
+    };
+  }
+
+  // ---------- canvas setup ----------
+  const mainCanvas = document.getElementById("mainCanvas");
+  const ctx = mainCanvas.getContext("2d");
+  const basemapCanvas = document.createElement("canvas");
+  const bctx = basemapCanvas.getContext("2d");
+  // scale down display size if the tile mosaic is large, keep backing resolution crisp
+  const MAX_DISPLAY_W = 900;
+
+  function applyCanvasSizing(){
+    mainCanvas.width = CANVAS_W;
+    mainCanvas.height = CANVAS_H;
+    if (CANVAS_W > MAX_DISPLAY_W){
+      mainCanvas.style.width = MAX_DISPLAY_W + "px";
+      mainCanvas.style.height = (CANVAS_H * MAX_DISPLAY_W / CANVAS_W) + "px";
+    } else {
+      mainCanvas.style.width = "";
+      mainCanvas.style.height = "";
+    }
+    basemapCanvas.width = CANVAS_W;
+    basemapCanvas.height = CANVAS_H;
+    bctx.fillStyle = "#0a0e16";
+    bctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  }
+  applyCanvasSizing();
+
+  let basemapLoaded = false;
+  let tilesFailed = 0;
+  let tilesTotal = 0;
+
+  function loadBasemap(){
+    tilesFailed = 0;
+    tilesTotal = 0;
+    return new Promise((resolve) => {
+      let pending = 0;
+      let started = false;
+      for (let tx = tileX0; tx <= tileX1; tx++){
+        for (let ty = tileY0; ty <= tileY1; ty++){
+          started = true;
+          pending++;
+          tilesTotal++;
+          // Esri ArcGIS Online: free, no API key required. Note the z/y/x path order.
+          const url = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${ZOOM}/${ty}/${tx}`;
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            bctx.drawImage(img, (tx - tileX0) * TILE, (ty - tileY0) * TILE);
+            pending--;
+            if (pending === 0) finish();
+          };
+          img.onerror = () => {
+            tilesFailed++;
+            drawGridPlaceholder((tx - tileX0) * TILE, (ty - tileY0) * TILE);
+            pending--;
+            if (pending === 0) finish();
+          };
+          img.src = url;
+        }
+      }
+      if (!started) resolve();
+      function finish(){
+        basemapLoaded = tilesFailed < tilesTotal;
+        resolve();
+      }
+    });
+  }
+
+  function drawGridPlaceholder(px, py){
+    bctx.fillStyle = "#0a0e16";
+    bctx.fillRect(px, py, TILE, TILE);
+    bctx.strokeStyle = "rgba(255,255,255,.04)";
+    bctx.lineWidth = 1;
+    for (let i = 0; i <= TILE; i += 32){
+      bctx.beginPath(); bctx.moveTo(px + i, py); bctx.lineTo(px + i, py + TILE); bctx.stroke();
+      bctx.beginPath(); bctx.moveTo(px, py + i); bctx.lineTo(px + TILE, py + i); bctx.stroke();
+    }
+  }
+
+  // ---------- data ----------
+  const statusEl = document.getElementById("status");
+  const debugEl = document.getElementById("debug");
+  const legendEl = document.getElementById("legend");
+  const fetchBtn = document.getElementById("fetchBtn");
+  const demoBtn = document.getElementById("demoBtn");
+  const playBtn = document.getElementById("playBtn");
+  const videoBtn = document.getElementById("videoBtn");
+  const loadFileBtn = document.getElementById("loadFileBtn");
+  const fileInput = document.getElementById("fileInput");
+
+
+  let groups = []; // [{ id, color, points: [{t, lat, lon}, ...] }]
+  let tMin = null, tMax = null;
+
+  function setStatus(html, cls){
+    statusEl.innerHTML = cls ? `<span class="${cls}">${html}</span>` : html;
+  }
+
+  let pollTimer = null;
+  let pollRows = [];
+  let pollCount = 0;
+
+  async function pollOnce(){
+    const params = new URLSearchParams({
+      north: String(BBOX.maxLat),
+      west: String(BBOX.minLon),
+      south: String(BBOX.minLat),
+      east: String(BBOX.maxLon),
+      results: "256",
+      duration: "0"
+    });
+    const url = `${API_BASE}/radar?${params.toString()}`;
+    const res = await fetch(url);
+    const rawText = await res.text();
+    let json;
+    try { json = JSON.parse(rawText); }
+    catch(e){ throw new Error("Server response is not valid JSON: " + rawText.slice(0, 300)); }
+    if (!res.ok) throw new Error(`Server returned an error: HTTP ${res.status}`);
+    const movements = Array.isArray(json) ? json : (json.movements || []);
+    const now = new Date().toISOString();
+    const rows = movements
+      .filter(m => m.location && isFinite(m.location.latitude) && isFinite(m.location.longitude))
+      .map(m => ({
+        lat: m.location.latitude,
+        lon: m.location.longitude,
+        recorded_at_time: now,
+        siri_ride__id: m.tripId || m.line?.id || "unknown",
+        siri_ride__vehicle_ref: m.line?.name || m.line?.id || null,
+        mode: m.line?.product || "other"
+      }));
+    return { url, rows };
+  }
+
+  const POLL_INTERVAL_MS = 20 * 1000;
+
+  async function pollTick(){
+    pollCount++;
+    try {
+      const { url, rows } = await pollOnce();
+      pollRows = pollRows.concat(rows);
+      debugEl.textContent = `GET ${url}\n\nSample #${pollCount}, ${pollRows.length} records so far.\n\nExample record from the latest sample:\n${JSON.stringify(rows[0] || {}, null, 2)}`;
+      setStatus(`Recording with no time limit: sample #${pollCount}, ${pollRows.length} points collected so far (${new Set(pollRows.map(r => r.siri_ride__id)).size} unique vehicles). Click "Stop &amp; Save" whenever you want to finish.`);
+    } catch(err){
+      console.error(err);
+      setStatus(`Sample #${pollCount} failed: ${err.message}. Still trying...`, "warn");
+    }
+  }
+
+  function finishPolling(){
+    if (pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+    fetchBtn.textContent = "Start Live Capture";
+
+    if (pollRows.length === 0){
+      setStatus("No location points were collected. There may not be any active vehicles in the selected area right now, or a network issue with v6.vbb.transport.rest. Try again, or use the demo data in the meantime.", "warn");
+      return;
+    }
+
+    buildGroupsFromRows(pollRows, {
+      rideKey: (r) => r.siri_ride__id ?? "unknown",
+      timeKey: (r) => new Date(r.recorded_at_time).getTime(),
+      latKey: (r) => r.lat,
+      lonKey: (r) => r.lon
+    });
+
+    const distinctRides = new Set(pollRows.map(r => r.siri_ride__id ?? "unknown")).size;
+    setStatus(`Collected <b>${pollRows.length}</b> location points from ${pollCount} samples, <b>${distinctRides}</b> distinct vehicles, between ${new Date(tMin).toLocaleString("en-GB")} and ${new Date(tMax).toLocaleString("en-GB")}.`, "ok");
+    playBtn.disabled = false;
+    videoBtn.disabled = false;
+    drawLegend();
+    renderStatic();
+  }
+
+  // VBB's radar endpoint only ever returns a live snapshot of current vehicle positions,
+  // there's no historical query like Hasadna's Stride API. A real trail has to be built by
+  // polling repeatedly while this tab stays open, accumulating one snapshot at a time. This
+  // runs every 20 seconds with no fixed duration, until the user stops it manually.
+  async function fetchLive(){
+    if (pollTimer){
+      // already polling: this click means "stop now" and process what's been collected
+      finishPolling();
+      return;
+    }
+
+    pollRows = [];
+    pollCount = 0;
+    fetchBtn.textContent = "Stop & Save Collected Data";
+    setStatus('Starting live capture with no time limit: sampling every 20 seconds. Click the button again anytime to stop and use what has been collected.');
+
+    await pollTick();
+    pollTimer = setInterval(pollTick, POLL_INTERVAL_MS);
+  }
+
+  function loadFromFile(rows){
+    if (!Array.isArray(rows) || rows.length === 0){
+      setStatus("The file is empty or is not a valid JSON array of location records.", "warn");
+      return;
+    }
+    buildGroupsFromRows(rows, {
+      rideKey: (r) => r.siri_ride__id ?? r.siri_ride__vehicle_ref ?? r.siri_ride_stop_id ?? r.siri_ride_id ?? "unknown",
+      timeKey: (r) => new Date(r.recorded_at_time).getTime(),
+      latKey: (r) => r.lat,
+      lonKey: (r) => r.lon
+    });
+    if (!groups.length){
+      setStatus("The file loaded but no valid trails were found in it (check the lat/lon/recorded_at_time fields).", "warn");
+      return;
+    }
+    const distinctRides = new Set(rows.map(r => r.siri_ride__id ?? r.siri_ride_id ?? "unknown")).size;
+    setStatus(`Loaded <b>${rows.length}</b> location points from the file, <b>${distinctRides}</b> distinct trips, between ${new Date(tMin).toLocaleString("en-GB")} and ${new Date(tMax).toLocaleString("en-GB")}.`, "ok");
+    playBtn.disabled = false;
+    videoBtn.disabled = false;
+    drawLegend();
+    renderStatic();
+  }
+
+  function buildDemo(){
+    const now = Date.now();
+    const rows = [];
+    const paths = 6;
+    const demoModes = ["suburban", "subway", "tram", "bus", "regional", "bus"];
+    const stepDeg = Math.max(BBOX.maxLat - BBOX.minLat, BBOX.maxLon - BBOX.minLon) * 0.012;
+    for (let p = 0; p < paths; p++){
+      const startLat = BBOX.minLat + Math.random() * (BBOX.maxLat - BBOX.minLat);
+      const startLon = BBOX.minLon + Math.random() * (BBOX.maxLon - BBOX.minLon);
+      const angle = Math.random() * Math.PI * 2;
+      const curve = (Math.random() - 0.5) * 0.02;
+      let lat = startLat, lon = startLon, dir = angle;
+      const nPoints = 40;
+      for (let i = 0; i < nPoints; i++){
+        rows.push({
+          siri_ride_id: `demo-${p}`,
+          recorded_at_time: new Date(now - (nPoints - i) * 15000).toISOString(),
+          lat, lon,
+          mode: demoModes[p % demoModes.length]
+        });
+        dir += curve;
+        lat += Math.cos(dir) * stepDeg;
+        lon += Math.sin(dir) * stepDeg;
+        lat = Math.min(BBOX.maxLat - 0.002, Math.max(BBOX.minLat + 0.002, lat));
+        lon = Math.min(BBOX.maxLon - 0.002, Math.max(BBOX.minLon + 0.002, lon));
+      }
+    }
+    buildGroupsFromRows(rows, {
+      rideKey: (r) => r.siri_ride_id,
+      timeKey: (r) => new Date(r.recorded_at_time).getTime(),
+      latKey: (r) => r.lat,
+      lonKey: (r) => r.lon
+    });
+    setStatus(`Loaded demo data: ${paths} simulated paths, to preview the comet-trail effect before connecting to live data.`, "ok");
+    playBtn.disabled = false;
+    videoBtn.disabled = false;
+    drawLegend();
+    renderStatic();
+  }
+
+  const MODE_COLORS = {
+    suburban: { color: "#5fe0ff", label: "S-Bahn" },
+    subway:   { color: "#ff6fb0", label: "U-Bahn" },
+    tram:     { color: "#ffcb47", label: "Tram" },
+    bus:      { color: "#9dff5f", label: "Bus" },
+    regional: { color: "#b98bff", label: "Regional Train" },
+    express:  { color: "#ff8a4f", label: "Express Train" },
+    ferry:    { color: "#5fffc4", label: "Ferry" },
+    other:    { color: "#8a94a6", label: "Other" }
+  };
+  function modeInfo(mode){ return MODE_COLORS[mode] || MODE_COLORS.other; }
+
+  function buildGroupsFromRows(rows, getters){
+    const map = new Map();
+    const vehicleRefs = new Map();
+    const modes = new Map();
+    for (const r of rows){
+      const lat = parseFloat(getters.latKey(r));
+      const lon = parseFloat(getters.lonKey(r));
+      const t = getters.timeKey(r);
+      if (!isFinite(lat) || !isFinite(lon) || !isFinite(t)) continue;
+      const key = String(getters.rideKey(r));
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push({ t, lat, lon });
+      if (r.siri_ride__vehicle_ref) vehicleRefs.set(key, r.siri_ride__vehicle_ref);
+      if (r.mode && !modes.has(key)) modes.set(key, r.mode);
+    }
+    const arr = [];
+    for (const [key, pts] of map.entries()){
+      pts.sort((a,b) => a.t - b.t);
+      if (pts.length < 2) continue;
+      const mode = modes.get(key) || "other";
+      const label = vehicleRefs.has(key) ? `Vehicle ${vehicleRefs.get(key)}` : `Trip ${key}`;
+      arr.push({ id: key, label, mode, color: modeInfo(mode).color, points: pts });
+    }
+    groups = arr;
+    tMin = Math.min(...arr.flatMap(g => g.points.map(p => p.t)));
+    tMax = Math.max(...arr.flatMap(g => g.points.map(p => p.t)));
+    const span = Math.max(1, tMax - tMin);
+    TRAIL_MS = Math.min(10 * 60 * 1000, Math.max(90 * 1000, span * 0.03));
+    seamT = computeActivitySeam();
+  }
+
+  function drawLegend(){
+    legendEl.innerHTML = "";
+    const modesPresent = new Set(groups.map(g => g.mode || "other"));
+    const order = ["suburban", "subway", "tram", "bus", "regional", "express", "ferry", "other"];
+    order.filter(m => modesPresent.has(m)).forEach(m => {
+      const info = modeInfo(m);
+      const span = document.createElement("span");
+      span.innerHTML = `<span class="dot" style="color:${info.color}"></span>${info.label}`;
+      legendEl.appendChild(span);
+    });
+  }
+
+  // ---------- rendering ----------
+  // trail memory window: scales with the data's real time span so that, however much a wide
+  // time range gets compressed into the loop, trails still read as continuous flowing motion
+  // rather than brief pulses. Minimum 4 minutes, otherwise ~6% of the whole span, capped at 25 min.
+  let TRAIL_MS = 90 * 1000;
+  let seamT = null; // the quietest moment in the data; playback loops through it so the reset is invisible
+
+  function computeActivitySeam(){
+    if (!groups.length || tMin == null || tMax == null) return tMin;
+    const SAMPLES = 120;
+    const span = Math.max(1, tMax - tMin);
+    let bestT = tMin;
+    let bestCount = Infinity;
+    for (let i = 0; i < SAMPLES; i++){
+      const t = tMin + (i / SAMPLES) * span;
+      let count = 0;
+      for (const g of groups){
+        if (t >= g.points[0].t && t <= g.points[g.points.length - 1].t) count++;
+      }
+      if (count < bestCount){
+        bestCount = count;
+        bestT = t;
+      }
+    }
+    return bestT;
+  }
+
+  // maps a loop fraction [0,1) to an actual timestamp, starting playback at the quietest
+  // moment (seamT) and wrapping the full span back around to it, so the visible "reset" of
+  // the loop lands on the emptiest part of the data instead of interrupting a busy scene
+  function wrapT(frac){
+    if (seamT == null || tMin == null || tMax == null) return tMin + frac * (tMax - tMin);
+    const span = Math.max(1, tMax - tMin);
+    const shifted = ((seamT - tMin) + frac * span) % span;
+    return tMin + shifted;
+  }
+
+  function interpAt(points, t){
+    if (t < points[0].t || t > points[points.length-1].t) return null;
+    for (let i = 0; i < points.length - 1; i++){
+      const a = points[i], b = points[i+1];
+      if (t >= a.t && t <= b.t){
+        const f = b.t === a.t ? 0 : (t - a.t) / (b.t - a.t);
+        return { lat: a.lat + (b.lat - a.lat) * f, lon: a.lon + (b.lon - a.lon) * f };
+      }
+    }
+    return null;
+  }
+
+  function currentPos(g, simT){
+    const pts = g.points;
+    if (simT < pts[0].t) return null; // hasn't appeared yet
+    if (simT >= pts[pts.length - 1].t) return pts[pts.length - 1]; // hold at last known position
+    return interpAt(pts, simT);
+  }
+
+  function drawFrame(simT){
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.drawImage(basemapCanvas, 0, 0);
+    ctx.fillStyle = "rgba(2,4,8,0.18)";
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    for (const g of groups){
+      const cur = currentPos(g, simT);
+      if (!cur) continue;
+
+      // trail: only the recent tail fades with age, the head itself persists
+      const pts = g.points.filter(p => p.t <= simT && p.t >= simT - TRAIL_MS);
+      for (let i = 0; i < pts.length - 1; i++){
+        const age = simT - pts[i].t;
+        const ageAlpha = Math.max(0, 1 - age / TRAIL_MS);
+        if (ageAlpha <= 0.01) continue;
+        const p0 = project(pts[i].lat, pts[i].lon);
+        const p1 = project(pts[i+1].lat, pts[i+1].lon);
+        ctx.strokeStyle = g.color;
+        ctx.globalAlpha = ageAlpha * 0.75;
+        ctx.lineWidth = 0.6 + ageAlpha * 3.2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // head: always shown at the vehicle's current (or last known) position — it disappears
+      // only when that position falls outside the visible map, which the canvas handles for
+      // free since coordinates outside its bounds simply don't draw
+      const hp = project(cur.lat, cur.lon);
+      ctx.save();
+      ctx.shadowColor = g.color;
+      ctx.shadowBlur = 16;
+      ctx.fillStyle = g.color;
+      ctx.beginPath();
+      ctx.arc(hp.x, hp.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (groups.length){
+      drawTimestamp(simT);
+    }
+  }
+
+  const berlinTimeFormatter = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false
+  });
+
+  function drawTimestamp(simT){
+    const label = berlinTimeFormatter.format(new Date(simT));
+    const fontSize = Math.max(15, Math.min(26, CANVAS_H * 0.032));
+    ctx.save();
+    ctx.font = `600 ${fontSize}px 'IBM Plex Mono', monospace`;
+    ctx.textBaseline = "top";
+    ctx.textAlign = "center";
+
+    // approximate the letter-spacing used elsewhere in the UI, canvas has no native tracking
+    const tracking = fontSize * 0.06;
+    const rawWidth = ctx.measureText(label).width;
+    const trackedWidth = rawWidth + tracking * (label.length - 1);
+
+    const padX = fontSize * 0.9;
+    const padY = fontSize * 0.55;
+    const boxW = trackedWidth + padX * 2;
+    const boxH = fontSize * 1.5 + padY * 2;
+    const boxX = CANVAS_W / 2 - boxW / 2;
+    const boxY = fontSize * 0.9;
+
+    ctx.fillStyle = "rgba(4,6,11,0.55)";
+    roundRect(ctx, boxX, boxY, boxW, boxH, boxH / 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(95,224,255,0.35)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, boxX, boxY, boxW, boxH, boxH / 2);
+    ctx.stroke();
+
+    ctx.shadowColor = "rgba(95,224,255,0.55)";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#eaf3fb";
+    drawTrackedText(ctx, label, CANVAS_W / 2, boxY + boxH / 2 - fontSize * 0.75, tracking, rawWidth, trackedWidth);
+    ctx.restore();
+  }
+
+  function roundRect(c, x, y, w, h, r){
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawTrackedText(c, text, centerX, top, tracking, rawWidth, trackedWidth){
+    c.textAlign = "left";
+    let x = centerX - trackedWidth / 2;
+    for (const ch of text){
+      c.fillText(ch, x, top);
+      x += c.measureText(ch).width + tracking;
+    }
+  }
+
+  function renderStatic(){
+    drawFrame(groups.length ? wrapT(0.5) : (tMin || Date.now()));
+  }
+
+  // ---------- preview playback ----------
+  let playing = false;
+  let rafId = null;
+  function togglePlay(){
+    if (!groups.length) return;
+    playing = !playing;
+    playBtn.textContent = playing ? "Stop Preview" : "Play Preview";
+    if (playing) playLoop();
+    else if (rafId) cancelAnimationFrame(rafId);
+  }
+  function playLoop(){
+    const DURATION_MS = 32000; // on-screen loop length, slowed down for a flowing feel
+    const start = performance.now();
+    function step(now){
+      if (!playing) return;
+      const loopFrac = ((now - start) % DURATION_MS) / DURATION_MS;
+      drawFrame(wrapT(loopFrac));
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  // ---------- video export ----------
+  function pickVideoMimeType(){
+    const candidates = [
+      "video/mp4;codecs=avc1.42E01E",
+      "video/mp4;codecs=h264",
+      "video/mp4",
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm"
+    ];
+    for (const type of candidates){
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)){
+        return type;
+      }
+    }
+    return null;
+  }
+
+  async function exportVideo(){
+    if (!groups.length) return;
+
+    if (!mainCanvas.captureStream || !window.MediaRecorder){
+      setStatus("This browser doesn't support canvas recording (captureStream/MediaRecorder). Try a more recent browser like Chrome or Firefox.", "warn");
+      return;
+    }
+    const mimeType = pickVideoMimeType();
+    if (!mimeType){
+      setStatus("This browser doesn't support WebM encoding. Try a more recent browser like Chrome or Firefox.", "warn");
+      return;
+    }
+
+    videoBtn.disabled = true;
+    playing = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    playBtn.textContent = "Play Preview";
+
+    const seconds = parseFloat(document.getElementById("videoSeconds").value);
+    const fps = 30;
+    setStatus(`Recording video: ${seconds} seconds, ${fps}fps...`);
+
+    const stream = mainCanvas.captureStream(fps);
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+
+    const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+    recorder.start();
+
+    const start = performance.now();
+    let recording = true;
+    function step(now){
+      const elapsed = now - start;
+      const frac = Math.min(1, elapsed / (seconds * 1000));
+      drawFrame(wrapT(frac));
+      if (elapsed >= seconds * 1000){
+        recording = false;
+        recorder.stop();
+        return;
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+
+    // safety watchdog in case the recorder never stops for some reason
+    const watchdog = setTimeout(() => {
+      if (recording){
+        recording = false;
+        try { recorder.stop(); } catch(e){}
+      }
+    }, seconds * 1000 + 5000);
+
+    await stopped;
+    clearTimeout(watchdog);
+
+    const blob = new Blob(chunks, { type: mimeType });
+    if (blob.size === 0){
+      setStatus("The recording came out empty. Try again, or check that the browser didn't block the recording.", "warn");
+      videoBtn.disabled = false;
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const sizeMB = (blob.size / (1024 * 1024)).toFixed(1);
+    const isMp4 = mimeType.startsWith("video/mp4");
+    const ext = isMp4 ? "mp4" : "webm";
+    document.getElementById("videoPreview").src = url;
+    const downloadLink = document.getElementById("videoDownload");
+    downloadLink.href = url;
+    downloadLink.download = `berlin-comet-trails.${ext}`;
+    document.getElementById("videoResult").style.display = "flex";
+    if (isMp4){
+      setStatus(`Video ready to download below as MP4 (${sizeMB}MB).`, "ok");
+    } else {
+      setStatus(`This browser doesn't support recording directly to MP4, so the file came out as WebM instead (${sizeMB}MB). To get an actual MP4, you can convert this file (e.g. via ffmpeg or an online converter), or try a different browser (recent Safari supports MP4 directly).`, "warn");
+    }
+    videoBtn.disabled = false;
+    renderStatic();
+  }
+
+  // ---------- region selection (picker map) ----------
+  const areaInfoEl = document.getElementById("areaInfo");
+  const useAreaBtn = document.getElementById("useAreaBtn");
+
+  async function applyRegion(bbox, requestedZoom){
+    if (pollTimer){
+      clearInterval(pollTimer);
+      pollTimer = null;
+      fetchBtn.textContent = "Start Live Capture";
+      setStatus("Capture stopped because the area changed.", "warn");
+    }
+    BBOX = bbox;
+    ZOOM = pickSafeZoom(bbox, requestedZoom);
+    computeGeometry();
+    applyCanvasSizing();
+
+    // switching region invalidates any previously loaded vehicle data
+    groups = [];
+    tMin = null; tMax = null;
+    legendEl.innerHTML = "";
+    document.getElementById("videoResult").style.display = "none";
+    playBtn.disabled = true;
+    videoBtn.disabled = true;
+    playing = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    playBtn.textContent = "Play Preview";
+
+    const tiles = (tileX1 - tileX0 + 1) * (tileY1 - tileY0 + 1);
+    areaInfoEl.textContent = `Zoom ${ZOOM}${requestedZoom !== ZOOM ? ` (adjusted from ${Math.round(requestedZoom)} to keep a reasonable size)` : ""}, ${tiles} tiles, canvas ${CANVAS_W}x${CANVAS_H}`;
+
+    setStatus("Loading basemap for the new area...");
+    await loadBasemap();
+    if (!basemapLoaded){
+      setStatus("The Esri basemap layer didn't load (likely a network block), a plain dark grid will be shown instead. The data and animation will still work normally.", "warn");
+    } else {
+      setStatus("The new area is ready. You can start live capture or try demo data.");
+    }
+    renderStatic();
+  }
+
+  let pickerMap;
+  function initPickerMap(){
+    pickerMap = L.map("pickerMap", { attributionControl: true });
+    pickerMap.fitBounds([[BBOX.minLat, BBOX.minLon], [BBOX.maxLat, BBOX.maxLon]]);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 19,
+      attribution: "Tiles &copy; Esri"
+    }).addTo(pickerMap);
+
+    useAreaBtn.addEventListener("click", () => {
+      const b = pickerMap.getBounds();
+      applyRegion(
+        { minLat: b.getSouth(), maxLat: b.getNorth(), minLon: b.getWest(), maxLon: b.getEast() },
+        pickerMap.getZoom()
+      );
+    });
+  }
+
+  // ---------- wire up ----------
+  fetchBtn.addEventListener("click", fetchLive);
+  demoBtn.addEventListener("click", buildDemo);
+  playBtn.addEventListener("click", togglePlay);
+  videoBtn.addEventListener("click", exportVideo);
+  loadFileBtn.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const rows = Array.isArray(json) ? json : (json.rows || json.data || []);
+      loadFromFile(rows);
+    } catch(err){
+      setStatus(`Failed to read the file: ${err.message}`, "warn");
+    }
+    fileInput.value = "";
+  });
+
+  initPickerMap();
+  loadBasemap().then(() => {
+    if (!basemapLoaded){
+      setStatus("The Esri basemap layer didn't load (likely a network block), a plain dark grid will be shown instead. The data and animation will still work normally.", "warn");
+    }
+    renderStatic();
+  });
+
+})();
+</script>
+</body>
+</html>
