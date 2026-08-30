@@ -298,14 +298,14 @@ setInterval(()=>{
 
 /* ── MAP ── */
 const TILES = {
-  dark:  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark:  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
 };
 
 function initMap(){
   map = L.map('map',{zoomControl:true}).setView([52.52,13.405],12);
   tileLayer = L.tileLayer(TILES.dark,{
-    attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
+    attribution:'Tiles &copy; Esri',maxZoom:19,maxNativeZoom:16
   }).addTo(map);
 }
 
