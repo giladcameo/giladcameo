@@ -538,9 +538,10 @@ let selectedRouteIdx = 0;
 // ── Map init ──────────────────────────────────────────────────────────────────
 const canvasRenderer = L.canvas({ padding: 0.5 });
 const map = L.map("map", { zoomControl: true }).setView([52.52, 13.405], 13);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: "© OpenStreetMap © CARTO",
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+  attribution: "Tiles © Esri",
   maxZoom: 19,
+  maxNativeZoom: 16,
 }).addTo(map);
 map.on("click", onMapClick);
 
