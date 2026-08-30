@@ -106,10 +106,19 @@
   canvas{ border-radius: 8px; display:block; }
 
   .legend{
-    display:flex; flex-wrap:wrap; gap: 10px 18px;
+    display:flex; flex-wrap:wrap; gap: 8px 10px;
     margin-top: 14px; font-size: 12.5px; color: var(--ink-dim);
   }
-  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:6px; box-shadow: 0 0 6px currentColor; }
+  .legend button{
+    display:inline-flex; align-items:center;
+    background: #10151f; border: 1px solid var(--panel-border);
+    border-radius: 20px; padding: 5px 12px 5px 9px;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink);
+    cursor:pointer; transition: opacity .15s ease, border-color .15s ease;
+  }
+  .legend button.off{ opacity: .4; }
+  .legend button:hover{ border-color: var(--accent); }
+  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:6px; box-shadow: 0 0 6px currentColor; flex-shrink:0; }
 
   details{ margin-top: 14px; }
   summary{ cursor:pointer; color: var(--ink-dim); font-size: 12.5px; }
@@ -346,6 +355,7 @@
 
   let groups = []; // [{ id, color, points: [{t, lat, lon}, ...] }]
   let tMin = null, tMax = null;
+  let hiddenModes = new Set(); // modes toggled off in the legend
 
   function setStatus(html, cls){
     statusEl.innerHTML = cls ? `<span class="${cls}">${html}</span>` : html;
@@ -549,6 +559,16 @@
     const span = Math.max(1, tMax - tMin);
     TRAIL_MS = Math.min(10 * 60 * 1000, Math.max(90 * 1000, span * 0.03));
     seamT = computeActivitySeam();
+    hiddenModes = new Set(); // new data: show every mode by default
+  }
+
+  function isModeVisible(mode){ return !hiddenModes.has(mode || "other"); }
+
+  function toggleMode(mode){
+    if (hiddenModes.has(mode)) hiddenModes.delete(mode);
+    else hiddenModes.add(mode);
+    drawLegend();
+    renderStatic();
   }
 
   function drawLegend(){
@@ -557,9 +577,13 @@
     const order = ["suburban", "subway", "tram", "bus", "regional", "express", "ferry", "other"];
     order.filter(m => modesPresent.has(m)).forEach(m => {
       const info = modeInfo(m);
-      const span = document.createElement("span");
-      span.innerHTML = `<span class="dot" style="color:${info.color}"></span>${info.label}`;
-      legendEl.appendChild(span);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = isModeVisible(m) ? "" : "off";
+      btn.setAttribute("aria-pressed", String(isModeVisible(m)));
+      btn.innerHTML = `<span class="dot" style="color:${info.color}"></span>${info.label}`;
+      btn.addEventListener("click", () => toggleMode(m));
+      legendEl.appendChild(btn);
     });
   }
 
@@ -626,6 +650,7 @@
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     for (const g of groups){
+      if (!isModeVisible(g.mode)) continue;
       const cur = currentPos(g, simT);
       if (!cur) continue;
 
