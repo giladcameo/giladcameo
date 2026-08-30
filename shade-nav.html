@@ -586,9 +586,9 @@ function toggleTheme() {
   addTileLayer();
 }
 function addTileLayer() {
-  const theme = lightMode ? "light_all" : "dark_all";
-  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${theme}/{z}/{x}/{y}{r}.png`, {
-    attribution: "© OpenStreetMap © CARTO", maxZoom: 19,
+  const theme = lightMode ? "World_Light_Gray_Base" : "World_Dark_Gray_Base";
+  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/${theme}/MapServer/tile/{z}/{y}/{x}`, {
+    attribution: "Tiles © Esri", maxZoom: 19, maxNativeZoom: 16,
   }).addTo(map);
 }
 // Restore saved theme
