@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>לוח יציאות — רכבת ישראל</title>
+  <meta name="theme-color" content="#0b1f3a"/>
+  <style>
+:root {
+  --bg:       #0b1f3a;
+  --panel:    #0e254a;
+  --hdr:      #0a1c36;
+  --next:     #c81e2c;
+  --sep:      rgba(255,255,255,0.1);
+  --text:     #ffffff;
+  --sub:      rgba(255,255,255,0.55);
+  --green:    #5cff7a;
+  --red:      #ff5252;
+  --yellow:   #ffcc44;
+  --line:     #1a3b6b;
+  --font:     'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; background: var(--bg); }
+body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
+
+#main { display: flex; flex-direction: column; height: 100%; height: 100dvh; background: var(--panel); }
+
+/* ══ HEADER ══ */
+.b-header {
+  flex-shrink: 0; position: relative;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  background: var(--hdr);
+  border-bottom: 1px solid var(--sep);
+}
+.hdr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.logo-mark {
+  background: var(--next); color: #fff; font-weight: 900; font-size: 12px;
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.hdr-title { font-size: 15px; font-weight: 700; flex: 1; }
+.bh-clock { font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.settings-btn {
+  flex-shrink: 0; width: 30px; height: 30px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.settings-btn:hover { background: rgba(255,255,255,.18); }
+
+/* Station pickers */
+.picker-row { display: flex; align-items: center; gap: 6px; }
+.pick-wrap { flex: 1; position: relative; min-width: 0; }
+.pick-wrap input {
+  width: 100%;
+  padding: 9px 10px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px;
+  color: #fff; font-family: var(--font); font-size: 13px;
+  outline: none; transition: border-color .15s, background .15s;
+}
+.pick-wrap input::placeholder { color: rgba(255,255,255,.35); }
+.pick-wrap input:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.15); }
+.pick-label { font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--sub); margin-bottom: 3px; }
+
+.swap-btn {
+  flex-shrink: 0; width: 34px; height: 34px; align-self: flex-end;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, transform .2s;
+}
+.swap-btn:hover { background: rgba(255,255,255,.18); }
+.swap-btn:active { transform: rotate(180deg); }
+
+/* Dropdown */
+.dropdown {
+  position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+  z-index: 300;
+  background: #0d2347;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  max-height: 260px; overflow-y: auto;
+  display: none;
+  box-shadow: 0 12px 28px rgba(0,0,0,.6);
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+}
+.dropdown.open { display: block; }
+.d-row {
+  padding: 10px 12px; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  transition: background .1s;
+  font-size: 13px;
+}
+.d-row:last-child { border-bottom: none; }
+.d-row:hover, .d-row.hi { background: rgba(255,255,255,.09); }
+.d-msg { padding: 12px; font-size: 12px; color: var(--sub); text-align: center; }
+
+/* ══ COL LABELS ══ */
+.col-labels {
+  flex-shrink: 0;
+  display: grid; grid-template-columns: 1fr 72px 60px;
+  padding: 6px 20px;
+  background: #081936; border-bottom: 1px solid var(--sep);
+  font-size: 9px; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--sub);
+}
+.col-labels span:nth-child(2), .col-labels span:nth-child(3) { text-align: center; }
+
+/* ══ BOARD ══ */
+.b-scroll {
+  flex: 1; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent;
+}
+.b-scroll::-webkit-scrollbar { width: 3px; }
+.b-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+
+/* Next journey */
+.dep-next {
+  padding: 16px 20px;
+  background: var(--next);
+  border-bottom: 2px solid rgba(255,255,255,.18);
+  animation: fadeIn .2s ease;
+}
+.dep-next .dn-top { display: flex; align-items: center; gap: 14px; }
+.dep-next .d-eta { flex-shrink: 0; text-align: center; }
+.dep-next .eta-num { font-size: 30px; font-weight: 700; line-height: 1; }
+.dep-next .eta-lbl { font-size: 10px; color: rgba(255,255,255,.65); margin-top: 2px; }
+.dep-next .d-times { font-size: 19px; font-weight: 700; }
+.dep-next .d-sub { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 4px; }
+
+/* Regular rows */
+.dep-row {
+  display: grid; grid-template-columns: 1fr 72px 60px; align-items: center;
+  padding: 12px 20px; border-bottom: 1px solid var(--sep);
+  transition: background .1s; animation: fadeIn .2s ease;
+  font-size: 13px;
+}
+.dep-row:hover { background: rgba(255,255,255,.05); }
+.dr-times { font-weight: 600; }
+.dr-sub { font-size: 10px; color: var(--sub); margin-top: 2px; }
+.dr-plat { text-align: center; color: var(--sub); font-size: 12px; }
+.dr-eta { text-align: center; }
+.eta-small { font-size: 15px; font-weight: 700; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+.d-delay      { font-size: 10px; }
+.d-delay.late { color: var(--red); }
+.d-delay.ok   { color: var(--green); }
+
+.eta-now  { color: var(--red); animation: blink 1s infinite; }
+.eta-soon { color: var(--yellow); }
+@keyframes blink { 50% { opacity: .2; } }
+
+.change-badge {
+  display: inline-block; font-size: 9px; padding: 1px 6px; margin-inline-start: 6px;
+  border: 1px solid rgba(255,255,255,.3); border-radius: 10px; color: var(--sub);
+}
+
+/* State */
+.state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 60px 24px;
+  font-size: 13px; color: var(--sub); text-align: center; line-height: 1.9;
+}
+.spinner {
+  width: 22px; height: 22px;
+  border: 2px solid rgba(255,255,255,.2); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+footer {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 20px;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: calc(26px + env(safe-area-inset-bottom));
+  background: #081936; border-top: 1px solid var(--sep);
+  font-size: 10px; color: var(--sub);
+}
+footer span:first-child { flex: 1; }
+
+/* ══ SETTINGS MODAL ══ */
+.modal {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.6);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal.open { display: flex; }
+.modal-card {
+  background: #0d2347; border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px; padding: 20px; max-width: 380px; width: 100%;
+  max-height: 85vh; overflow-y: auto;
+}
+.modal-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.modal-text { font-size: 12px; color: var(--sub); line-height: 1.7; margin-bottom: 10px; }
+.modal-text code {
+  background: rgba(255,255,255,.1); border-radius: 4px; padding: 1px 5px;
+  font-size: 11px; direction: ltr; display: inline-block;
+}
+#settingsInput {
+  width: 100%; padding: 9px 10px; margin-bottom: 14px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px; color: #fff; font-family: var(--font); font-size: 13px;
+  outline: none; direction: ltr; text-align: right;
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btn {
+  padding: 8px 16px; border-radius: 6px; border: 1px solid transparent;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font);
+}
+.modal-btn.ghost { background: transparent; border-color: rgba(255,255,255,.2); color: #fff; }
+.modal-btn.primary { background: var(--next); color: #fff; }
+  </style>
+</head>
+<body>
+
+<div id="main">
+
+  <!-- HEADER -->
+  <div class="b-header">
+    <div class="hdr-top">
+      <div class="logo-mark">ר״י</div>
+      <div class="hdr-title">רכבת ישראל · לוח יציאות</div>
+      <div class="bh-clock" id="clock">--:--</div>
+      <button class="settings-btn" id="settingsBtn" title="הגדרות מפתח API">⚙</button>
+    </div>
+
+    <div class="picker-row">
+      <div class="pick-wrap" id="fromWrap">
+        <div class="pick-label">מתחנה</div>
+        <input id="fromInput" type="text" placeholder="בחרו תחנת מוצא…" autocomplete="off" spellcheck="false"/>
+        <div class="dropdown" id="fromDropdown"></div>
+      </div>
+      <button class="swap-btn" id="swapBtn" title="החלף כיוון">⇄</button>
+      <div class="pick-wrap" id="toWrap">
+        <div class="pick-label">לתחנה</div>
+        <input id="toInput" type="text" placeholder="בחרו תחנת יעד…" autocomplete="off" spellcheck="false"/>
+        <div class="dropdown" id="toDropdown"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUMN LABELS -->
+  <div class="col-labels">
+    <span>יציאה ← הגעה</span><span>רציף</span><span>עוד</span>
+  </div>
+
+  <!-- BOARD -->
+  <div class="b-scroll">
+    <div id="board">
+      <div class="state">🚆<br>בחרו תחנת מוצא ותחנת יעד<br>כדי לראות את הרכבות הקרובות</div>
+    </div>
+  </div>
+
+  <footer>
+    <span id="ftrApi">—</span>
+    <span id="ftrTime">—</span>
+  </footer>
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal">
+  <div class="modal-card">
+    <div class="modal-title">מפתח API</div>
+    <p class="modal-text">
+      לרכבת ישראל אין API ציבורי רשמי. האתר rail.co.il משתמש בלוח הזמנים שלו
+      במפתח מנוי (subscription key) שנשלח מהדפדפן בכל בקשה. כדי שהלוח יעבוד,
+      הדביקו כאן מפתח כזה — הוא נשמר רק בדפדפן שלכם (localStorage), לא בקוד
+      האתר ולא בשום שרת.
+    </p>
+    <p class="modal-text">
+      אפשר למצוא מפתח עדכני על ידי פתיחת
+      <code>rail.co.il</code> בדפדפן, פתיחת כלי הפיתוח (F12) ← לשונית
+      Network, וחיפוש בקשה אל <code>rail-api.rail.co.il</code> — הערך
+      בכותרת <code>ocp-apim-subscription-key</code> הוא המפתח.
+    </p>
+    <input id="settingsInput" type="text" placeholder="הדביקו כאן את המפתח…" autocomplete="off" spellcheck="false"/>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" id="settingsClose">סגירה</button>
+      <button class="modal-btn primary" id="settingsSave">שמירה</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const REFRESH_MS = 30_000;
+
+/* Unofficial Israel Railways timetable API (no official public developer
+   API exists). rail.co.il's own website calls this endpoint client-side
+   with a subscription key baked into its bundle — that key isn't stored
+   in this file's source; instead each visitor supplies their own via the
+   ⚙ button, kept only in their browser's localStorage. See the settings
+   panel for where to find the current key. */
+const API_BASE   = 'https://rail-api.rail.co.il/rjpa/api/v1';
+const KEY_STORE  = 'ilrail_subscription_key';
+function getApiKey() { try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; } }
+function setApiKey(k) { try { localStorage.setItem(KEY_STORE, k.trim()); } catch {} }
+
+const STATIONS = [
+  {"id":"3700","he":"תל אביב - סבידור מרכז","en":"Tel Aviv-Savidor Center"},
+  {"id":"3500","he":"הרצליה","en":"Hertsliya"},
+  {"id":"3400","he":"בית יהושע","en":"Bet Yehoshu'a"},
+  {"id":"3300","he":"נתניה","en":"Netanya"},
+  {"id":"3100","he":"חדרה - מערב","en":"Hadera-West"},
+  {"id":"2800","he":"בנימינה","en":"Binyamina"},
+  {"id":"2820","he":"קיסריה - פרדס חנה","en":"Caesarea-Pardes Hana"},
+  {"id":"2500","he":"עתלית","en":"Atlit"},
+  {"id":"2200","he":"חיפה - בת גלים","en":"Haifa-Bat Galim"},
+  {"id":"1300","he":"חוצות המפרץ","en":"Hutsot HaMifrats"},
+  {"id":"700","he":"קריית חיים","en":"Kiryat Hayim"},
+  {"id":"1400","he":"קריית מוצקין","en":"Kiryat Motzkin"},
+  {"id":"1500","he":"עכו","en":"Ako"},
+  {"id":"2300","he":"חיפה - חוף הכרמל","en":"Haifa-Hof HaKarmel"},
+  {"id":"8700","he":"כפר סבא - נורדאו","en":"Kfar Sava-Nordau"},
+  {"id":"1600","he":"נהריה","en":"Nahariya"},
+  {"id":"6500","he":"ירושלים - גן החיות התנכי","en":"Jerusalem-Biblical Zoo"},
+  {"id":"6300","he":"בית שמש","en":"Bet Shemesh"},
+  {"id":"7000","he":"קריית גת","en":"Kiryat Gat"},
+  {"id":"5000","he":"לוד","en":"Lod"},
+  {"id":"7300","he":"באר שבע- צפון/אוניברסיטה","en":"Be'er Sheva-North/University"},
+  {"id":"4800","he":"כפר חב\\\"ד","en":"Kfar Habad"},
+  {"id":"4600","he":"תל אביב - השלום","en":"Tel Aviv-HaShalom"},
+  {"id":"2100","he":"חיפה- מרכז השמונה","en":"Haifa Center-HaShmona"},
+  {"id":"5010","he":"רמלה","en":"Ramla"},
+  {"id":"8800","he":"ראש העין - צפון","en":"Rosh Ha'Ayin-North"},
+  {"id":"5300","he":"באר יעקב","en":"Be'er Ya'akov"},
+  {"id":"5200","he":"רחובות","en":"Rehovot"},
+  {"id":"5410","he":"יבנה מזרח","en":"Yavne-East"},
+  {"id":"9100","he":"ראשון לציון - הראשונים","en":"Rishon LeTsiyon-HaRishonim"},
+  {"id":"5800","he":"אשדוד עד הלום","en":"Ashdod-Ad Halom"},
+  {"id":"4250","he":"פתח תקווה - סגולה","en":"Petah Tikva-Segula"},
+  {"id":"4100","he":"בני ברק","en":"Bnei Brak"},
+  {"id":"3600","he":"תל אביב - אוניברסיטה","en":"Tel Aviv-University"},
+  {"id":"7320","he":"באר שבע - מרכז","en":"Be'er Sheva-Center"},
+  {"id":"1220","he":"מרכזית המפרץ (לב המפרץ)","en":"HaMifrats Central Station"},
+  {"id":"4900","he":"תל אביב - ההגנה","en":"Tel Aviv-HaHagana"},
+  {"id":"8600","he":"נמל תעופה בן גוריון","en":"Ben Gurion Airport"},
+  {"id":"6700","he":"ירושלים - מלחה","en":"Jerusalem-Malha"},
+  {"id":"5900","he":"אשקלון","en":"Ashkelon"},
+  {"id":"7500","he":"דימונה","en":"Dimona"},
+  {"id":"9200","he":"הוד השרון - סוקולוב","en":"Hod HaSharon-Sokolov"},
+  {"id":"4170","he":"פתח תקווה - קריית אריה","en":"Petah Tikva-Kiryat Arye"},
+  {"id":"5150","he":"לוד גני אביב","en":"Lod-Gane Aviv"},
+  {"id":"8550","he":"להבים - רהט","en":"Lehavim-Rahat"},
+  {"id":"300","he":"פאתי מודיעין","en":"Pa'ate Modi'in"},
+  {"id":"400","he":"מודיעין - מרכז","en":"Modi'in-Center"},
+  {"id":"4640","he":"צומת חולון","en":"Holon Junction"},
+  {"id":"4660","he":"חולון - וולפסון","en":"Holon-Wolfson"},
+  {"id":"4680","he":"בת ים - יוספטל","en":"Bat Yam-Yoseftal"},
+  {"id":"4690","he":"בת ים - קוממיות","en":"Bat Yam-Komemiyut"},
+  {"id":"9800","he":"ראשון לציון - משה דיין","en":"Rishon LeTsiyon-Moshe Dayan"},
+  {"id":"9000","he":"יבנה מערב","en":"Yavne-West"},
+  {"id":"9600","he":"שדרות","en":"Sderot"},
+  {"id":"9650","he":"נתיבות","en":"Netivot"},
+  {"id":"9700","he":"אופקים","en":"Ofakim"},
+  {"id":"3310","he":"נתניה - ספיר","en":"Netanya-Sapir"},
+  {"id":"1240","he":"יקנעם - כפר יהושע","en":"Yokne'am-Kfar Yehoshu'a"},
+  {"id":"1250","he":"מגדל העמק - כפר ברוך","en":"Migdal Ha'emek-Kfar Barukh"},
+  {"id":"1260","he":"עפולה ר.איתן","en":"Afula R.Eitan"},
+  {"id":"1280","he":"בית שאן","en":"Beit She'an"},
+  {"id":"1820","he":"אחיהוד","en":"Ahihud"},
+  {"id":"1840","he":"כרמיאל","en":"Karmiel"},
+  {"id":"2940","he":"רעננה מערב","en":"Ra'anana West"},
+  {"id":"2960","he":"רעננה דרום","en":"Ra'anana South"},
+  {"id":"6150","he":"קרית מלאכי - יואב","en":"Kiryat Malakhi-Yoav"},
+  {"id":"680","he":"ירושלים - יצחק נבון","en":"Jerusalem-Yitzhak Navon"},
+  {"id":"6900","he":"מזכרת בתיה","en":"Mazkeret Batya"}
+];
+
+let fromStation = null, toStation = null;
+let refreshTimer = null, activeInput = null;
+
+/* ── Clock ── */
+const clockEl = document.getElementById('clock');
+function tick() {
+  clockEl.textContent = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+setInterval(tick, 1000); tick();
+
+/* ── Station pickers ── */
+function setupPicker(inputId, dropdownId, onSelect) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+
+  input.addEventListener('focus', () => { activeInput = inputId; renderMatches(''); });
+  input.addEventListener('input', () => renderMatches(input.value.trim()));
+  input.addEventListener('keydown', e => { if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); } });
+
+  function renderMatches(q) {
+    const ql = q.toLowerCase();
+    const matches = q.length === 0
+      ? STATIONS
+      : STATIONS.filter(s => s.he.includes(q) || s.en.toLowerCase().includes(ql));
+    if (!matches.length) {
+      dropdown.innerHTML = '<div class="d-msg">לא נמצאו תחנות</div>';
+      dropdown.classList.add('open');
+      return;
+    }
+    dropdown.innerHTML = matches.slice(0, 30).map((s, i) =>
+      `<div class="d-row" data-idx="${i}">${h(s.he)}</div>`
+    ).join('');
+    dropdown.classList.add('open');
+    dropdown.querySelectorAll('.d-row').forEach(el => {
+      el.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        const s = matches[+el.dataset.idx];
+        input.value = s.he;
+        dropdown.classList.remove('open');
+        onSelect(s);
+      });
+    });
+  }
+
+  return { close: () => dropdown.classList.remove('open') };
+}
+
+const fromPicker = setupPicker('fromInput', 'fromDropdown', s => { fromStation = s; maybeSearch(); });
+const toPicker   = setupPicker('toInput',   'toDropdown',   s => { toStation = s; maybeSearch(); });
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#fromWrap')) fromPicker.close();
+  if (!e.target.closest('#toWrap'))   toPicker.close();
+});
+
+document.getElementById('swapBtn').addEventListener('click', () => {
+  const tmp = fromStation; fromStation = toStation; toStation = tmp;
+  document.getElementById('fromInput').value = fromStation ? fromStation.he : '';
+  document.getElementById('toInput').value   = toStation   ? toStation.he   : '';
+  maybeSearch();
+});
+
+function maybeSearch() {
+  clearTimeout(refreshTimer);
+  if (!fromStation || !toStation) return;
+  if (fromStation.id === toStation.id) {
+    showState('תחנת המוצא והיעד זהות — בחרו תחנות שונות');
+    return;
+  }
+  if (!getApiKey()) {
+    showState('יש להגדיר מפתח API כדי לראות רכבות\n(לחצו על ⚙ למעלה)');
+    openSettings();
+    return;
+  }
+  document.getElementById('ftrApi').textContent = 'rail.co.il · לא רשמי';
+  showState('loading');
+  loadDepartures();
+}
+
+/* ── Settings (API key) ── */
+const settingsModal = document.getElementById('settingsModal');
+const settingsInput = document.getElementById('settingsInput');
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+document.getElementById('settingsSave').addEventListener('click', () => {
+  setApiKey(settingsInput.value);
+  closeSettings();
+  maybeSearch();
+});
+settingsModal.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
+
+function openSettings() {
+  settingsInput.value = getApiKey();
+  settingsModal.classList.add('open');
+}
+function closeSettings() { settingsModal.classList.remove('open'); }
+
+/* ── Load departures ── */
+async function loadDepartures() {
+  if (!fromStation || !toStation) return;
+  clearTimeout(refreshTimer);
+
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const hour = now.toTimeString().slice(0, 5);
+
+  try {
+    const routes = await fetchRoutes(fromStation.id, toStation.id, date, hour);
+    renderBoard(routes);
+    document.getElementById('ftrTime').textContent =
+      'עודכן ' + now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  } catch (e) {
+    showState('שגיאה בטעינת הנתונים:\n' + e.message + '\n(ייתכן שמפתח ה-API הציבורי התחלף)');
+  }
+
+  refreshTimer = setTimeout(loadDepartures, REFRESH_MS);
+}
+
+/* ── Fetch: rail-api.rail.co.il ── */
+async function fetchRoutes(fromId, toId, date, hour) {
+  const r = await fetch(`${API_BASE}/timetable/searchTrain`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'ocp-apim-subscription-key': getApiKey(),
+    },
+    body: JSON.stringify({
+      fromStation: fromId,
+      toStation: toId,
+      date,
+      hour,
+      scheduleType: 'ByDeparture',
+      systemType: '2',
+      languageId: 'Hebrew',
+    }),
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  const result = data.result || data.Result || {};
+  const travels = result.travels || result.Travels || [];
+  return travels.map(t => (t.trains || t.Trains || []).map(normalizeLeg));
+}
+
+function normalizeLeg(t) {
+  return {
+    from:      t.orignStation ?? t.originStation ?? t.OrignStation,
+    to:        t.destinationStation ?? t.DestinationStation,
+    departure: t.departureTime ?? t.DepartureTime,
+    arrival:   t.arrivalTime ?? t.ArrivalTime,
+    platform:  t.originPlatform ?? t.OriginPlatform,
+    dstPlatform: t.destPlatform ?? t.DestPlatform,
+    trainNo:   t.trainNumber ?? t.TrainNumber ?? t.trainNo,
+    delayMin:  firstDelay(t.etaDiffTimes ?? t.EtaDiffTimes, t.orignStation ?? t.OrignStation),
+  };
+}
+function firstDelay(list, stationId) {
+  if (!Array.isArray(list)) return 0;
+  const hit = list.find(e => String(e.stationId ?? e.StationId) === String(stationId));
+  return hit ? (hit.difMin ?? hit.DifMin ?? 0) : 0;
+}
+
+/* ── Parse "DD/MM/YYYY HH:MM:SS" ── */
+function parseRailTime(s) {
+  if (!s) return null;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})/.exec(s);
+  if (!m) return null;
+  const [, d, mo, y, h, mi] = m;
+  return new Date(+y, +mo - 1, +d, +h, +mi);
+}
+
+/* ── Render board ── */
+function renderBoard(routeLegs) {
+  const board = document.getElementById('board');
+  const journeys = routeLegs
+    .filter(legs => legs.length && parseRailTime(legs[0].departure))
+    .sort((a, b) => parseRailTime(a[0].departure) - parseRailTime(b[0].departure));
+
+  if (!journeys.length) {
+    board.innerHTML = '<div class="state">אין רכבות קרובות במסלול זה</div>';
+    return;
+  }
+  const now = Date.now();
+  const [first, ...rest] = journeys.slice(0, 15);
+  board.innerHTML = buildNextRow(first, now) + rest.map(j => buildRow(j, now)).join('');
+}
+
+function buildNextRow(legs, now) {
+  const first = legs[0], last = legs[legs.length - 1];
+  const eta = etaMins(parseRailTime(first.departure), now);
+  const changes = legs.length - 1;
+  return `
+  <div class="dep-next">
+    <div class="dn-top">
+      <div class="d-eta">${etaBig(eta)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="d-times">${fmtTime(first.departure)} ← ${fmtTime(last.arrival)}${delayText(first)}</div>
+        <div class="d-sub">רציף ${h(first.platform ?? '—')}${changes ? `<span class="change-badge">${changes} החלפות</span>` : ''}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildRow(legs, now) {
+  const first = legs[0], last = legs[legs.length - 1];
+  const eta = etaMins(parseRailTime(first.departure), now);
+  const changes = legs.length - 1;
+  return `
+  <div class="dep-row">
+    <div>
+      <div class="dr-times">${fmtTime(first.departure)} ← ${fmtTime(last.arrival)}</div>
+      <div class="dr-sub">${delayText(first) || '&nbsp;'}${changes ? `<span class="change-badge">${changes} החלפות</span>` : ''}</div>
+    </div>
+    <div class="dr-plat">${h(first.platform ?? '—')}</div>
+    <div class="dr-eta">${etaSmall(eta)}</div>
+  </div>`;
+}
+
+function etaBig(m) {
+  if (m === null) return '';
+  if (m <= 0) return `<div class="eta-num eta-now">עכשיו</div>`;
+  return `<div class="eta-num ${m <= 5 ? 'eta-soon' : ''}">${m}</div><div class="eta-lbl">דק'</div>`;
+}
+function etaSmall(m) {
+  if (m === null) return '';
+  if (m <= 0) return `<div class="eta-small eta-now">עכשיו</div>`;
+  return `<div class="eta-small ${m <= 5 ? 'eta-soon' : ''}">${m}'</div>`;
+}
+function delayText(leg) {
+  const m = leg.delayMin || 0;
+  if (m > 1)  return ` <span class="d-delay late">+${m}'</span>`;
+  return ` <span class="d-delay ok">בזמן</span>`;
+}
+
+/* ── Helpers ── */
+function etaMins(date, now) {
+  if (!date) return null;
+  return Math.round((date - now) / 60000);
+}
+function fmtTime(iso) {
+  const d = parseRailTime(iso);
+  if (!d) return '—';
+  return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function showState(msg) {
+  const board = document.getElementById('board');
+  board.innerHTML = msg === 'loading'
+    ? '<div class="state"><div class="spinner"></div>טוען רכבות…</div>'
+    : `<div class="state">${h(msg)}</div>`;
+}
+function h(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
