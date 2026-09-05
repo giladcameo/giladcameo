@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gilad Cameo — Urban Planner &amp; GIS Analyst</title>
+  <meta name="description" content="Gilad Cameo — Urban planner and GIS analyst in Berlin building real-time transit dashboards, location-aware apps, and urban analytics with AI-assisted development." />
+  <title data-i18n="page-title">Gilad Cameo — Urban Planner &amp; GIS Analyst</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,8 +17,25 @@
       --ink-faint: #8a8a90;
       --line: #dedcd3;
       --accent: #c8401d;
+      --ink-mid: #6e6e75;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -60px;
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      z-index: 100;
+      transition: top 0.15s;
+    }
+    .skip-link:focus { top: 16px; }
 
     body {
       background: var(--bg);
@@ -41,10 +59,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
       padding: 22px 40px;
       border-bottom: 1px solid var(--line);
     }
     @media (max-width: 680px) { nav { padding: 16px 24px; } }
+    nav > ul { flex-wrap: wrap; }
     .logo {
       font-size: 14px;
       font-weight: 700;
@@ -162,7 +183,7 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      color: var(--ink-faint);
+      color: var(--ink-mid);
     }
     .tags span:not(:last-child)::after {
       content: '/';
@@ -254,7 +275,7 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      color: var(--ink-faint);
+      color: var(--ink-mid);
       margin-bottom: 14px;
     }
     .row-tags span:not(:last-child)::after {
@@ -331,19 +352,26 @@
       border-top: 1px solid var(--line);
       padding: 28px 40px;
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    @media (max-width: 680px) { footer { padding: 24px; } }
+    .footer-row {
+      display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
     }
-    @media (max-width: 680px) { footer { padding: 24px; } }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
     footer span {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       font-size: 12px;
       letter-spacing: 0.5px;
-      color: var(--ink-faint);
+      color: var(--ink-mid);
     }
     footer .pin-ic { width: 11px; height: 11px; }
     footer a {
@@ -355,46 +383,91 @@
       text-decoration: none;
     }
     footer a:hover { color: var(--accent); }
+    .footer-legal {
+      font-size: 12px;
+      color: var(--ink-mid);
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    /* LANGUAGE TOGGLE */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 3px;
+    }
+    .lang-toggle button {
+      appearance: none;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--ink-soft);
+      padding: 5px 11px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-toggle button:hover { color: var(--accent); }
+    .lang-toggle button[aria-pressed="true"] {
+      background: var(--ink);
+      color: #fff;
+    }
+    .lang-toggle button[aria-pressed="true"]:hover { color: #fff; }
   </style>
 </head>
 <body>
 
+<a class="skip-link" href="#main-content" data-i18n="skip-link">Skip to main content</a>
+
 <nav aria-label="Main navigation">
   <div class="logo">Gilad Cameo</div>
   <ul>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
+    <li><a href="#projects" data-i18n="nav-projects">Projects</a></li>
+    <li><a href="#about" data-i18n="nav-about">About</a></li>
+    <li><a href="https://www.linkedin.com/in/gilad-cameo-703b95123" target="_blank" rel="noopener noreferrer" data-i18n-aria="nav-linkedin-aria" aria-label="Gilad Cameo on LinkedIn (opens in new tab)">LinkedIn</a></li>
+    <li><a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer" data-i18n-aria="nav-github-aria" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
   </ul>
+  <div class="lang-toggle" role="group" data-i18n-aria="lang-toggle-group-aria" aria-label="Language selection">
+    <button type="button" id="lang-en" aria-pressed="true">EN</button>
+    <button type="button" id="lang-de" aria-pressed="false">DE</button>
+  </div>
 </nav>
+
+<main id="main-content">
 
 <div class="wrap hero">
   <div class="hero-meta">
-    <span class="hero-index" aria-hidden="true">Portfolio &middot; 2026</span>
+    <span class="hero-index" aria-hidden="true" data-i18n="hero-index">Portfolio &middot; 2026</span>
     <span class="hero-status">
       <span class="status-dot" aria-hidden="true"></span>
-      Open to collaboration
+      <span data-i18n="hero-status">Open to collaboration</span>
     </span>
   </div>
   <h1>Gilad<br><span class="last">Cameo</span></h1>
   <div class="hero-role">
     <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-    Urban Planner &amp; GIS Analyst &mdash; Berlin
+    <span data-i18n="hero-role">Urban Planner &amp; GIS Analyst &mdash; Berlin</span>
   </div>
   <div class="hero-geo" aria-hidden="true">52.5200&deg; N &middot; 13.4050&deg; E</div>
-  <p class="hero-bio">
+  <p class="hero-bio" data-i18n="hero-bio">
     I'm a GIS analyst who builds <strong>data tools for cities</strong> &mdash; real-time transit dashboards,
     location-aware apps, and urban analytics &mdash; using <strong>AI-assisted development</strong> to turn
     spatial analysis into working software. Interested in the intersection of
     <strong>transportation</strong>, <strong>open data</strong>, and code.
   </p>
   <div class="tags">
-    <span>Urban Planning</span>
-    <span>Transportation</span>
-    <span>AI-assisted Dev</span>
-    <span>QGIS &middot; ArcGIS</span>
-    <span>Open Data</span>
-    <span>Geospatial</span>
+    <span data-i18n="tag-1">Urban Planning</span>
+    <span data-i18n="tag-2">Transportation</span>
+    <span data-i18n="tag-3">AI-assisted Dev</span>
+    <span data-i18n="tag-4">QGIS &middot; ArcGIS</span>
+    <span data-i18n="tag-5">Open Data</span>
+    <span data-i18n="tag-6">Geospatial</span>
   </div>
   <div class="skyline" aria-hidden="true">
     <svg viewBox="0 0 1000 120" preserveAspectRatio="none">
@@ -424,23 +497,23 @@
 
 <section class="wrap section" id="projects" aria-labelledby="projects-heading">
   <div class="section-head">
-    <span class="section-label" aria-hidden="true">Work &middot; 01&ndash;06</span>
+    <span class="section-label" aria-hidden="true" data-i18n="projects-label">Work &middot; 01&ndash;06</span>
   </div>
-  <h2 id="projects-heading">Selected Projects</h2>
+  <h2 id="projects-heading" data-i18n="projects-heading">Selected Projects</h2>
   <div class="rows">
 
-    <a class="row" href="berlin-transit.html" aria-label="Berlin Transit Live — Open App">
+    <a class="row" href="berlin-transit.html" data-i18n-aria="row-1-aria" aria-label="Berlin Transit Live — Open App">
       <span class="row-num" aria-hidden="true">01</span>
       <div>
         <h3 class="row-title">Berlin Transit Live</h3>
-        <p class="row-desc">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
+        <p class="row-desc" data-i18n="row-1-desc">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
         <div class="row-tags">
           <span>Leaflet Map</span>
           <span>DB API</span>
           <span>U &middot; S &middot; Tram &middot; Bus</span>
-          <span>10s Refresh</span>
+          <span data-i18n="refresh-10s">10s Refresh</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -456,18 +529,18 @@
       </div>
     </a>
 
-    <a class="row" href="transit-board.html" aria-label="Transit Board Near Me — Open App">
+    <a class="row" href="transit-board.html" data-i18n-aria="row-2-aria" aria-label="Transit Board Near Me — Open App">
       <span class="row-num" aria-hidden="true">02</span>
       <div>
         <h3 class="row-title">Transit Board &middot; Near Me</h3>
-        <p class="row-desc">GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data, presented as a clean arrivals table.</p>
+        <p class="row-desc" data-i18n="row-2-desc">GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data, presented as a clean arrivals table.</p>
         <div class="row-tags">
           <span>GPS Location</span>
           <span>DE &middot; AT &middot; CH &middot; IL</span>
-          <span>30s Refresh</span>
+          <span data-i18n="refresh-30s">30s Refresh</span>
           <span>Multi-stop</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -484,18 +557,18 @@
       </div>
     </a>
 
-    <a class="row" href="walkable.html" aria-label="Walkable — Open App">
+    <a class="row" href="walkable.html" data-i18n-aria="row-3-aria" aria-label="Walkable — Open App">
       <span class="row-num" aria-hidden="true">03</span>
       <div>
         <h3 class="row-title">Walkable</h3>
-        <p class="row-desc">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
+        <p class="row-desc" data-i18n="row-3-desc">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
         <div class="row-tags">
           <span>Overpass API</span>
           <span>Leaflet Map</span>
           <span>Isochrone</span>
           <span>OSM</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -512,18 +585,18 @@
       </div>
     </a>
 
-    <a class="row" href="shade-nav.html" aria-label="Shade Walk — Open App">
+    <a class="row" href="shade-nav.html" data-i18n-aria="row-4-aria" aria-label="Shade Walk — Open App">
       <span class="row-num" aria-hidden="true">04</span>
       <div>
         <h3 class="row-title">Shade Walk</h3>
-        <p class="row-desc">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
+        <p class="row-desc" data-i18n="row-4-desc">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
         <div class="row-tags">
           <span>OSRM Foot</span>
           <span>Overpass Trees</span>
           <span>Shade Scoring</span>
           <span>Leaflet Map</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -541,18 +614,18 @@
       </div>
     </a>
 
-    <a class="row" href="berlin-comet-trails.html" aria-label="Berlin Comet Trails — Open App">
+    <a class="row" href="berlin-comet-trails.html" data-i18n-aria="row-5-aria" aria-label="Berlin Comet Trails — Open App">
       <span class="row-num" aria-hidden="true">05</span>
       <div>
         <h3 class="row-title">Berlin Comet Trails</h3>
-        <p class="row-desc">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
+        <p class="row-desc" data-i18n="row-5-desc">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
         <div class="row-tags">
           <span>VBB API</span>
           <span>Canvas Animation</span>
           <span>Video Export</span>
           <span>Leaflet Picker</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -566,18 +639,18 @@
       </div>
     </a>
 
-    <a class="row" href="nyc-line-numbers.html" aria-label="NYC Line Numbers — Open App">
+    <a class="row" href="nyc-line-numbers.html" data-i18n-aria="row-6-aria" aria-label="NYC Line Numbers — Open App">
       <span class="row-num" aria-hidden="true">06</span>
       <div>
         <h3 class="row-title">NYC Line Numbers</h3>
-        <p class="row-desc">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
+        <p class="row-desc" data-i18n="row-6-desc">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
         <div class="row-tags">
           <span>MTA GTFS-Realtime</span>
           <span>Canvas Animation</span>
           <span>Video Export</span>
           <span>Leaflet Picker</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" data-i18n="open-app">Open App &rarr;</span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -609,16 +682,16 @@
     </svg>
   </div>
   <div class="section-head">
-    <span class="section-label" aria-hidden="true">About</span>
+    <span class="section-label" aria-hidden="true" data-i18n="about-label">About</span>
   </div>
-  <h2 id="about-heading">Background</h2>
+  <h2 id="about-heading" data-i18n="about-heading">Background</h2>
   <div class="about-grid">
     <div>
-      <h3>Interests</h3>
-      <p>Urban planner and GIS analyst based in <strong style="color:var(--ink)">Berlin</strong>. Technion graduate passionate about how cities move &mdash; I cycle whenever I can and take public transport everywhere else. I'm not a traditional developer, so I lean on <strong style="color:var(--ink)">AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand <strong style="color:var(--ink)">urban mobility</strong>.</p>
+      <h3 data-i18n="interests-heading">Interests</h3>
+      <p data-i18n="interests-body">Urban planner and GIS analyst based in <strong style="color:var(--ink)">Berlin</strong>. Technion graduate passionate about how cities move &mdash; I cycle whenever I can and take public transport everywhere else. I'm not a traditional developer, so I lean on <strong style="color:var(--ink)">AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand <strong style="color:var(--ink)">urban mobility</strong>.</p>
     </div>
     <div>
-      <h3>Stack</h3>
+      <h3 data-i18n="stack-heading">Stack</h3>
       <ul>
         <li>AI-assisted development</li>
         <li>QGIS &middot; ArcGIS</li>
@@ -629,12 +702,20 @@
   </div>
 </section>
 
+</main>
+
 <footer>
-  <span>
-    <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-    Gilad Cameo &middot; Berlin &middot; 2026
-  </span>
-  <a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
+  <div class="footer-row">
+    <span>
+      <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+      Gilad Cameo &middot; Berlin &middot; 2026
+    </span>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/gilad-cameo-703b95123" target="_blank" rel="noopener noreferrer" data-i18n-aria="linkedin-aria" data-i18n="linkedin-link" aria-label="Gilad Cameo on LinkedIn (opens in new tab)">LinkedIn Profile</a>
+      <a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer" data-i18n-aria="github-aria" data-i18n="github-link" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
+    </div>
+  </div>
+  <p class="footer-legal" data-i18n="footer-legal">&copy; 2026 Gilad Cameo. All rights reserved.</p>
 </footer>
 
 <script>
@@ -647,6 +728,143 @@ if ('serviceWorker' in navigator) {
   });
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+</script>
+
+<script>
+(function () {
+  var translations = {
+    en: {
+      'page-title': 'Gilad Cameo — Urban Planner &amp; GIS Analyst',
+      'skip-link': 'Skip to main content',
+      'nav-projects': 'Projects',
+      'nav-about': 'About',
+      'nav-linkedin-aria': 'Gilad Cameo on LinkedIn (opens in new tab)',
+      'nav-github-aria': 'Gilad Cameo on GitHub (opens in new tab)',
+      'lang-toggle-group-aria': 'Language selection',
+      'hero-index': 'Portfolio &middot; 2026',
+      'hero-status': 'Open to collaboration',
+      'hero-role': 'Urban Planner &amp; GIS Analyst &mdash; Berlin',
+      'hero-bio': 'I\'m a GIS analyst who builds <strong>data tools for cities</strong> &mdash; real-time transit dashboards, location-aware apps, and urban analytics &mdash; using <strong>AI-assisted development</strong> to turn spatial analysis into working software. Interested in the intersection of <strong>transportation</strong>, <strong>open data</strong>, and code.',
+      'tag-1': 'Urban Planning',
+      'tag-2': 'Transportation',
+      'tag-3': 'AI-assisted Dev',
+      'tag-4': 'QGIS &middot; ArcGIS',
+      'tag-5': 'Open Data',
+      'tag-6': 'Geospatial',
+      'projects-label': 'Work &middot; 01&ndash;06',
+      'projects-heading': 'Selected Projects',
+      'open-app': 'Open App &rarr;',
+      'refresh-10s': '10s Refresh',
+      'refresh-30s': '30s Refresh',
+      'row-1-aria': 'Berlin Transit Live — Open App',
+      'row-1-desc': 'Full-screen map of Berlin\'s public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.',
+      'row-2-aria': 'Transit Board Near Me — Open App',
+      'row-2-desc': 'GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data, presented as a clean arrivals table.',
+      'row-3-aria': 'Walkable — Open App',
+      'row-3-desc': 'Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.',
+      'row-4-aria': 'Shade Walk — Open App',
+      'row-4-desc': 'Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.',
+      'row-5-aria': 'Berlin Comet Trails — Open App',
+      'row-5-desc': 'Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.',
+      'row-6-aria': 'NYC Line Numbers — Open App',
+      'row-6-desc': 'Records live NYC subway train positions from the MTA\'s real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.',
+      'about-label': 'About',
+      'about-heading': 'Background',
+      'interests-heading': 'Interests',
+      'interests-body': 'Urban planner and GIS analyst based in <strong style="color:var(--ink)">Berlin</strong>. Technion graduate passionate about how cities move &mdash; I cycle whenever I can and take public transport everywhere else. I\'m not a traditional developer, so I lean on <strong style="color:var(--ink)">AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand <strong style="color:var(--ink)">urban mobility</strong>.',
+      'stack-heading': 'Stack',
+      'linkedin-aria': 'Gilad Cameo on LinkedIn (opens in new tab)',
+      'linkedin-link': 'LinkedIn Profile',
+      'github-aria': 'Gilad Cameo on GitHub (opens in new tab)',
+      'github-link': 'GitHub Profile',
+      'footer-legal': '&copy; 2026 Gilad Cameo. All rights reserved.'
+    },
+    de: {
+      'page-title': 'Gilad Cameo — Stadtplaner &amp; GIS-Analyst',
+      'skip-link': 'Zum Hauptinhalt springen',
+      'nav-projects': 'Projekte',
+      'nav-about': 'Über mich',
+      'nav-linkedin-aria': 'Gilad Cameo auf LinkedIn (öffnet in neuem Tab)',
+      'nav-github-aria': 'Gilad Cameo auf GitHub (öffnet in neuem Tab)',
+      'lang-toggle-group-aria': 'Sprachauswahl',
+      'hero-index': 'Portfolio &middot; 2026',
+      'hero-status': 'Offen für Zusammenarbeit',
+      'hero-role': 'Stadtplaner &amp; GIS-Analyst &mdash; Berlin',
+      'hero-bio': 'Ich bin GIS-Analyst und entwickle <strong>Datentools für Städte</strong> &mdash; Echtzeit-Verkehrs-Dashboards, standortbasierte Apps und urbane Analysen &mdash; mithilfe von <strong>KI-gestützter Entwicklung</strong>, um räumliche Analysen in funktionierende Software zu verwandeln. Mein Interesse gilt der Schnittstelle von <strong>Verkehr</strong>, <strong>offenen Daten</strong> und Code.',
+      'tag-1': 'Stadtplanung',
+      'tag-2': 'Verkehr',
+      'tag-3': 'KI-gestützte Entwicklung',
+      'tag-4': 'QGIS &middot; ArcGIS',
+      'tag-5': 'Offene Daten',
+      'tag-6': 'Geodaten',
+      'projects-label': 'Arbeiten &middot; 01&ndash;06',
+      'projects-heading': 'Ausgewählte Projekte',
+      'open-app': 'App öffnen &rarr;',
+      'refresh-10s': '10s Aktualisierung',
+      'refresh-30s': '30s Aktualisierung',
+      'row-1-aria': 'Berlin Transit Live — App öffnen',
+      'row-1-desc': 'Vollbildkarte des Berliner Nahverkehrs mit Echtzeit-Abfahrten. Nach Linientyp filtern, jede Haltestelle suchen, automatische Aktualisierung alle 10 Sekunden.',
+      'row-2-aria': 'Transit Board Near Me — App öffnen',
+      'row-2-desc': 'GPS-gestützte Abfahrtstafel, die nahegelegene Haltestellen überall auf der Welt findet. Live-Echtzeitdaten, übersichtlich als Ankunftstabelle dargestellt.',
+      'row-3-aria': 'Walkable — App öffnen',
+      'row-3-desc': 'Adresse eingeben und sofort alles in Gehdistanz sehen &mdash; Restaurants, Nahverkehr, Parks, Apotheken und mehr, dargestellt auf einer echten Fußgänger-Isochrone.',
+      'row-4-aria': 'Shade Walk — App öffnen',
+      'row-4-desc': 'Zu Fuß von A nach B entlang der schattigsten Route navigieren. Ruft echte Baumkronendaten von OpenStreetMap ab, bewertet mehrere Routenalternativen und zeigt, wo Baumkronen vor der Sonne schützen.',
+      'row-5-aria': 'Berlin Comet Trails — App öffnen',
+      'row-5-desc': 'Zeichnet Live-Fahrzeugpositionen in ganz Berlin auf und stellt sie als verblassende Kometenspuren über einer dunklen Basiskarte dar, exportierbar als Video.',
+      'row-6-aria': 'NYC Line Numbers — App öffnen',
+      'row-6-desc': 'Zeichnet Live-Positionen der New Yorker U-Bahn aus den Echtzeit-Feeds der MTA auf und stellt jeden Zug mit seiner tatsächlichen Liniennummer dar (1, 6, L, A, N&hellip;) über einer dunklen Basiskarte, exportierbar als Video.',
+      'about-label': 'Über mich',
+      'about-heading': 'Hintergrund',
+      'interests-heading': 'Interessen',
+      'interests-body': 'Stadtplaner und GIS-Analyst mit Sitz in <strong style="color:var(--ink)">Berlin</strong>. Technion-Absolvent mit Leidenschaft dafür, wie sich Städte bewegen &mdash; ich fahre so oft wie möglich Rad und nutze ansonsten den öffentlichen Nahverkehr. Ich bin kein klassischer Entwickler und setze daher auf <strong style="color:var(--ink)">KI-gestützte Entwicklung</strong>, um räumliche Analysen in Datentools zu verwandeln, die Planern und Pendlern helfen, <strong style="color:var(--ink)">urbane Mobilität</strong> zu verstehen.',
+      'stack-heading': 'Technologien',
+      'linkedin-aria': 'Gilad Cameo auf LinkedIn (öffnet in neuem Tab)',
+      'linkedin-link': 'LinkedIn-Profil',
+      'github-aria': 'Gilad Cameo auf GitHub (öffnet in neuem Tab)',
+      'github-link': 'GitHub-Profil',
+      'footer-legal': '&copy; 2026 Gilad Cameo. Alle Rechte vorbehalten.'
+    }
+  };
+
+  var STORAGE_KEY = 'gc-lang';
+  var htmlEl = document.documentElement;
+  var btnEn = document.getElementById('lang-en');
+  var btnDe = document.getElementById('lang-de');
+
+  function applyLanguage(lang) {
+    var dict = translations[lang] || translations.en;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (dict[key] !== undefined) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-aria');
+      if (dict[key] !== undefined) el.setAttribute('aria-label', dict[key]);
+    });
+    var groupLabel = document.querySelector('[data-i18n-aria="lang-toggle-group-aria"]');
+    if (groupLabel && dict['lang-toggle-group-aria']) {
+      groupLabel.setAttribute('aria-label', dict['lang-toggle-group-aria']);
+    }
+    var titleText = dict['page-title'];
+    if (titleText) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = titleText;
+      document.title = tmp.textContent;
+    }
+    htmlEl.lang = lang;
+    btnEn.setAttribute('aria-pressed', String(lang === 'en'));
+    btnDe.setAttribute('aria-pressed', String(lang === 'de'));
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+  }
+
+  btnEn.addEventListener('click', function () { applyLanguage('en'); });
+  btnDe.addEventListener('click', function () { applyLanguage('de'); });
+
+  var saved;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { saved = null; }
+  if (saved === 'de' || saved === 'en') applyLanguage(saved);
+})();
 </script>
 </body>
 </html>
