@@ -67,6 +67,20 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 }
 .s-clear.on { opacity: 1; pointer-events: auto; }
 
+/* Locate-me button */
+.locate-btn {
+  flex-shrink: 0; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px; color: #fff; cursor: pointer;
+  transition: background .15s;
+}
+.locate-btn:hover  { background: rgba(255,255,255,.18); }
+.locate-btn:active { background: rgba(255,255,255,.24); }
+.locate-btn.locating svg { animation: spin .9s linear infinite; }
+.locate-btn svg { width: 17px; height: 17px; }
+
 /* Dropdown */
 .dropdown {
   position: absolute; top: calc(100% - 1px); left: 16px; right: 16px;
@@ -200,9 +214,15 @@ footer span:first-child { flex: 1; }
       <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
       </svg>
-      <input id="searchInput" type="text" placeholder="Search station…" autocomplete="off" spellcheck="false"/>
+      <input id="searchInput" type="text" placeholder="Search Berlin station…" autocomplete="off" spellcheck="false"/>
       <button class="s-clear" id="clearBtn" title="Clear">✕</button>
     </div>
+    <button class="locate-btn" id="locateBtn" title="Find nearest station">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      </svg>
+    </button>
     <div class="bh-clock" id="clock">--:--</div>
     <!-- Dropdown anchors to header -->
     <div class="dropdown" id="dropdown"></div>
@@ -263,6 +283,66 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.b-header')) closeDropdown();
 });
 
+/* ── Berlin-only filter ── */
+/* Bounding box around Berlin's city limits; Brandenburg stops fall outside it. */
+const BERLIN_BBOX = { minLat: 52.33, maxLat: 52.68, minLon: 13.08, maxLon: 13.77 };
+function inBerlin(lat, lon) {
+  return typeof lat === 'number' && typeof lon === 'number' &&
+    lat >= BERLIN_BBOX.minLat && lat <= BERLIN_BBOX.maxLat &&
+    lon >= BERLIN_BBOX.minLon && lon <= BERLIN_BBOX.maxLon;
+}
+
+/* ── Locate me: find the nearest Berlin station ── */
+const locateBtn = document.getElementById('locateBtn');
+locateBtn.addEventListener('click', locateMe);
+
+function locateMe() {
+  if (!navigator.geolocation) {
+    showState('Geolocation is not supported by this browser.');
+    return;
+  }
+  closeDropdown();
+  locateBtn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(onLocated, onLocateError, {
+    enableHighAccuracy: true, timeout: 10_000,
+  });
+}
+
+function onLocateError(err) {
+  locateBtn.classList.remove('locating');
+  showState(err.code === 1
+    ? 'Location access denied.\nAllow location access in your browser settings.'
+    : 'Could not get your location:\n' + err.message);
+}
+
+async function onLocated(pos) {
+  const { latitude: lat, longitude: lon } = pos.coords;
+  if (!inBerlin(lat, lon)) {
+    locateBtn.classList.remove('locating');
+    showState('Your location is outside Berlin.\nSearch for a Berlin station instead.');
+    return;
+  }
+  showState('loading');
+  try {
+    const r = await fetch(
+      `https://v6.vbb.transport.rest/stops/nearby?latitude=${lat}&longitude=${lon}&results=15&distance=3000`
+    );
+    const stops = await r.json();
+    const nearest = (Array.isArray(stops) ? stops : []).find(
+      s => s.location && inBerlin(s.location.latitude, s.location.longitude)
+    );
+    if (!nearest) {
+      showState('No Berlin station found near you.');
+      return;
+    }
+    selectStation({ id: nearest.id, name: nearest.name });
+  } catch (e) {
+    showState('Error finding nearby station:\n' + e.message);
+  } finally {
+    locateBtn.classList.remove('locating');
+  }
+}
+
 function clearSearch() {
   searchInput.value = '';
   clearBtn.classList.remove('on');
@@ -272,7 +352,7 @@ function clearSearch() {
   document.getElementById('ftrApi').textContent = '—';
   document.getElementById('ftrTime').textContent = '—';
   document.getElementById('board').innerHTML =
-    '<div class="state">🔍<br>Search for a station above<br>to see live departures</div>';
+    '<div class="state">🔍<br>Search for a Berlin station above<br>to see live departures</div>';
 }
 
 function closeDropdown() {
@@ -286,11 +366,12 @@ async function doSearch(query) {
   dropdown.classList.add('open');
   try {
     const r = await fetch(
-      `https://v6.vbb.transport.rest/locations?query=${encodeURIComponent(query)}&results=10&stops=true&addresses=false&poi=false`
+      `https://v6.vbb.transport.rest/locations?query=${encodeURIComponent(query)}&results=20&stops=true&addresses=false&poi=false`
     );
     const data = await r.json();
     const results = (Array.isArray(data) ? data : [])
-      .filter(s => s.type === 'stop')
+      .filter(s => s.type === 'stop' && s.location && inBerlin(s.location.latitude, s.location.longitude))
+      .slice(0, 10)
       .map(s => ({ id: s.id, name: s.name }));
     renderDropdown(results);
   } catch (e) {
@@ -301,7 +382,7 @@ async function doSearch(query) {
 /* ── Render dropdown ── */
 function renderDropdown(results) {
   if (!results.length) {
-    dropdown.innerHTML = '<div class="d-msg">No stations found</div>';
+    dropdown.innerHTML = '<div class="d-msg">No Berlin stations found</div>';
     return;
   }
   dropdown.innerHTML = results.map((r, i) =>
