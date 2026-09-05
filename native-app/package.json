@@ -1,0 +1,17 @@
+{
+  "name": "berlin-transit-app",
+  "version": "1.0.0",
+  "description": "Native iOS/Android wrapper for Berlin Transit Live",
+  "private": true,
+  "scripts": {
+    "sync-web": "cp -f ../berlin-transit.html www/index.html && cp -f ../icon.png www/icon.png",
+    "sync": "npm run sync-web && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/ios": "^8.4.2"
+  }
+}

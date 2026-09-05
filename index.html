@@ -3,598 +3,638 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gilad Cameo</title>
+  <title>Gilad Cameo — Urban Planner &amp; GIS Analyst</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #faf9f6;
+      --surface: #ffffff;
+      --ink: #16161a;
+      --ink-soft: #5c5c63;
+      --ink-faint: #8a8a90;
+      --line: #dedcd3;
+      --accent: #c8401d;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0d1117;
-      color: #e6edf3;
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
     }
+
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .wrap { max-width: 1040px; margin: 0 auto; padding-left: 40px; padding-right: 40px; }
+    @media (max-width: 680px) { .wrap { padding-left: 24px; padding-right: 24px; } }
 
     /* NAV */
     nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 40px;
-      height: 56px;
-      border-bottom: 1px solid #21262d;
-      background: #0d1117;
+      padding: 22px 40px;
+      border-bottom: 1px solid var(--line);
     }
+    @media (max-width: 680px) { nav { padding: 16px 24px; } }
     .logo {
-      font-family: monospace;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
-      color: #f0a800;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
+    @media (max-width: 480px) { .logo { font-size: 12px; letter-spacing: 1px; } }
     nav ul {
       list-style: none;
       display: flex;
-      gap: 28px;
+      gap: 32px;
     }
+    @media (max-width: 480px) { nav ul { gap: 16px; } }
     nav a {
-      color: #8b949e;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
       transition: color 0.15s;
     }
-    nav a:hover { color: #f0a800; }
+    @media (max-width: 480px) { nav a { font-size: 11px; letter-spacing: 0.3px; } }
+    nav a:hover { color: var(--accent); }
 
     /* HERO */
-    .hero {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 80px 40px 60px;
+    .hero { padding-top: 72px; padding-bottom: 72px; }
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
     }
-    .hero-label {
-      font-family: monospace;
-      font-size: 11px;
-      letter-spacing: 3px;
+    .hero-index {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      color: #f0a800;
-      margin-bottom: 20px;
+      color: var(--ink-faint);
+    }
+    .hero-status {
       display: flex;
       align-items: center;
       gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
     }
-    .green-dot {
-      width: 7px;
-      height: 7px;
+    .status-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: #3fb950;
-      box-shadow: 0 0 8px #3fb950;
-      animation: blink 2s infinite;
+      background: var(--accent);
+      flex-shrink: 0;
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    @media (prefers-reduced-motion: no-preference) {
+      .status-dot { animation: pulse 2.4s ease-in-out infinite; }
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
     .hero h1 {
-      font-size: 64px;
+      font-size: clamp(44px, 8.5vw, 108px);
       font-weight: 800;
-      line-height: 1.05;
-      margin-bottom: 16px;
-    }
-    .hero h1 span { color: #f0a800; }
-
-    .hero-sub {
-      font-family: monospace;
-      font-size: 13px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #8b949e;
+      letter-spacing: -0.03em;
+      line-height: 0.98;
       margin-bottom: 24px;
     }
-    .hero-bio {
-      font-size: 17px;
-      color: #8b949e;
-      line-height: 1.8;
-      max-width: 580px;
-      margin-bottom: 32px;
+    .hero h1 .last { color: var(--accent); }
+
+    .hero-role {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
     }
-    .hero-bio strong { color: #e6edf3; }
+    .pin-ic {
+      width: 13px;
+      height: 13px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .hero-geo {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink-faint);
+      margin-bottom: 28px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-bio {
+      font-size: 19px;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      max-width: 620px;
+      margin-bottom: 28px;
+    }
+    .hero-bio strong { color: var(--ink); font-weight: 700; }
 
     .tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 0 14px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
     }
-    .tag {
-      font-family: monospace;
-      font-size: 11px;
-      letter-spacing: 1px;
-      padding: 5px 14px;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      border-radius: 20px;
+    .tags span:not(:last-child)::after {
+      content: '/';
+      margin-left: 14px;
+      color: var(--line);
     }
+
+    /* SKYLINE */
+    .skyline {
+      margin-top: 48px;
+      line-height: 0;
+    }
+    .skyline svg { width: 100%; height: clamp(64px, 9vw, 110px); display: block; }
+
+    /* TRANSIT LINE DIVIDER */
+    .transit-divider { margin-bottom: 28px; line-height: 0; }
+    .transit-divider svg { width: 100%; height: 14px; display: block; }
 
     /* SECTION */
-    .section {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 60px 40px;
-      border-top: 1px solid #21262d;
-    }
-    .section-label {
-      font-family: monospace;
-      font-size: 10px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #f0a800;
+    .section { padding: 64px 0; border-top: 1px solid var(--line); }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
       margin-bottom: 8px;
     }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
     .section h2 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 32px;
-      color: #e6edf3;
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 6px 0 44px;
     }
 
-    /* CARDS */
-    .cards {
+    /* PROJECT ROWS */
+    .rows { display: flex; flex-direction: column; }
+    .row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 680px) {
-      .cards { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 40px; }
-      nav { padding: 0 20px; }
-      .hero, .section { padding-left: 20px; padding-right: 20px; }
-    }
-
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 10px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: border-color 0.2s, transform 0.15s;
+      grid-template-columns: 64px 1fr 168px;
+      gap: 28px;
+      align-items: center;
+      padding: 36px 20px;
+      margin: 0 -20px;
+      border-top: 1px solid var(--line);
       text-decoration: none;
       color: inherit;
+      border-radius: 6px;
+      transition: background 0.15s;
     }
-    .card:hover {
-      border-color: #f0a800;
-      transform: translateY(-4px);
+    .rows .row:last-child { border-bottom: 1px solid var(--line); }
+    .row:hover { background: var(--surface); }
+    .row:hover .row-num,
+    .row:hover .row-title,
+    .row:hover .row-arrow { color: var(--accent); }
+    .row:hover .thumb { border-color: var(--accent); }
+
+    .row-num {
+      font-size: 22px;
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink-faint);
+      transition: color 0.15s;
+    }
+    .row-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+      transition: color 0.15s;
+    }
+    .row-desc {
+      font-size: 14.5px;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      max-width: 520px;
+      margin-bottom: 14px;
+    }
+    .row-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 14px;
+    }
+    .row-tags span:not(:last-child)::after {
+      content: '\00b7';
+      margin-left: 12px;
+      color: var(--line);
+    }
+    .row-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--ink);
+      transition: color 0.15s;
     }
 
     .thumb {
-      height: 160px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      height: 118px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
       position: relative;
       overflow: hidden;
+      transition: border-color 0.15s;
     }
-    .thumb-berlin { background: #010409; }
-    .thumb-transit { background: #080907; font-family: monospace; }
-
     .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .thumb-grid {
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(88,166,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(88,166,255,0.06) 1px, transparent 1px);
-      background-size: 28px 28px;
-    }
-    .thumb-label {
-      position: absolute;
-      bottom: 10px; left: 12px;
-      font-family: monospace;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: rgba(88,166,255,0.6);
+
+    @media (max-width: 760px) {
+      .row { grid-template-columns: 40px 1fr; }
+      .thumb { display: none; }
+      .row-num { font-size: 18px; }
+      .row-title { font-size: 19px; }
     }
 
-    .tb-wrap { width: 100%; }
-    .tb-top {
-      background: #0f110e;
-      border-bottom: 1px solid #1c1f18;
-      padding: 6px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .tb-top-loc { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #f0a800; }
-    .tb-top-time { font-size: 14px; font-weight: 700; color: #ffc840; }
-    .tb-row-item {
-      display: grid;
-      grid-template-columns: 38px 1fr 36px 28px;
-      align-items: center;
-      padding: 5px 12px;
-      border-bottom: 1px solid #1c1f18;
-    }
-    .tb-badge-item {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 900;
-      border-radius: 2px;
-      padding: 2px 4px;
-      min-width: 24px;
-    }
-    .tb-d  { font-size: 9px; color: #ffc840; letter-spacing: 0.5px; padding: 0 4px; }
-    .tb-t  { font-size: 9px; font-weight: 700; color: #f0a800; text-align: center; }
-    .tb-e  { font-size: 9px; font-weight: 700; text-align: right; }
-    .tb-scanline {
-      position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg, transparent 0px, transparent 1px,
-        rgba(0,0,0,0.1) 1px, rgba(0,0,0,0.1) 2px
-      );
-    }
-
-    .card-body {
-      padding: 20px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .card-num {
-      font-family: monospace;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #f0a800;
-      opacity: 0.6;
-      margin-bottom: 6px;
-    }
-    .card-body h3 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .card-body p {
-      font-size: 13px;
-      color: #8b949e;
-      line-height: 1.7;
-      flex: 1;
-      margin-bottom: 16px;
-    }
-    .card-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 18px;
-    }
-    .pill {
-      font-family: monospace;
-      font-size: 9px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      background: #0d1117;
-      border: 1px solid #21262d;
-      color: #8b949e;
-      border-radius: 3px;
-    }
-    .card-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: monospace;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 8px 18px;
-      border: 1px solid #f0a800;
-      color: #f0a800;
-      background: transparent;
-      border-radius: 3px;
-      text-decoration: none;
-      align-self: flex-start;
-      transition: background 0.15s, color 0.15s;
-    }
-    .card-btn:hover { background: #f0a800; color: #0d1117; }
-
+    /* ABOUT */
     .about-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 40px;
+      gap: 56px;
     }
-    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; gap: 36px; } }
     .about-grid h3 {
-      font-family: monospace;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #f0a800;
-      margin-bottom: 14px;
+      color: var(--accent);
+      margin-bottom: 16px;
     }
     .about-grid p {
-      font-size: 14px;
-      color: #8b949e;
-      line-height: 1.8;
+      font-size: 15.5px;
+      color: var(--ink-soft);
+      line-height: 1.75;
     }
     .about-grid ul {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
     }
     .about-grid li {
-      font-size: 14px;
-      color: #8b949e;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .about-grid li::before {
-      content: '\25b8';
-      color: #f0a800;
-      flex-shrink: 0;
+      font-size: 15px;
+      color: var(--ink);
+      font-weight: 500;
     }
 
     footer {
-      border-top: 1px solid #21262d;
-      padding: 24px 40px;
+      border-top: 1px solid var(--line);
+      padding: 28px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
     }
+    @media (max-width: 680px) { footer { padding: 24px; } }
     footer span {
-      font-family: monospace;
-      font-size: 11px;
-      letter-spacing: 1px;
-      color: #30363d;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      color: var(--ink-faint);
     }
+    footer .pin-ic { width: 11px; height: 11px; }
     footer a {
-      font-family: monospace;
-      font-size: 11px;
-      letter-spacing: 1px;
-      color: #8b949e;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
       text-decoration: none;
     }
-    footer a:hover { color: #f0a800; }
+    footer a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">GC.</div>
+<nav aria-label="Main navigation">
+  <div class="logo">Gilad Cameo</div>
   <ul>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank">GitHub</a></li>
+    <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
   </ul>
 </nav>
 
-<div class="hero">
-  <div class="hero-label">
-    <span class="green-dot"></span>
-    Open to collaboration
+<div class="wrap hero">
+  <div class="hero-meta">
+    <span class="hero-index" aria-hidden="true">Portfolio &middot; 2026</span>
+    <span class="hero-status">
+      <span class="status-dot" aria-hidden="true"></span>
+      Open to collaboration
+    </span>
   </div>
-  <h1>Gilad<br><span>Cameo</span></h1>
-  <div class="hero-sub">Urban Planner &amp; Developer</div>
+  <h1>Gilad<br><span class="last">Cameo</span></h1>
+  <div class="hero-role">
+    <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    Urban Planner &amp; GIS Analyst &mdash; Berlin
+  </div>
+  <div class="hero-geo" aria-hidden="true">52.5200&deg; N &middot; 13.4050&deg; E</div>
   <p class="hero-bio">
-    I build <strong>data tools for cities</strong> &mdash; real-time transit dashboards,
-    location-aware apps, and urban analytics. Interested in the intersection of
+    I'm a GIS analyst who builds <strong>data tools for cities</strong> &mdash; real-time transit dashboards,
+    location-aware apps, and urban analytics &mdash; using <strong>AI-assisted development</strong> to turn
+    spatial analysis into working software. Interested in the intersection of
     <strong>transportation</strong>, <strong>open data</strong>, and code.
   </p>
   <div class="tags">
-    <span class="tag">Urban Planning</span>
-    <span class="tag">Transportation</span>
-    <span class="tag">Python &middot; Pandas</span>
-    <span class="tag">AI Data Analysis</span>
-    <span class="tag">Open Data</span>
-    <span class="tag">JavaScript</span>
+    <span>Urban Planning</span>
+    <span>Transportation</span>
+    <span>AI-assisted Dev</span>
+    <span>QGIS &middot; ArcGIS</span>
+    <span>Open Data</span>
+    <span>Geospatial</span>
+  </div>
+  <div class="skyline" aria-hidden="true">
+    <svg viewBox="0 0 1000 120" preserveAspectRatio="none">
+      <rect x="0"   y="80"  width="50" height="40" fill="#dedcd3"/>
+      <rect x="54"  y="45"  width="70" height="75" fill="#c9c7bc"/>
+      <rect x="128" y="85"  width="40" height="35" fill="#dedcd3"/>
+      <rect x="172" y="20"  width="85" height="100" fill="#8a8a90"/>
+      <rect x="261" y="65"  width="55" height="55" fill="#dedcd3"/>
+      <rect x="320" y="35"  width="65" height="85" fill="#c9c7bc"/>
+      <rect x="389" y="80"  width="45" height="40" fill="#dedcd3"/>
+      <line x1="505" y1="120" x2="505" y2="28" stroke="#16161a" stroke-width="3"/>
+      <circle cx="505" cy="22" r="9" fill="var(--bg)" stroke="#16161a" stroke-width="3"/>
+      <line x1="505" y1="13" x2="505" y2="4" stroke="#16161a" stroke-width="2"/>
+      <circle cx="505" cy="4" r="3" fill="#c8401d"/>
+      <rect x="517" y="70"  width="50" height="50" fill="#dedcd3"/>
+      <rect x="571" y="50"  width="60" height="70" fill="#c9c7bc"/>
+      <rect x="635" y="85"  width="40" height="35" fill="#dedcd3"/>
+      <rect x="679" y="15"  width="80" height="105" fill="#8a8a90"/>
+      <rect x="763" y="60"  width="55" height="60" fill="#dedcd3"/>
+      <rect x="822" y="40"  width="65" height="80" fill="#c9c7bc"/>
+      <rect x="891" y="75"  width="45" height="45" fill="#dedcd3"/>
+      <rect x="940" y="30"  width="60" height="90" fill="#c9c7bc"/>
+      <line x1="0" y1="120" x2="1000" y2="120" stroke="#dedcd3" stroke-width="1"/>
+    </svg>
   </div>
 </div>
 
-<div class="section" id="projects">
-  <div class="section-label">// projects</div>
-  <h2>Live Tools</h2>
-  <div class="cards">
+<section class="wrap section" id="projects" aria-labelledby="projects-heading">
+  <div class="section-head">
+    <span class="section-label" aria-hidden="true">Work &middot; 01&ndash;06</span>
+  </div>
+  <h2 id="projects-heading">Selected Projects</h2>
+  <div class="rows">
 
-    <a class="card" href="berlin-transit.html">
-      <div class="thumb thumb-berlin">
-        <div class="thumb-grid"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice">
-          <polyline points="0,80 60,80 110,60 180,60 250,55 340,45" stroke="#224f9e" stroke-width="3.5" fill="none"/>
-          <polyline points="20,120 80,120 130,100 200,95 280,80 380,75" stroke="#007734" stroke-width="3" fill="none"/>
-          <polyline points="50,50 110,90 175,120 260,130 360,130" stroke="#cc2222" stroke-width="3" fill="none"/>
-          <polyline points="0,145 70,138 150,132 250,128 400,122" stroke="#007734" stroke-width="2" fill="none" opacity="0.5"/>
-          <circle cx="110" cy="60" r="4.5" fill="#e6edf3"/>
-          <circle cx="200" cy="95" r="4.5" fill="#e6edf3"/>
-          <circle cx="175" cy="120" r="4.5" fill="#e6edf3"/>
-          <circle cx="200" cy="62" r="6" fill="#f0a800"/>
-          <circle cx="280" cy="80" r="4.5" fill="#e6edf3"/>
-        </svg>
-        <div class="thumb-label">Berlin &middot; Live Map</div>
-      </div>
-      <div class="card-body">
-        <div class="card-num">// 01</div>
-        <h3>Berlin Transit Live</h3>
-        <p>Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
-        <div class="card-pills">
-          <span class="pill">Leaflet Map</span>
-          <span class="pill">DB API</span>
-          <span class="pill">U &middot; S &middot; Tram &middot; Bus</span>
-          <span class="pill">10s Refresh</span>
+    <a class="row" href="berlin-transit.html" aria-label="Berlin Transit Live — Open App">
+      <span class="row-num" aria-hidden="true">01</span>
+      <div>
+        <h3 class="row-title">Berlin Transit Live</h3>
+        <p class="row-desc">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
+        <div class="row-tags">
+          <span>Leaflet Map</span>
+          <span>DB API</span>
+          <span>U &middot; S &middot; Tram &middot; Bus</span>
+          <span>10s Refresh</span>
         </div>
-        <span class="card-btn">Open App &rarr;</span>
+        <span class="row-arrow">Open App &rarr;</span>
+      </div>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <polyline points="0,58 30,58 55,44 90,44 125,40 200,32" stroke="#c9c7bc" stroke-width="2" fill="none"/>
+          <polyline points="10,86 40,86 65,72 100,68 140,58 200,54" stroke="#c9c7bc" stroke-width="2" fill="none"/>
+          <polyline points="25,36 55,64 87,86 130,94 200,94" stroke="#c9c7bc" stroke-width="2" fill="none"/>
+          <circle cx="55" cy="44" r="3" fill="#16161a"/>
+          <circle cx="100" cy="68" r="3" fill="#16161a"/>
+          <circle cx="87" cy="86" r="3" fill="#16161a"/>
+          <circle cx="100" cy="45" r="4.5" fill="#c8401d"/>
+          <circle cx="140" cy="58" r="3" fill="#16161a"/>
+        </svg>
       </div>
     </a>
 
-    <a class="card" href="transit-board.html">
-      <div class="thumb thumb-transit">
-        <div class="tb-wrap">
-          <div class="tb-top">
-            <span class="tb-top-loc">&#9685; Tel Aviv &middot; Allenby</span>
-            <span class="tb-top-time">14:32:07</span>
-          </div>
-          <div class="tb-row-item">
-            <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">51</span>
-            <span class="tb-d">Ben Gurion Airport</span>
-            <span class="tb-t">14:35</span>
-            <span class="tb-e" style="color:#ff3c3c;">NOW</span>
-          </div>
-          <div class="tb-row-item">
-            <span class="tb-badge-item" style="background:#6e3fa3;color:#fff;">4</span>
-            <span class="tb-d">Bat Yam</span>
-            <span class="tb-t">14:38</span>
-            <span class="tb-e" style="color:#ffaa00;">6'</span>
-          </div>
-          <div class="tb-row-item">
-            <span class="tb-badge-item" style="background:#224f9e;color:#fff;">11</span>
-            <span class="tb-d">Tel Aviv Central</span>
-            <span class="tb-t">14:41</span>
-            <span class="tb-e" style="color:#5a3d00;">9'</span>
-          </div>
-          <div class="tb-row-item">
-            <span class="tb-badge-item" style="background:#ef7c00;color:#fff;">480</span>
-            <span class="tb-d">Jerusalem</span>
-            <span class="tb-t">14:50</span>
-            <span class="tb-e" style="color:#5a3d00;">18'</span>
-          </div>
+    <a class="row" href="transit-board.html" aria-label="Transit Board Near Me — Open App">
+      <span class="row-num" aria-hidden="true">02</span>
+      <div>
+        <h3 class="row-title">Transit Board &middot; Near Me</h3>
+        <p class="row-desc">GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data, presented as a clean arrivals table.</p>
+        <div class="row-tags">
+          <span>GPS Location</span>
+          <span>DE &middot; AT &middot; CH &middot; IL</span>
+          <span>30s Refresh</span>
+          <span>Multi-stop</span>
         </div>
-        <div class="tb-scanline"></div>
+        <span class="row-arrow">Open App &rarr;</span>
       </div>
-      <div class="card-body">
-        <div class="card-num">// 02</div>
-        <h3>Transit Board &middot; Near Me</h3>
-        <p>GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data with a retro CRT display aesthetic.</p>
-        <div class="card-pills">
-          <span class="pill">GPS Location</span>
-          <span class="pill">DE &middot; AT &middot; CH &middot; IL</span>
-          <span class="pill">30s Refresh</span>
-          <span class="pill">Multi-stop</span>
-        </div>
-        <span class="card-btn">Open App &rarr;</span>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <line x1="14" y1="30" x2="186" y2="30" stroke="#dedcd3" stroke-width="1"/>
+          <line x1="14" y1="56" x2="186" y2="56" stroke="#dedcd3" stroke-width="1"/>
+          <line x1="14" y1="82" x2="186" y2="82" stroke="#dedcd3" stroke-width="1"/>
+          <rect x="14" y="18" width="20" height="12" rx="2" fill="#c8401d"/>
+          <rect x="14" y="44" width="20" height="12" rx="2" fill="#16161a"/>
+          <rect x="14" y="70" width="20" height="12" rx="2" fill="#16161a"/>
+          <rect x="150" y="18" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
+          <rect x="150" y="44" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
+          <rect x="150" y="70" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
+        </svg>
       </div>
     </a>
 
-    <a class="card" href="walkable.html" aria-label="Walkable — Open App">
-      <div class="thumb" style="background:#0a1628;" aria-hidden="true">
-        <div class="thumb-grid"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <circle cx="200" cy="80" r="60" stroke="rgba(56,189,248,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
-          <circle cx="200" cy="80" r="38" stroke="rgba(56,189,248,0.4)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
-          <circle cx="200" cy="80" r="18" stroke="rgba(56,189,248,0.6)" stroke-width="1.5" fill="none"/>
-          <circle cx="200" cy="80" r="5" fill="#38bdf8"/>
-          <circle cx="200" cy="80" r="8" fill="none" stroke="#38bdf8" stroke-width="1.5"/>
-          <circle cx="238" cy="58" r="3.5" fill="#ef4444"/>
-          <circle cx="228" cy="102" r="3.5" fill="#22c55e"/>
-          <circle cx="162" cy="74" r="3.5" fill="#f97316"/>
-          <circle cx="245" cy="86" r="3.5" fill="#3b82f6"/>
-          <circle cx="180" cy="118" r="3.5" fill="#a855f7"/>
-          <circle cx="172" cy="50" r="3.5" fill="#ef4444"/>
-        </svg>
-        <div class="thumb-label">Walkable &middot; Near Me</div>
-      </div>
-      <div class="card-body">
-        <div class="card-num">// 03</div>
-        <h3>Walkable</h3>
-        <p>Enter any address and instantly see everything within walking distance — restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
-        <div class="card-pills">
-          <span class="pill">Overpass API</span>
-          <span class="pill">Leaflet Map</span>
-          <span class="pill">Isochrone</span>
-          <span class="pill">OSM</span>
+    <a class="row" href="walkable.html" aria-label="Walkable — Open App">
+      <span class="row-num" aria-hidden="true">03</span>
+      <div>
+        <h3 class="row-title">Walkable</h3>
+        <p class="row-desc">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
+        <div class="row-tags">
+          <span>Overpass API</span>
+          <span>Leaflet Map</span>
+          <span>Isochrone</span>
+          <span>OSM</span>
         </div>
-        <span class="card-btn">Open App &rarr;</span>
+        <span class="row-arrow">Open App &rarr;</span>
+      </div>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="100" cy="59" r="44" stroke="#dedcd3" stroke-width="1.5" fill="none"/>
+          <circle cx="100" cy="59" r="28" stroke="#dedcd3" stroke-width="1.5" fill="none"/>
+          <circle cx="100" cy="59" r="12" stroke="#c9c7bc" stroke-width="1.5" fill="none"/>
+          <circle cx="100" cy="59" r="4" fill="#c8401d"/>
+          <circle cx="128" cy="40" r="3" fill="#16161a"/>
+          <circle cx="120" cy="78" r="3" fill="#16161a"/>
+          <circle cx="72" cy="46" r="3" fill="#16161a"/>
+          <circle cx="132" cy="64" r="3" fill="#16161a"/>
+          <circle cx="82" cy="88" r="3" fill="#16161a"/>
+        </svg>
       </div>
     </a>
 
-    <a class="card" href="shade-nav.html" aria-label="Shade Walk — Open App">
-      <div class="thumb" style="background:#071210;" aria-hidden="true">
-        <div class="thumb-grid" style="background-image:linear-gradient(rgba(34,197,94,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.06) 1px,transparent 1px);background-size:28px 28px;"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <!-- tree canopies -->
-          <circle cx="90"  cy="75" r="22" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
-          <circle cx="155" cy="55" r="18" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
-          <circle cx="230" cy="70" r="24" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
-          <circle cx="310" cy="60" r="20" fill="rgba(34,197,94,0.18)" stroke="rgba(34,197,94,0.35)" stroke-width="1"/>
-          <circle cx="130" cy="110" r="16" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
-          <circle cx="270" cy="115" r="19" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
-          <!-- route: shaded=green, exposed=amber -->
-          <polyline points="40,90 90,82 120,75 155,65 195,72 230,78 265,88 310,68 360,72" stroke="#f59e0b" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <polyline points="40,90 90,82"  stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <polyline points="120,75 155,65 195,72 230,78" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <polyline points="265,88 310,68 360,72" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <!-- A/B markers -->
-          <circle cx="40"  cy="90" r="7" fill="#1d4ed8" stroke="#fff" stroke-width="2"/>
-          <circle cx="360" cy="72" r="7" fill="#dc2626" stroke="#fff" stroke-width="2"/>
-          <text x="40"  y="94" text-anchor="middle" font-size="7" font-weight="800" fill="#fff">A</text>
-          <text x="360" y="76" text-anchor="middle" font-size="7" font-weight="800" fill="#fff">B</text>
-        </svg>
-        <div class="thumb-label" style="color:rgba(34,197,94,0.9)">Shade Walk &middot; Route</div>
-      </div>
-      <div class="card-body">
-        <div class="card-num">// 04</div>
-        <h3>Shade Walk</h3>
-        <p>Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and colours the path green where tree cover protects you from the sun.</p>
-        <div class="card-pills">
-          <span class="pill">OSRM Foot</span>
-          <span class="pill">Overpass Trees</span>
-          <span class="pill">Shade Scoring</span>
-          <span class="pill">Leaflet Map</span>
+    <a class="row" href="shade-nav.html" aria-label="Shade Walk — Open App">
+      <span class="row-num" aria-hidden="true">04</span>
+      <div>
+        <h3 class="row-title">Shade Walk</h3>
+        <p class="row-desc">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
+        <div class="row-tags">
+          <span>OSRM Foot</span>
+          <span>Overpass Trees</span>
+          <span>Shade Scoring</span>
+          <span>Leaflet Map</span>
         </div>
-        <span class="card-btn">Open App &rarr;</span>
+        <span class="row-arrow">Open App &rarr;</span>
+      </div>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="45" cy="52" r="14" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
+          <circle cx="78" cy="38" r="11" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
+          <circle cx="115" cy="50" r="15" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
+          <circle cx="155" cy="42" r="12" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
+          <polyline points="20,66 45,60 62,55 78,49 98,53 115,57 132,64 155,50 180,53" stroke="#16161a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline points="20,66 45,60" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline points="62,55 78,49 98,53 115,57" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline points="132,64 155,50 180,53" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="20" cy="66" r="4" fill="#16161a"/>
+          <circle cx="180" cy="53" r="4" fill="#16161a"/>
+        </svg>
       </div>
     </a>
 
-    <a class="card" href="berlin-comet-trails.html" aria-label="Berlin Comet Trails — Open App">
-      <div class="thumb" style="background:#05070c;" aria-hidden="true">
-        <div class="thumb-grid" style="background-image:linear-gradient(rgba(95,224,255,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(95,224,255,0.06) 1px,transparent 1px);background-size:28px 28px;"></div>
-        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <path d="M20,130 Q120,100 180,70 T340,25" stroke="#5fe0ff" stroke-width="2" fill="none" opacity="0.85"/>
-          <path d="M20,130 Q120,100 180,70 T340,25" stroke="#5fe0ff" stroke-width="8" fill="none" opacity="0.15"/>
-          <circle cx="340" cy="25" r="5" fill="#5fe0ff"/>
-          <path d="M40,40 Q140,55 200,95 T320,135" stroke="#ff6fb0" stroke-width="2" fill="none" opacity="0.75"/>
-          <path d="M40,40 Q140,55 200,95 T320,135" stroke="#ff6fb0" stroke-width="8" fill="none" opacity="0.12"/>
-          <circle cx="320" cy="135" r="5" fill="#ff6fb0"/>
-        </svg>
-        <div class="thumb-label" style="color:rgba(95,224,255,0.9)">Comet Trails &middot; Live</div>
-      </div>
-      <div class="card-body">
-        <div class="card-num">// 05</div>
-        <h3>Berlin Comet Trails</h3>
-        <p>Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
-        <div class="card-pills">
-          <span class="pill">VBB API</span>
-          <span class="pill">Canvas Animation</span>
-          <span class="pill">Video Export</span>
-          <span class="pill">Leaflet Picker</span>
+    <a class="row" href="berlin-comet-trails.html" aria-label="Berlin Comet Trails — Open App">
+      <span class="row-num" aria-hidden="true">05</span>
+      <div>
+        <h3 class="row-title">Berlin Comet Trails</h3>
+        <p class="row-desc">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
+        <div class="row-tags">
+          <span>VBB API</span>
+          <span>Canvas Animation</span>
+          <span>Video Export</span>
+          <span>Leaflet Picker</span>
         </div>
-        <span class="card-btn">Open App &rarr;</span>
+        <span class="row-arrow">Open App &rarr;</span>
+      </div>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect x="0" y="0" width="200" height="118" fill="#0c1018"/>
+          <path d="M10,90 Q60,70 90,50 T170,20" stroke="#c8401d" stroke-width="2" fill="none" opacity="0.85"/>
+          <path d="M10,90 Q60,70 90,50 T170,20" stroke="#c8401d" stroke-width="6" fill="none" opacity="0.18"/>
+          <circle cx="170" cy="20" r="4" fill="#c8401d"/>
+          <path d="M20,30 Q70,40 100,70 T160,100" stroke="#8a8a90" stroke-width="1.5" fill="none" opacity="0.7"/>
+          <circle cx="160" cy="100" r="3" fill="#8a8a90"/>
+        </svg>
+      </div>
+    </a>
+
+    <a class="row" href="nyc-line-numbers.html" aria-label="NYC Line Numbers — Open App">
+      <span class="row-num" aria-hidden="true">06</span>
+      <div>
+        <h3 class="row-title">NYC Line Numbers</h3>
+        <p class="row-desc">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
+        <div class="row-tags">
+          <span>MTA GTFS-Realtime</span>
+          <span>Canvas Animation</span>
+          <span>Video Export</span>
+          <span>Leaflet Picker</span>
+        </div>
+        <span class="row-arrow">Open App &rarr;</span>
+      </div>
+      <div class="thumb" aria-hidden="true">
+        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect x="0" y="0" width="200" height="118" fill="#0c1018"/>
+          <line x1="15" y1="90" x2="185" y2="30" stroke="#2a3242" stroke-width="2"/>
+          <line x1="15" y1="30" x2="185" y2="90" stroke="#2a3242" stroke-width="2"/>
+          <circle cx="60" cy="70" r="12" fill="#EE352E"/>
+          <text x="60" y="75" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#fff">1</text>
+          <circle cx="120" cy="46" r="12" fill="#00933C"/>
+          <text x="120" y="51" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#fff">6</text>
+          <circle cx="155" cy="80" r="12" fill="#A7A9AC"/>
+          <text x="155" y="85" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#0b0e14">L</text>
+        </svg>
       </div>
     </a>
 
   </div>
-</div>
+</section>
 
-<div class="section" id="about">
-  <div class="section-label">// about</div>
-  <h2>Background</h2>
+<section class="wrap section" id="about" aria-labelledby="about-heading">
+  <div class="transit-divider" aria-hidden="true">
+    <svg viewBox="0 0 1000 14" preserveAspectRatio="none">
+      <line x1="0" y1="7" x2="1000" y2="7" stroke="#dedcd3" stroke-width="1.5"/>
+      <circle cx="80" cy="7" r="3" fill="#8a8a90"/>
+      <circle cx="280" cy="7" r="3" fill="#8a8a90"/>
+      <circle cx="500" cy="7" r="4.5" fill="var(--bg)" stroke="#c8401d" stroke-width="2"/>
+      <circle cx="720" cy="7" r="3" fill="#8a8a90"/>
+      <circle cx="920" cy="7" r="3" fill="#8a8a90"/>
+    </svg>
+  </div>
+  <div class="section-head">
+    <span class="section-label" aria-hidden="true">About</span>
+  </div>
+  <h2 id="about-heading">Background</h2>
   <div class="about-grid">
     <div>
       <h3>Interests</h3>
-      <p>Focused on urban mobility and public transport &mdash; how cities move, how data can reveal patterns, and how better tools help planners and commuters. Currently learning Python and pandas, and using AI for data analysis to extract insights from transit datasets.</p>
+      <p>Urban planner and GIS analyst based in <strong style="color:var(--ink)">Berlin</strong>. Technion graduate passionate about how cities move &mdash; I cycle whenever I can and take public transport everywhere else. I'm not a traditional developer, so I lean on <strong style="color:var(--ink)">AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand <strong style="color:var(--ink)">urban mobility</strong>.</p>
     </div>
     <div>
       <h3>Stack</h3>
       <ul>
-        <li>Python &middot; Pandas &middot; Data Analysis &middot; AI</li>
-        <li>JavaScript &middot; HTML &middot; CSS</li>
+        <li>AI-assisted development</li>
+        <li>QGIS &middot; ArcGIS</li>
         <li>OpenStreetMap &middot; GTFS &middot; Open APIs</li>
         <li>Leaflet &middot; Geospatial Tools</li>
       </ul>
     </div>
   </div>
-</div>
+</section>
 
 <footer>
-  <span>Gilad Cameo &middot; 2025</span>
-  <a href="https://github.com/giladcameo" target="_blank">github.com/giladcameo</a>
+  <span>
+    <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    Gilad Cameo &middot; Berlin &middot; 2026
+  </span>
+  <a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
 </footer>
 
 <script>

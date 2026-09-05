@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Berlin: Comet Trails of Trains &amp; Buses</title>
+<title>NYC: Live Subway Line Numbers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -47,7 +47,7 @@
   }
   h1{ font-size: 30px; font-weight: 700; margin: 0 0 6px; line-height:1.25; }
   h1 span{ color: var(--accent); }
-  .sub{ color: var(--ink-dim); font-size: 14.5px; max-width: 62ch; line-height:1.6; margin:0; }
+  .sub{ color: var(--ink-dim); font-size: 14.5px; max-width: 66ch; line-height:1.6; margin:0; }
 
   .panel{
     background: var(--panel);
@@ -106,10 +106,15 @@
   canvas{ border-radius: 8px; display:block; }
 
   .legend{
-    display:flex; flex-wrap:wrap; gap: 10px 18px;
+    display:flex; flex-wrap:wrap; gap: 10px 14px;
     margin-top: 14px; font-size: 12.5px; color: var(--ink-dim);
   }
-  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:6px; box-shadow: 0 0 6px currentColor; }
+  .legend .bullet{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%;
+    font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:10.5px;
+    margin-inline-end:6px; vertical-align:middle;
+  }
 
   details{ margin-top: 14px; }
   summary{ cursor:pointer; color: var(--ink-dim); font-size: 12.5px; }
@@ -136,11 +141,15 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow">Live Transit &middot; Comet Trails &middot; Berlin</p>
-    <h1>Berlin <span>Alive</span>: Public Transit in Motion</h1>
+    <p class="eyebrow">Live Transit &middot; Line-Number Bullets &middot; NYC</p>
+    <h1>NYC <span>Alive</span>: Subway Lines in Motion</h1>
     <p class="sub">
-      This tool records live vehicle positions across Berlin straight in your browser via VBB (v6.vbb.transport.rest/radar),
-      draws them as fading comet trails over a dark basemap, and lets you export it all as smooth video (WebM) to download.
+      This tool records live subway train positions across New York City straight in your browser via the MTA's
+      GTFS-Realtime feeds, and instead of a fading comet trail it draws each train as its actual line-number bullet
+      (1, 6, L, A, N&hellip;) over a dark basemap &mdash; exportable as smooth video (WebM/MP4) to download.
+      Subway feeds report which station a train is at or approaching rather than a continuous GPS track, so bullets
+      ease straight-line between stops instead of tracing real curved rails; showing the line number keeps that
+      honest instead of faking a precise trail.
     </p>
   </header>
 
@@ -176,7 +185,7 @@
     </div>
     <div class="statusline" id="status">Waiting to fetch data...</div>
     <details>
-      <summary>Technical debug details (raw API request, fields received)</summary>
+      <summary>Technical debug details (raw API requests, fields received)</summary>
       <pre id="debug">—</pre>
     </details>
   </div>
@@ -190,31 +199,35 @@
   <div class="video-result panel" id="videoResult">
     <div class="statusline ok">Video ready:</div>
     <video id="videoPreview" controls loop></video>
-    <a id="videoDownload" download="berlin-comet-trails.webm">
+    <a id="videoDownload" download="nyc-line-numbers.webm">
       <button class="secondary">Download Video File</button>
     </a>
   </div>
 
   <footer>
-    Basemap: Esri World Dark Gray Base. Transit data: v6.vbb.transport.rest (wraps the VBB API, Verkehrsverbund Berlin-Brandenburg), an open-source project by derhuerst.
-    If capture isn't collecting any data, there may not be any active vehicles in the selected area right now — try a different area on the picker map, or use the demo data button to check out the visual effect in the meantime.
+    Basemap: Esri World Dark Gray Base. Transit data: MTA GTFS-Realtime subway feeds (api-endpoint.mta.info, no API
+    key required) plus the MTA Subway Stations dataset on NY State's Open Data portal (data.ny.gov) for stop
+    coordinates. Line colors follow the MTA's official subway bullet palette.
+    If capture isn't collecting any data, your browser may be blocking the request (MTA's feeds don't always send
+    CORS headers to arbitrary sites) or there may be no trains reporting on the selected lines right now &mdash;
+    try the demo data button to check out the visual effect in the meantime.
   </footer>
 
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.6/dist/protobuf.min.js"></script>
 <script>
 (function(){
   "use strict";
 
   // ---------- geography ----------
-  // Default: central Berlin (S-Bahn ring area). The picker map below lets the user change
-  // this to any area/zoom before capturing.
-  let BBOX = { minLat: 52.46, maxLat: 52.58, minLon: 13.28, maxLon: 13.50 };
-  let ZOOM = 12;
+  // Default: the core NYC subway network (Manhattan + inner Bronx/Brooklyn/Queens). The
+  // picker map below lets the user change this to any area/zoom before capturing.
+  let BBOX = { minLat: 40.58, maxLat: 40.88, minLon: -74.03, maxLon: -73.78 };
+  let ZOOM = 11;
   const TILE = 256;
   const MAX_TILES = 260; // safety cap so a huge area at high zoom doesn't blow up canvas/export size
-  const API_BASE = "https://v6.vbb.transport.rest";
 
   function lon2x(lon, z){ return (lon + 180) / 360 * Math.pow(2, z); }
   function lat2y(lat, z){
@@ -260,7 +273,6 @@
   const ctx = mainCanvas.getContext("2d");
   const basemapCanvas = document.createElement("canvas");
   const bctx = basemapCanvas.getContext("2d");
-  // scale down display size if the tile mosaic is large, keep backing resolution crisp
   const MAX_DISPLAY_W = 900;
 
   function applyCanvasSizing(){
@@ -295,7 +307,6 @@
           started = true;
           pending++;
           tilesTotal++;
-          // Esri ArcGIS Online: free, no API key required. Note the z/y/x path order.
           const url = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/${ZOOM}/${ty}/${tx}`;
           const img = new Image();
           img.crossOrigin = "anonymous";
@@ -332,6 +343,33 @@
     }
   }
 
+  // ---------- MTA subway line reference ----------
+  // Official MTA bullet colors. Lighter bullets (yellow/grey) get dark text for contrast,
+  // everything else gets white text, matching the real subway map/signage convention.
+  const ROUTE_COLORS = {
+    "1": "#EE352E", "2": "#EE352E", "3": "#EE352E",
+    "4": "#00933C", "5": "#00933C", "6": "#00933C", "6X": "#00933C",
+    "7": "#B933AD", "7X": "#B933AD",
+    "A": "#0039A6", "C": "#0039A6", "E": "#0039A6",
+    "B": "#FF6319", "D": "#FF6319", "F": "#FF6319", "FX": "#FF6319", "M": "#FF6319",
+    "G": "#6CBE45",
+    "J": "#996633", "Z": "#996633",
+    "L": "#A7A9AC",
+    "N": "#FCCC0A", "Q": "#FCCC0A", "R": "#FCCC0A", "W": "#FCCC0A",
+    "S": "#808183", "GS": "#808183", "FS": "#808183", "H": "#808183",
+    "SI": "#0039A6"
+  };
+  const DARK_TEXT_ROUTES = new Set(["N", "Q", "R", "W", "L", "S", "GS", "FS", "H"]);
+  const LEGEND_ORDER = ["1","2","3","4","5","6","6X","7","7X","S","GS","FS","H",
+                         "A","C","E","B","D","F","FX","M","G","J","Z","L","N","Q","R","W","SI"];
+
+  function routeInfo(routeId){
+    const id = String(routeId || "?").toUpperCase();
+    const color = ROUTE_COLORS[id] || "#8a94a6";
+    const textColor = DARK_TEXT_ROUTES.has(id) ? "#0b0e14" : "#ffffff";
+    return { id, color, textColor };
+  }
+
   // ---------- data ----------
   const statusEl = document.getElementById("status");
   const debugEl = document.getElementById("debug");
@@ -343,47 +381,189 @@
   const loadFileBtn = document.getElementById("loadFileBtn");
   const fileInput = document.getElementById("fileInput");
 
-
-  let groups = []; // [{ id, color, points: [{t, lat, lon}, ...] }]
+  let groups = []; // [{ id, route, color, textColor, points: [{t, lat, lon}, ...] }]
   let tMin = null, tMax = null;
 
   function setStatus(html, cls){
     statusEl.innerHTML = cls ? `<span class="${cls}">${html}</span>` : html;
   }
 
+  // ---------- MTA GTFS-Realtime feeds (no API key required) ----------
+  const FEEDS = [
+    { name: "1234567S", url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs" },
+    { name: "ACE",      url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace" },
+    { name: "BDFM",     url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm" },
+    { name: "G",        url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g" },
+    { name: "JZ",       url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-jz" },
+    { name: "NQRW",     url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-nqrw" },
+    { name: "L",        url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l" },
+    { name: "SI",       url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si" }
+  ];
+  // MTA retired the static Stations.csv download at web.mta.info; the same dataset now lives
+  // on NY State's open data portal (Socrata), which also serves CORS-friendly CSV exports.
+  const STATIONS_CSV_URL = "https://data.ny.gov/resource/39hk-dx4f.csv?$limit=50000";
+
+  // A trimmed subset of Google's public-domain gtfs-realtime.proto — only the messages and
+  // field numbers this tool actually reads (VehiclePosition: route, stop_id, timestamp).
+  const GTFS_RT_PROTO = `
+    syntax = "proto2";
+    package transit_realtime;
+    message FeedMessage {
+      required FeedHeader header = 1;
+      repeated FeedEntity entity = 2;
+    }
+    message FeedHeader {
+      required string gtfs_realtime_version = 1;
+      optional uint64 timestamp = 3;
+    }
+    message FeedEntity {
+      required string id = 1;
+      optional TripUpdate trip_update = 3;
+      optional VehiclePosition vehicle = 4;
+    }
+    message TripDescriptor {
+      optional string trip_id = 1;
+      optional string start_time = 2;
+      optional string start_date = 3;
+      optional string route_id = 5;
+    }
+    message VehicleDescriptor {
+      optional string id = 1;
+      optional string label = 2;
+    }
+    message TripUpdate {
+      required TripDescriptor trip = 1;
+    }
+    message VehiclePosition {
+      optional TripDescriptor trip = 1;
+      optional VehicleDescriptor vehicle = 8;
+      optional uint32 current_stop_sequence = 3;
+      optional string stop_id = 7;
+      optional uint32 current_status = 4;
+      optional uint64 timestamp = 5;
+    }
+  `;
+
+  let FeedMessageType = null;
+  function ensureProto(){
+    if (FeedMessageType) return FeedMessageType;
+    const root = protobuf.parse(GTFS_RT_PROTO).root;
+    FeedMessageType = root.lookupType("transit_realtime.FeedMessage");
+    return FeedMessageType;
+  }
+
+  // ---------- static stop -> lat/lon lookup (MTA Subway Stations dataset via data.ny.gov) ----------
+  let stopCoords = null; // Map<gtfsStopId, {lat, lon}>
+  let stopsLoadPromise = null;
+
+  function parseCSV(text){
+    const rows = [];
+    let row = [], field = "", inQuotes = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ','){ row.push(field); field = ""; }
+        else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ""; }
+        else if (c === '\r'){ /* skip */ }
+        else field += c;
+      }
+    }
+    if (field.length || row.length){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  async function loadStopCoordinates(){
+    const res = await fetch(STATIONS_CSV_URL);
+    if (!res.ok) throw new Error(`Stations dataset returned HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text).filter(r => r.length > 1);
+    if (!rows.length) throw new Error("Stations dataset came back empty");
+    // Normalize header cells so both "GTFS Stop ID" (legacy CSV) and "gtfs_stop_id"
+    // (Socrata's machine field names) match the same lookup.
+    const header = rows[0].map(h => h.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " "));
+    const idIdx = header.findIndex(h => h.includes("gtfs stop id"));
+    const latIdx = header.findIndex(h => h.includes("gtfs latitude"));
+    const lonIdx = header.findIndex(h => h.includes("gtfs longitude"));
+    if (idIdx < 0 || latIdx < 0 || lonIdx < 0){
+      throw new Error("Stations dataset doesn't have the expected GTFS Stop ID/Latitude/Longitude columns");
+    }
+    const map = new Map();
+    for (let i = 1; i < rows.length; i++){
+      const r = rows[i];
+      const id = (r[idIdx] || "").trim();
+      const lat = parseFloat(r[latIdx]);
+      const lon = parseFloat(r[lonIdx]);
+      if (!id || !isFinite(lat) || !isFinite(lon)) continue;
+      map.set(id, { lat, lon });
+    }
+    return map;
+  }
+
+  function ensureStopCoordinates(){
+    if (stopCoords) return Promise.resolve(stopCoords);
+    if (!stopsLoadPromise){
+      stopsLoadPromise = loadStopCoordinates().then(map => { stopCoords = map; return map; });
+    }
+    return stopsLoadPromise;
+  }
+
+  function lookupStop(stopId){
+    if (!stopCoords || !stopId) return null;
+    if (stopCoords.has(stopId)) return stopCoords.get(stopId);
+    // realtime feeds append a platform direction (N/S) to the static parent stop id
+    const base = stopId.replace(/[NS]$/, "");
+    if (stopCoords.has(base)) return stopCoords.get(base);
+    return null;
+  }
+
   let pollTimer = null;
   let pollRows = [];
   let pollCount = 0;
+  let pollErrorStreak = 0;
 
   async function pollOnce(){
-    const params = new URLSearchParams({
-      north: String(BBOX.maxLat),
-      west: String(BBOX.minLon),
-      south: String(BBOX.minLat),
-      east: String(BBOX.maxLon),
-      results: "256",
-      duration: "0"
-    });
-    const url = `${API_BASE}/radar?${params.toString()}`;
-    const res = await fetch(url);
-    const rawText = await res.text();
-    let json;
-    try { json = JSON.parse(rawText); }
-    catch(e){ throw new Error("Server response is not valid JSON: " + rawText.slice(0, 300)); }
-    if (!res.ok) throw new Error(`Server returned an error: HTTP ${res.status}`);
-    const movements = Array.isArray(json) ? json : (json.movements || []);
-    const now = new Date().toISOString();
-    const rows = movements
-      .filter(m => m.location && isFinite(m.location.latitude) && isFinite(m.location.longitude))
-      .map(m => ({
-        lat: m.location.latitude,
-        lon: m.location.longitude,
-        recorded_at_time: now,
-        siri_ride__id: m.tripId || m.line?.id || "unknown",
-        siri_ride__vehicle_ref: m.line?.name || m.line?.id || null,
-        mode: m.line?.product || "other"
-      }));
-    return { url, rows };
+    const FeedMessage = ensureProto();
+    const now = Date.now();
+    const rows = [];
+    const errors = [];
+    const debugSamples = [];
+
+    await Promise.all(FEEDS.map(async (feed) => {
+      try {
+        const res = await fetch(feed.url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        const msg = FeedMessage.decode(new Uint8Array(buf));
+        let kept = 0;
+        for (const ent of msg.entity){
+          const vp = ent.vehicle;
+          if (!vp || !vp.trip) continue;
+          const coord = lookupStop(vp.stopId);
+          if (!coord) continue;
+          const routeId = vp.trip.routeId || "?";
+          const tripId = vp.trip.tripId || (vp.vehicle && vp.vehicle.id) || ent.id;
+          const ts = vp.timestamp ? Number(vp.timestamp) * 1000 : now;
+          rows.push({
+            lat: coord.lat, lon: coord.lon,
+            recorded_at_time: new Date(ts).toISOString(),
+            trip_id: String(tripId),
+            route_id: routeId
+          });
+          kept++;
+        }
+        debugSamples.push(`${feed.name}: ${kept} vehicle positions`);
+      } catch(e){
+        errors.push(`${feed.name} (${feed.url}): ${e.message}`);
+      }
+    }));
+
+    return { rows, errors, debugSamples };
   }
 
   const POLL_INTERVAL_MS = 20 * 1000;
@@ -391,10 +571,21 @@
   async function pollTick(){
     pollCount++;
     try {
-      const { url, rows } = await pollOnce();
+      const { rows, errors, debugSamples } = await pollOnce();
       pollRows = pollRows.concat(rows);
-      debugEl.textContent = `GET ${url}\n\nSample #${pollCount}, ${pollRows.length} records so far.\n\nExample record from the latest sample:\n${JSON.stringify(rows[0] || {}, null, 2)}`;
-      setStatus(`Recording with no time limit: sample #${pollCount}, ${pollRows.length} points collected so far (${new Set(pollRows.map(r => r.siri_ride__id)).size} unique vehicles). Click "Stop &amp; Save" whenever you want to finish.`);
+      debugEl.textContent =
+        `Feeds polled (sample #${pollCount}):\n${debugSamples.join("\n") || "(none succeeded)"}\n\n` +
+        (errors.length ? `Errors:\n${errors.join("\n")}\n\n` : "") +
+        `${pollRows.length} records so far.\n\nExample record from the latest sample:\n${JSON.stringify(rows[0] || {}, null, 2)}`;
+
+      if (rows.length === 0 && errors.length === FEEDS.length){
+        pollErrorStreak++;
+        setStatus(`Sample #${pollCount}: all ${FEEDS.length} MTA feeds failed (likely a CORS restriction in this browser, or an MTA API change). Still trying every 20s &mdash; try Demo Data in the meantime.`, "warn");
+      } else {
+        pollErrorStreak = 0;
+        const uniqueVehicles = new Set(pollRows.map(r => r.trip_id)).size;
+        setStatus(`Recording with no time limit: sample #${pollCount}, ${pollRows.length} points collected so far (${uniqueVehicles} unique trains). Click "Stop &amp; Save" whenever you want to finish.`);
+      }
     } catch(err){
       console.error(err);
       setStatus(`Sample #${pollCount} failed: ${err.message}. Still trying...`, "warn");
@@ -406,29 +597,30 @@
     fetchBtn.textContent = "Start Live Capture";
 
     if (pollRows.length === 0){
-      setStatus("No location points were collected. There may not be any active vehicles in the selected area right now, or a network issue with v6.vbb.transport.rest. Try again, or use the demo data in the meantime.", "warn");
+      setStatus("No train positions were collected. Your browser may have blocked the MTA feed requests (CORS), or there may be no trains reporting on the selected lines right now. Try again, or use the demo data in the meantime.", "warn");
       return;
     }
 
     buildGroupsFromRows(pollRows, {
-      rideKey: (r) => r.siri_ride__id ?? "unknown",
+      rideKey: (r) => r.trip_id ?? "unknown",
+      routeKey: (r) => r.route_id ?? "?",
       timeKey: (r) => new Date(r.recorded_at_time).getTime(),
       latKey: (r) => r.lat,
       lonKey: (r) => r.lon
     });
 
-    const distinctRides = new Set(pollRows.map(r => r.siri_ride__id ?? "unknown")).size;
-    setStatus(`Collected <b>${pollRows.length}</b> location points from ${pollCount} samples, <b>${distinctRides}</b> distinct vehicles, between ${new Date(tMin).toLocaleString("en-GB")} and ${new Date(tMax).toLocaleString("en-GB")}.`, "ok");
+    const distinctTrains = new Set(pollRows.map(r => r.trip_id ?? "unknown")).size;
+    setStatus(`Collected <b>${pollRows.length}</b> location points from ${pollCount} samples, <b>${distinctTrains}</b> distinct trains, between ${new Date(tMin).toLocaleString("en-US")} and ${new Date(tMax).toLocaleString("en-US")}.`, "ok");
     playBtn.disabled = false;
     videoBtn.disabled = false;
     drawLegend();
     renderStatic();
   }
 
-  // VBB's radar endpoint only ever returns a live snapshot of current vehicle positions,
-  // there's no historical query like Hasadna's Stride API. A real trail has to be built by
-  // polling repeatedly while this tab stays open, accumulating one snapshot at a time. This
-  // runs every 20 seconds with no fixed duration, until the user stops it manually.
+  // MTA's subway feeds only report which stop a train is currently at or approaching, not a
+  // continuous GPS trace. A moving picture has to be built by polling repeatedly while this
+  // tab stays open, accumulating one snapshot at a time. This runs every 20 seconds with no
+  // fixed duration, until the user stops it manually.
   async function fetchLive(){
     if (pollTimer){
       // already polling: this click means "stop now" and process what's been collected
@@ -436,8 +628,21 @@
       return;
     }
 
+    fetchBtn.disabled = true;
+    setStatus("Loading NYC subway station coordinates...");
+    try {
+      await ensureStopCoordinates();
+    } catch(err){
+      console.error(err);
+      fetchBtn.disabled = false;
+      setStatus(`Couldn't load the MTA station list (${err.message}). This is likely a CORS restriction in your browser. Try Demo Data instead.`, "warn");
+      return;
+    }
+    fetchBtn.disabled = false;
+
     pollRows = [];
     pollCount = 0;
+    pollErrorStreak = 0;
     fetchBtn.textContent = "Stop & Save Collected Data";
     setStatus('Starting live capture with no time limit: sampling every 20 seconds. Click the button again anytime to stop and use what has been collected.');
 
@@ -451,7 +656,8 @@
       return;
     }
     buildGroupsFromRows(rows, {
-      rideKey: (r) => r.siri_ride__id ?? r.siri_ride__vehicle_ref ?? r.siri_ride_stop_id ?? r.siri_ride_id ?? "unknown",
+      rideKey: (r) => r.trip_id ?? r.siri_ride__id ?? r.siri_ride_id ?? "unknown",
+      routeKey: (r) => r.route_id ?? r.mode ?? "?",
       timeKey: (r) => new Date(r.recorded_at_time).getTime(),
       latKey: (r) => r.lat,
       lonKey: (r) => r.lon
@@ -460,8 +666,8 @@
       setStatus("The file loaded but no valid trails were found in it (check the lat/lon/recorded_at_time fields).", "warn");
       return;
     }
-    const distinctRides = new Set(rows.map(r => r.siri_ride__id ?? r.siri_ride_id ?? "unknown")).size;
-    setStatus(`Loaded <b>${rows.length}</b> location points from the file, <b>${distinctRides}</b> distinct trips, between ${new Date(tMin).toLocaleString("en-GB")} and ${new Date(tMax).toLocaleString("en-GB")}.`, "ok");
+    const distinctTrains = new Set(rows.map(r => r.trip_id ?? r.siri_ride_id ?? "unknown")).size;
+    setStatus(`Loaded <b>${rows.length}</b> location points from the file, <b>${distinctTrains}</b> distinct trains, between ${new Date(tMin).toLocaleString("en-US")} and ${new Date(tMax).toLocaleString("en-US")}.`, "ok");
     playBtn.disabled = false;
     videoBtn.disabled = false;
     drawLegend();
@@ -471,10 +677,9 @@
   function buildDemo(){
     const now = Date.now();
     const rows = [];
-    const paths = 6;
-    const demoModes = ["suburban", "subway", "tram", "bus", "regional", "bus"];
+    const demoLines = ["1", "6", "L", "A", "N", "G"];
     const stepDeg = Math.max(BBOX.maxLat - BBOX.minLat, BBOX.maxLon - BBOX.minLon) * 0.012;
-    for (let p = 0; p < paths; p++){
+    demoLines.forEach((route, p) => {
       const startLat = BBOX.minLat + Math.random() * (BBOX.maxLat - BBOX.minLat);
       const startLon = BBOX.minLon + Math.random() * (BBOX.maxLon - BBOX.minLon);
       const angle = Math.random() * Math.PI * 2;
@@ -483,10 +688,10 @@
       const nPoints = 40;
       for (let i = 0; i < nPoints; i++){
         rows.push({
-          siri_ride_id: `demo-${p}`,
+          trip_id: `demo-${p}`,
+          route_id: route,
           recorded_at_time: new Date(now - (nPoints - i) * 15000).toISOString(),
-          lat, lon,
-          mode: demoModes[p % demoModes.length]
+          lat, lon
         });
         dir += curve;
         lat += Math.cos(dir) * stepDeg;
@@ -494,36 +699,24 @@
         lat = Math.min(BBOX.maxLat - 0.002, Math.max(BBOX.minLat + 0.002, lat));
         lon = Math.min(BBOX.maxLon - 0.002, Math.max(BBOX.minLon + 0.002, lon));
       }
-    }
+    });
     buildGroupsFromRows(rows, {
-      rideKey: (r) => r.siri_ride_id,
+      rideKey: (r) => r.trip_id,
+      routeKey: (r) => r.route_id,
       timeKey: (r) => new Date(r.recorded_at_time).getTime(),
       latKey: (r) => r.lat,
       lonKey: (r) => r.lon
     });
-    setStatus(`Loaded demo data: ${paths} simulated paths, to preview the comet-trail effect before connecting to live data.`, "ok");
+    setStatus(`Loaded demo data: ${demoLines.length} simulated trains (${demoLines.join(", ")}), to preview the line-bullet effect before connecting to live data.`, "ok");
     playBtn.disabled = false;
     videoBtn.disabled = false;
     drawLegend();
     renderStatic();
   }
 
-  const MODE_COLORS = {
-    suburban: { color: "#5fe0ff", label: "S-Bahn" },
-    subway:   { color: "#ff6fb0", label: "U-Bahn" },
-    tram:     { color: "#ffcb47", label: "Tram" },
-    bus:      { color: "#9dff5f", label: "Bus" },
-    regional: { color: "#b98bff", label: "Regional Train" },
-    express:  { color: "#ff8a4f", label: "Express Train" },
-    ferry:    { color: "#5fffc4", label: "Ferry" },
-    other:    { color: "#8a94a6", label: "Other" }
-  };
-  function modeInfo(mode){ return MODE_COLORS[mode] || MODE_COLORS.other; }
-
   function buildGroupsFromRows(rows, getters){
     const map = new Map();
-    const vehicleRefs = new Map();
-    const modes = new Map();
+    const routes = new Map();
     for (const r of rows){
       const lat = parseFloat(getters.latKey(r));
       const lon = parseFloat(getters.lonKey(r));
@@ -532,42 +725,35 @@
       const key = String(getters.rideKey(r));
       if (!map.has(key)) map.set(key, []);
       map.get(key).push({ t, lat, lon });
-      if (r.siri_ride__vehicle_ref) vehicleRefs.set(key, r.siri_ride__vehicle_ref);
-      if (r.mode && !modes.has(key)) modes.set(key, r.mode);
+      if (!routes.has(key)) routes.set(key, getters.routeKey(r));
     }
     const arr = [];
     for (const [key, pts] of map.entries()){
       pts.sort((a,b) => a.t - b.t);
       if (pts.length < 2) continue;
-      const mode = modes.get(key) || "other";
-      const label = vehicleRefs.has(key) ? `Vehicle ${vehicleRefs.get(key)}` : `Trip ${key}`;
-      arr.push({ id: key, label, mode, color: modeInfo(mode).color, points: pts });
+      const info = routeInfo(routes.get(key));
+      arr.push({ id: key, route: info.id, color: info.color, textColor: info.textColor, points: pts });
     }
     groups = arr;
     tMin = Math.min(...arr.flatMap(g => g.points.map(p => p.t)));
     tMax = Math.max(...arr.flatMap(g => g.points.map(p => p.t)));
-    const span = Math.max(1, tMax - tMin);
-    TRAIL_MS = Math.min(10 * 60 * 1000, Math.max(90 * 1000, span * 0.03));
     seamT = computeActivitySeam();
   }
 
   function drawLegend(){
     legendEl.innerHTML = "";
-    const modesPresent = new Set(groups.map(g => g.mode || "other"));
-    const order = ["suburban", "subway", "tram", "bus", "regional", "express", "ferry", "other"];
-    order.filter(m => modesPresent.has(m)).forEach(m => {
-      const info = modeInfo(m);
+    const routesPresent = new Set(groups.map(g => g.route));
+    const order = LEGEND_ORDER.filter(r => routesPresent.has(r))
+      .concat([...routesPresent].filter(r => !LEGEND_ORDER.includes(r)));
+    order.forEach(r => {
+      const info = routeInfo(r);
       const span = document.createElement("span");
-      span.innerHTML = `<span class="dot" style="color:${info.color}"></span>${info.label}`;
+      span.innerHTML = `<span class="bullet" style="background:${info.color};color:${info.textColor}">${info.id}</span>${info.id}`;
       legendEl.appendChild(span);
     });
   }
 
   // ---------- rendering ----------
-  // trail memory window: scales with the data's real time span so that, however much a wide
-  // time range gets compressed into the loop, trails still read as continuous flowing motion
-  // rather than brief pulses. Minimum 4 minutes, otherwise ~6% of the whole span, capped at 25 min.
-  let TRAIL_MS = 90 * 1000;
   let seamT = null; // the quietest moment in the data; playback loops through it so the reset is invisible
 
   function computeActivitySeam(){
@@ -619,6 +805,28 @@
     return interpAt(pts, simT);
   }
 
+  function drawLineBullet(x, y, label, color, textColor){
+    const r = Math.max(9, Math.min(16, CANVAS_W * 0.014));
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.stroke();
+    ctx.fillStyle = textColor;
+    const fontSize = Math.round(r * (label.length > 1 ? 0.85 : 1.15));
+    ctx.font = `700 ${fontSize}px 'IBM Plex Mono', monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x, y + 0.5);
+    ctx.restore();
+  }
+
   function drawFrame(simT){
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.drawImage(basemapCanvas, 0, 0);
@@ -628,38 +836,8 @@
     for (const g of groups){
       const cur = currentPos(g, simT);
       if (!cur) continue;
-
-      // trail: only the recent tail fades with age, the head itself persists
-      const pts = g.points.filter(p => p.t <= simT && p.t >= simT - TRAIL_MS);
-      for (let i = 0; i < pts.length - 1; i++){
-        const age = simT - pts[i].t;
-        const ageAlpha = Math.max(0, 1 - age / TRAIL_MS);
-        if (ageAlpha <= 0.01) continue;
-        const p0 = project(pts[i].lat, pts[i].lon);
-        const p1 = project(pts[i+1].lat, pts[i+1].lon);
-        ctx.strokeStyle = g.color;
-        ctx.globalAlpha = ageAlpha * 0.75;
-        ctx.lineWidth = 0.6 + ageAlpha * 3.2;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-
-      // head: always shown at the vehicle's current (or last known) position — it disappears
-      // only when that position falls outside the visible map, which the canvas handles for
-      // free since coordinates outside its bounds simply don't draw
       const hp = project(cur.lat, cur.lon);
-      ctx.save();
-      ctx.shadowColor = g.color;
-      ctx.shadowBlur = 16;
-      ctx.fillStyle = g.color;
-      ctx.beginPath();
-      ctx.arc(hp.x, hp.y, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      drawLineBullet(hp.x, hp.y, g.route, g.color, g.textColor);
     }
 
     if (groups.length){
@@ -667,22 +845,21 @@
     }
   }
 
-  const berlinTimeFormatter = new Intl.DateTimeFormat("de-DE", {
-    timeZone: "Europe/Berlin",
+  const nycTimeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit",
     hour12: false
   });
 
   function drawTimestamp(simT){
-    const label = berlinTimeFormatter.format(new Date(simT));
+    const label = nycTimeFormatter.format(new Date(simT));
     const fontSize = Math.max(15, Math.min(26, CANVAS_H * 0.032));
     ctx.save();
     ctx.font = `600 ${fontSize}px 'IBM Plex Mono', monospace`;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
 
-    // approximate the letter-spacing used elsewhere in the UI, canvas has no native tracking
     const tracking = fontSize * 0.06;
     const rawWidth = ctx.measureText(label).width;
     const trackedWidth = rawWidth + tracking * (label.length - 1);
@@ -817,7 +994,6 @@
     }
     requestAnimationFrame(step);
 
-    // safety watchdog in case the recorder never stops for some reason
     const watchdog = setTimeout(() => {
       if (recording){
         recording = false;
@@ -841,7 +1017,7 @@
     document.getElementById("videoPreview").src = url;
     const downloadLink = document.getElementById("videoDownload");
     downloadLink.href = url;
-    downloadLink.download = `berlin-comet-trails.${ext}`;
+    downloadLink.download = `nyc-line-numbers.${ext}`;
     document.getElementById("videoResult").style.display = "flex";
     if (isMp4){
       setStatus(`Video ready to download below as MP4 (${sizeMB}MB).`, "ok");
@@ -868,7 +1044,6 @@
     computeGeometry();
     applyCanvasSizing();
 
-    // switching region invalidates any previously loaded vehicle data
     groups = [];
     tMin = null; tMax = null;
     legendEl.innerHTML = "";
