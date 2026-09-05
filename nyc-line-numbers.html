@@ -206,8 +206,8 @@
 
   <footer>
     Basemap: Esri World Dark Gray Base. Transit data: MTA GTFS-Realtime subway feeds (api-endpoint.mta.info, no API
-    key required) plus the MTA's static Stations.csv for stop coordinates. Line colors follow the MTA's official
-    subway bullet palette.
+    key required) plus the MTA Subway Stations dataset on NY State's Open Data portal (data.ny.gov) for stop
+    coordinates. Line colors follow the MTA's official subway bullet palette.
     If capture isn't collecting any data, your browser may be blocking the request (MTA's feeds don't always send
     CORS headers to arbitrary sites) or there may be no trains reporting on the selected lines right now &mdash;
     try the demo data button to check out the visual effect in the meantime.
@@ -399,7 +399,9 @@
     { name: "L",        url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l" },
     { name: "SI",       url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si" }
   ];
-  const STATIONS_CSV_URL = "https://web.mta.info/developers/data/nyct/subway/Stations.csv";
+  // MTA retired the static Stations.csv download at web.mta.info; the same dataset now lives
+  // on NY State's open data portal (Socrata), which also serves CORS-friendly CSV exports.
+  const STATIONS_CSV_URL = "https://data.ny.gov/resource/39hk-dx4f.csv?$limit=50000";
 
   // A trimmed subset of Google's public-domain gtfs-realtime.proto — only the messages and
   // field numbers this tool actually reads (VehiclePosition: route, stop_id, timestamp).
@@ -450,7 +452,7 @@
     return FeedMessageType;
   }
 
-  // ---------- static stop -> lat/lon lookup (MTA Stations.csv) ----------
+  // ---------- static stop -> lat/lon lookup (MTA Subway Stations dataset via data.ny.gov) ----------
   let stopCoords = null; // Map<gtfsStopId, {lat, lon}>
   let stopsLoadPromise = null;
 
@@ -478,16 +480,18 @@
 
   async function loadStopCoordinates(){
     const res = await fetch(STATIONS_CSV_URL);
-    if (!res.ok) throw new Error(`Stations.csv returned HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Stations dataset returned HTTP ${res.status}`);
     const text = await res.text();
     const rows = parseCSV(text).filter(r => r.length > 1);
-    if (!rows.length) throw new Error("Stations.csv came back empty");
-    const header = rows[0].map(h => h.trim().toLowerCase());
+    if (!rows.length) throw new Error("Stations dataset came back empty");
+    // Normalize header cells so both "GTFS Stop ID" (legacy CSV) and "gtfs_stop_id"
+    // (Socrata's machine field names) match the same lookup.
+    const header = rows[0].map(h => h.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " "));
     const idIdx = header.findIndex(h => h.includes("gtfs stop id"));
     const latIdx = header.findIndex(h => h.includes("gtfs latitude"));
     const lonIdx = header.findIndex(h => h.includes("gtfs longitude"));
     if (idIdx < 0 || latIdx < 0 || lonIdx < 0){
-      throw new Error("Stations.csv doesn't have the expected GTFS Stop ID/Latitude/Longitude columns");
+      throw new Error("Stations dataset doesn't have the expected GTFS Stop ID/Latitude/Longitude columns");
     }
     const map = new Map();
     for (let i = 1; i < rows.length; i++){
