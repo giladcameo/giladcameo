@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berlin Micromobility Clusters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --bg: #05070c;
+    --panel: #0c1018;
+    --panel-border: #1c2433;
+    --ink: #dbe4f0;
+    --ink-dim: #7c8aa0;
+    --accent: #5fe0ff;
+    --accent2: #ff6fb0;
+    --warn: #ffb454;
+    --ok: #7cf29a;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  body{
+    background-image:
+      radial-gradient(1px 1px at 8% 15%, rgba(255,255,255,.35), transparent),
+      radial-gradient(1px 1px at 22% 65%, rgba(255,255,255,.25), transparent),
+      radial-gradient(1.5px 1.5px at 40% 30%, rgba(255,255,255,.3), transparent),
+      radial-gradient(1px 1px at 63% 80%, rgba(255,255,255,.2), transparent),
+      radial-gradient(1px 1px at 78% 20%, rgba(255,255,255,.3), transparent),
+      radial-gradient(1.5px 1.5px at 90% 55%, rgba(255,255,255,.25), transparent),
+      radial-gradient(1px 1px at 12% 90%, rgba(255,255,255,.2), transparent);
+  }
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 28px 20px 60px; }
+  header{ margin-bottom: 22px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px; letter-spacing: .12em;
+    color: var(--accent); text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  h1{ font-size: 30px; font-weight: 700; margin: 0 0 6px; line-height:1.25; }
+  h1 span{ color: var(--accent); }
+  .sub{ color: var(--ink-dim); font-size: 14.5px; max-width: 66ch; line-height:1.6; margin:0; }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 18px;
+  }
+  .controls{ display:flex; flex-wrap:wrap; gap: 14px; align-items:flex-end; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size: 12px; color: var(--ink-dim); }
+  .check{ display:flex; align-items:center; gap:7px; font-size: 13px; color: var(--ink); }
+  .check input{ accent-color: var(--accent); width:15px; height:15px; }
+  select, button{
+    font-family:'Inter', sans-serif;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    background: #10151f;
+    color: var(--ink);
+    padding: 9px 12px;
+  }
+  button{
+    cursor:pointer; font-weight:600;
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--accent), #3aa8c9);
+    color: #04121a;
+    transition: transform .1s ease, filter .15s ease;
+  }
+  button:hover{ filter: brightness(1.08); }
+  button:active{ transform: translateY(1px); }
+  button.secondary{
+    background: #10151f; color: var(--ink); border: 1px solid var(--panel-border);
+  }
+  button:disabled{ opacity:.45; cursor:not-allowed; filter:none; }
+
+  .statusline{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    margin-top: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .statusline b{ color: var(--ink); }
+  .statusline .warn{ color: var(--warn); }
+  .statusline .ok{ color: var(--ok); }
+
+  #map{ height: 560px; border-radius: 10px; overflow: hidden; margin-top: 16px; }
+  .leaflet-container{ background: #0c1018; font-family: 'Inter', sans-serif; }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip{ background: var(--panel); color: var(--ink); }
+  .leaflet-popup-content{ font-size: 12.5px; line-height:1.6; }
+  .leaflet-popup-content b{ color: var(--accent); }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap: 10px 18px;
+    margin-top: 14px; font-size: 12.5px; color: var(--ink-dim);
+    align-items:center;
+  }
+  .legend .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:6px; box-shadow: 0 0 6px currentColor; }
+  .legend .scale{ display:flex; align-items:center; gap:6px; }
+  .legend .scale .bar{ width:120px; height:8px; border-radius:4px; background: linear-gradient(90deg, #2a5c7a, #5fe0ff, #ffb454, #ff6fb0); }
+
+  .stats-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 14px; }
+  .stat{ background:#10151f; border:1px solid var(--panel-border); border-radius:10px; padding:12px 14px; }
+  .stat .num{ font-family:'IBM Plex Mono', monospace; font-size: 22px; font-weight:600; color: var(--accent); }
+  .stat .lbl{ font-size: 11.5px; color: var(--ink-dim); margin-top:2px; }
+
+  table.clusters{ width:100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+  table.clusters th, table.clusters td{ text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--panel-border); }
+  table.clusters th{ color: var(--ink-dim); font-weight:600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  table.clusters td.count{ font-family:'IBM Plex Mono', monospace; color: var(--accent); font-weight:600; }
+
+  details{ margin-top: 14px; }
+  summary{ cursor:pointer; color: var(--ink-dim); font-size: 12.5px; }
+  pre{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    background: #0a0e16; border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 10px; overflow:auto; max-height: 260px;
+    color: var(--ink-dim);
+  }
+
+  footer{ margin-top: 28px; color: var(--ink-dim); font-size: 12px; line-height:1.7; }
+  footer a{ color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Live GBFS &middot; Density Clustering &middot; Berlin</p>
+    <h1>Berlin <span>Micromobility</span> Clusters</h1>
+    <p class="sub">
+      Pulls the current real-time positions of every publicly reported shared bike and e-scooter in Berlin
+      straight from the operators' own open GBFS feeds, bins them into a spatial grid in your browser, and
+      shows where the vehicles are actually piling up right now.
+    </p>
+  </header>
+
+  <div class="panel">
+    <div class="controls">
+      <button id="fetchBtn">Load Live Vehicle Data</button>
+      <div class="field">
+        <label for="gridSize">Cluster cell size</label>
+        <select id="gridSize">
+          <option value="150">150 m (fine)</option>
+          <option value="300" selected>300 m</option>
+          <option value="600">600 m (coarse)</option>
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" id="toggleNextbike" checked> Nextbike (bikes)</label>
+      <label class="check"><input type="checkbox" id="toggleDott" checked> Dott (e-scooters)</label>
+      <label class="check"><input type="checkbox" id="toggleHeat" checked> Heat layer</label>
+    </div>
+    <div class="statusline" id="status">Waiting to fetch live data...</div>
+    <details>
+      <summary>Technical debug details (raw GBFS requests, feed URLs, counts)</summary>
+      <pre id="debug">—</pre>
+    </details>
+  </div>
+
+  <div class="panel">
+    <div id="map"></div>
+    <div class="legend">
+      <span><span class="dot" style="color:#5fe0ff"></span>Nextbike</span>
+      <span><span class="dot" style="color:#ff6fb0"></span>Dott</span>
+      <span class="scale">Cluster density: <span class="bar"></span> low &rarr; high</span>
+    </div>
+  </div>
+
+  <div class="panel" id="statsPanel" style="display:none;">
+    <div class="stats-grid" id="statsGrid"></div>
+    <table class="clusters">
+      <thead><tr><th>#</th><th>Near</th><th>Vehicles</th><th>Nextbike</th><th>Dott</th></tr></thead>
+      <tbody id="clusterTableBody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    Vehicle data: live GBFS <code>free_bike_status</code> feeds published directly by
+    <a href="https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_bn/gbfs.json" target="_blank" rel="noopener">Nextbike Berlin</a>
+    and <a href="https://gbfs.api.ridedott.com/public/v2/berlin/gbfs.json" target="_blank" rel="noopener">Dott Berlin</a>,
+    both listed in the <a href="https://github.com/MobilityData/gbfs" target="_blank" rel="noopener">MobilityData GBFS registry</a>
+    as open, public, no-auth feeds &mdash; fetched directly from your browser, nothing is proxied through a server.
+    Clustering is a simple client-side grid binning of live positions, not an official concentration or demand metric.
+    Coverage depends on which operators keep their feeds public at any given time; other Berlin operators (TIER, Voi, Bolt, Lime&hellip;)
+    are not included here because they do not currently publish an open GBFS feed for Berlin.
+    Basemap: CARTO Dark Matter (free, no API key).
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  const PROVIDERS = [
+    {
+      key: "nextbike",
+      label: "Nextbike",
+      color: "#5fe0ff",
+      discovery: "https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_bn/gbfs.json"
+    },
+    {
+      key: "dott",
+      label: "Dott",
+      color: "#ff6fb0",
+      discovery: "https://gbfs.api.ridedott.com/public/v2/berlin/gbfs.json"
+    }
+  ];
+
+  // Loose bounding box around greater Berlin, to sanity-filter any stray coordinates.
+  const BERLIN_BBOX = { minLat: 52.30, maxLat: 52.70, minLon: 13.05, maxLon: 13.80 };
+
+  // A handful of well-known Berlin locations, used only to give cluster rows a human-readable
+  // label ("near Alexanderplatz") instead of raw coordinates. Nearest-neighbour, straight-line.
+  const LANDMARKS = [
+    ["Alexanderplatz", 52.5219, 13.4132], ["Hauptbahnhof", 52.5251, 13.3694],
+    ["Potsdamer Platz", 52.5096, 13.3759], ["Brandenburg Gate", 52.5163, 13.3777],
+    ["Friedrichstraße", 52.5203, 13.3878], ["Warschauer Straße", 52.5054, 13.4491],
+    ["Kottbusser Tor", 52.4989, 13.4180], ["Görlitzer Bahnhof", 52.4988, 13.4374],
+    ["Hermannplatz", 52.4869, 13.4243], ["Rathaus Neukölln", 52.4809, 13.4351],
+    ["Ostkreuz", 52.5029, 13.4694], ["Prenzlauer Berg (Senefelderplatz)", 52.5330, 13.4136],
+    ["Mauerpark", 52.5432, 13.4023], ["Schönhauser Allee", 52.5488, 13.4127],
+    ["Zoologischer Garten", 52.5073, 13.3325], ["Kurfürstendamm", 52.5033, 13.3287],
+    ["Charlottenburg (Wilmersdorfer Str.)", 52.5064, 13.3096], ["Tempelhofer Feld", 52.4732, 13.4032],
+    ["Schöneberg (Nollendorfplatz)", 52.4996, 13.3542], ["Moabit (Turmstraße)", 52.5262, 13.3418],
+    ["Wedding (Leopoldplatz)", 52.5461, 13.3574], ["Gesundbrunnen", 52.5490, 13.3888],
+    ["Friedrichshain (Boxhagener Platz)", 52.5121, 13.4548], ["Kreuzberg (Bergmannstraße)", 52.4884, 13.3910],
+    ["Südkreuz", 52.4759, 13.3654], ["Adlershof", 52.4348, 13.5412],
+    ["Spandau", 52.5350, 13.1985], ["Steglitz", 52.4562, 13.3238],
+    ["Tegel", 52.5878, 13.2907], ["Pankow", 52.5691, 13.4016]
+  ];
+
+  const statusEl = document.getElementById("status");
+  const debugEl = document.getElementById("debug");
+  const fetchBtn = document.getElementById("fetchBtn");
+  const gridSizeSel = document.getElementById("gridSize");
+  const toggleNextbike = document.getElementById("toggleNextbike");
+  const toggleDott = document.getElementById("toggleDott");
+  const toggleHeat = document.getElementById("toggleHeat");
+  const statsPanel = document.getElementById("statsPanel");
+  const statsGrid = document.getElementById("statsGrid");
+  const clusterTableBody = document.getElementById("clusterTableBody");
+
+  function setStatus(html, cls){
+    statusEl.innerHTML = cls ? `<span class="${cls}">${html}</span>` : html;
+  }
+
+  const map = L.map("map", { attributionControl: true }).setView([52.517, 13.405], 12);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+  }).addTo(map);
+
+  const clusterLayer = L.layerGroup().addTo(map);
+  let heatLayer = null;
+
+  let rawVehicles = []; // [{lat, lon, provider}]
+  const debugLines = [];
+
+  function haversine(lat1, lon1, lat2, lon2){
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function nearestLandmark(lat, lon){
+    let best = null, bestD = Infinity;
+    for (const [name, la, lo] of LANDMARKS){
+      const d = haversine(lat, lon, la, lo);
+      if (d < bestD){ bestD = d; best = name; }
+    }
+    return bestD <= 2200 ? best : `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  }
+
+  async function fetchJson(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return res.json();
+  }
+
+  function pickFeedUrl(gbfsJson, feedName){
+    const data = gbfsJson.data || {};
+    let feeds = data.feeds;
+    if (!feeds){
+      const langKey = Object.keys(data)[0];
+      feeds = langKey ? (data[langKey].feeds || []) : [];
+    }
+    const feed = (feeds || []).find(f => f.name === feedName);
+    return feed ? feed.url : null;
+  }
+
+  async function fetchProvider(provider){
+    const gbfs = await fetchJson(provider.discovery);
+    const feedUrl = pickFeedUrl(gbfs, "free_bike_status");
+    if (!feedUrl) throw new Error("No free_bike_status feed listed in discovery file");
+    const statusJson = await fetchJson(feedUrl);
+    const list = (statusJson.data && (statusJson.data.bikes || statusJson.data.vehicles)) || [];
+    const points = [];
+    for (const v of list){
+      const lat = v.lat, lon = v.lon;
+      if (!isFinite(lat) || !isFinite(lon)) continue;
+      if (lat < BERLIN_BBOX.minLat || lat > BERLIN_BBOX.maxLat || lon < BERLIN_BBOX.minLon || lon > BERLIN_BBOX.maxLon) continue;
+      if (v.is_disabled) continue;
+      points.push({ lat, lon, provider: provider.key });
+    }
+    debugLines.push(`${provider.label}: discovery ${provider.discovery}\n  -> free_bike_status ${feedUrl}\n  -> ${list.length} reported, ${points.length} usable in Berlin bbox`);
+    return points;
+  }
+
+  async function fetchAll(){
+    fetchBtn.disabled = true;
+    debugLines.length = 0;
+    setStatus("Fetching live GBFS feeds...");
+    rawVehicles = [];
+    const results = await Promise.allSettled(PROVIDERS.map(fetchProvider));
+    const failures = [];
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") rawVehicles = rawVehicles.concat(r.value);
+      else failures.push(`${PROVIDERS[i].label}: ${r.reason.message}`);
+    });
+    debugEl.textContent = debugLines.join("\n\n") + (failures.length ? `\n\nFailures:\n${failures.join("\n")}` : "");
+    fetchBtn.disabled = false;
+
+    if (rawVehicles.length === 0){
+      setStatus(`No vehicle positions could be loaded. ${failures.join(" ") || "The feeds may be temporarily empty or unreachable from this browser."}`, "warn");
+      statsPanel.style.display = "none";
+      return;
+    }
+    const okMsg = `Loaded <b>${rawVehicles.length}</b> live vehicle positions.`;
+    const failMsg = failures.length ? ` (${failures.length} feed failed: ${failures.join("; ")})` : "";
+    setStatus(okMsg + failMsg, failures.length ? "warn" : "ok");
+    render();
+  }
+
+  function activeVehicles(){
+    return rawVehicles.filter(v =>
+      (v.provider === "nextbike" && toggleNextbike.checked) ||
+      (v.provider === "dott" && toggleDott.checked)
+    );
+  }
+
+  function buildClusters(vehicles, cellMeters){
+    const dLat = cellMeters / 111320;
+    const clusters = new Map();
+    for (const v of vehicles){
+      const dLon = cellMeters / (111320 * Math.cos(v.lat * Math.PI / 180));
+      const key = `${Math.floor(v.lat / dLat)}_${Math.floor(v.lon / dLon)}`;
+      let c = clusters.get(key);
+      if (!c){ c = { count: 0, sumLat: 0, sumLon: 0, byProvider: {} }; clusters.set(key, c); }
+      c.count++;
+      c.sumLat += v.lat;
+      c.sumLon += v.lon;
+      c.byProvider[v.provider] = (c.byProvider[v.provider] || 0) + 1;
+    }
+    return Array.from(clusters.values()).map(c => ({
+      lat: c.sumLat / c.count,
+      lon: c.sumLon / c.count,
+      count: c.count,
+      byProvider: c.byProvider
+    })).sort((a, b) => b.count - a.count);
+  }
+
+  function colorForRatio(t){
+    const stops = [
+      [0.00, [42, 92, 122]],
+      [0.35, [95, 224, 255]],
+      [0.70, [255, 180, 84]],
+      [1.00, [255, 111, 176]]
+    ];
+    for (let i = 1; i < stops.length; i++){
+      if (t <= stops[i][0]){
+        const [t0, c0] = stops[i-1], [t1, c1] = stops[i];
+        const f = (t - t0) / (t1 - t0 || 1);
+        const c = c0.map((v, idx) => Math.round(v + (c1[idx] - v) * f));
+        return `rgb(${c[0]},${c[1]},${c[2]})`;
+      }
+    }
+    return "rgb(255,111,176)";
+  }
+
+  function render(){
+    const vehicles = activeVehicles();
+    clusterLayer.clearLayers();
+    if (heatLayer){ map.removeLayer(heatLayer); heatLayer = null; }
+
+    if (vehicles.length === 0){
+      statsPanel.style.display = "none";
+      return;
+    }
+
+    const cellMeters = Number(gridSizeSel.value);
+    const clusters = buildClusters(vehicles, cellMeters);
+    const maxCount = clusters[0] ? clusters[0].count : 1;
+
+    if (toggleHeat.checked && window.L && L.heatLayer){
+      const heatPoints = vehicles.map(v => [v.lat, v.lon, 0.6]);
+      heatLayer = L.heatLayer(heatPoints, { radius: 22, blur: 26, maxZoom: 17, minOpacity: 0.25 }).addTo(map);
+    }
+
+    clusters.forEach(c => {
+      const t = Math.min(1, Math.log(c.count + 1) / Math.log(maxCount + 1));
+      const radius = 6 + t * 20;
+      const marker = L.circleMarker([c.lat, c.lon], {
+        radius,
+        color: colorForRatio(t),
+        weight: 1.5,
+        fillColor: colorForRatio(t),
+        fillOpacity: 0.55
+      });
+      const near = nearestLandmark(c.lat, c.lon);
+      const breakdown = Object.entries(c.byProvider)
+        .map(([k, n]) => `${PROVIDERS.find(p => p.key === k)?.label || k}: ${n}`)
+        .join(" · ");
+      marker.bindPopup(`<b>${c.count} vehicles</b><br>near ${near}<br>${breakdown}`);
+      marker.addTo(clusterLayer);
+    });
+
+    // stats panel
+    statsPanel.style.display = "";
+    const byProviderTotal = {};
+    vehicles.forEach(v => byProviderTotal[v.provider] = (byProviderTotal[v.provider] || 0) + 1);
+    statsGrid.innerHTML = `
+      <div class="stat"><div class="num">${vehicles.length}</div><div class="lbl">Vehicles on map</div></div>
+      <div class="stat"><div class="num">${clusters.length}</div><div class="lbl">Distinct cells (${cellMeters}m)</div></div>
+      <div class="stat"><div class="num">${byProviderTotal.nextbike || 0}</div><div class="lbl">Nextbike bikes</div></div>
+      <div class="stat"><div class="num">${byProviderTotal.dott || 0}</div><div class="lbl">Dott e-scooters</div></div>
+      <div class="stat"><div class="num">${maxCount}</div><div class="lbl">Densest single cell</div></div>
+    `;
+    clusterTableBody.innerHTML = clusters.slice(0, 15).map((c, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${nearestLandmark(c.lat, c.lon)}</td>
+        <td class="count">${c.count}</td>
+        <td>${c.byProvider.nextbike || 0}</td>
+        <td>${c.byProvider.dott || 0}</td>
+      </tr>
+    `).join("");
+  }
+
+  fetchBtn.addEventListener("click", fetchAll);
+  gridSizeSel.addEventListener("change", render);
+  toggleNextbike.addEventListener("change", render);
+  toggleDott.addEventListener("change", render);
+  toggleHeat.addEventListener("change", render);
+
+  fetchAll();
+})();
+</script>
+</body>
+</html>
