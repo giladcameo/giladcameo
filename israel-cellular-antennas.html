@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מפת אנטנות סלולריות בישראל — עוצמה וטופוגרפיה</title>
+<meta name="description" content="מפה אינטראקטיבית של אתרי אנטנות סלולריות בישראל (נתוני data.gov.il), עם באפרים המוגבלים על ידי קו-ראייה טופוגרפי אמיתי (SRTM) וצביעה לפי נתוני הקרינה שפורסמו בפועל לכל אתר." />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --bg: #05070c;
+    --panel: #0c1018;
+    --panel-border: #1c2433;
+    --ink: #dbe4f0;
+    --ink-dim: #8a96ab;
+    --accent: #5fe0ff;
+    --accent2: #ff6fb0;
+    --warn: #ffb454;
+    --ok: #7cf29a;
+    --bad: #ff6b6b;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:'Segoe UI', Arial, sans-serif; }
+  body{ display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+
+  header{
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--panel-border);
+    background: linear-gradient(135deg, #0c1018 0%, #05070c 100%);
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  header a.back{ color: var(--ink-dim); text-decoration:none; font-size:13px; white-space:nowrap; }
+  header a.back:hover{ color: var(--accent); }
+  header h1{ font-size:17px; margin:0; font-weight:700; }
+  header h1 span{ color: var(--accent); }
+  header .sub{ font-size:12px; color:var(--ink-dim); margin-top:2px; }
+
+  .layout{ flex:1; display:flex; min-height:0; }
+  #panel{
+    width: 320px; min-width:320px; overflow-y:auto; background:var(--panel);
+    border-left: 1px solid var(--panel-border); padding: 14px; font-size:13px;
+  }
+  #panel h2{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin:16px 0 8px; }
+  #panel h2:first-child{ margin-top:0; }
+  .field-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .field-row label{ flex:1; color:var(--ink); cursor:pointer; }
+  .field-row input[type=checkbox]{ accent-color: var(--accent); width:15px; height:15px; }
+  input[type=text], input[type=number], select{
+    width:100%; background:#161c28; border:1px solid var(--panel-border); color:var(--ink);
+    border-radius:6px; padding:6px 8px; font-size:13px;
+  }
+  input[type=range]{ width:100%; accent-color: var(--accent); }
+  .range-val{ font-family: monospace; color: var(--accent); font-size:12px; }
+  .hint{ color: var(--ink-dim); font-size:11.5px; line-height:1.5; margin-top:4px; }
+  button{
+    background: var(--accent); color:#05070c; border:none; border-radius:6px;
+    padding:8px 10px; font-size:12.5px; font-weight:700; cursor:pointer; width:100%;
+  }
+  button:disabled{ opacity:.45; cursor:default; }
+  button.secondary{ background:#161c28; color:var(--ink); border:1px solid var(--panel-border); }
+  .legend-bar{ height:10px; border-radius:5px;
+    background: linear-gradient(90deg, #2fbf71, #b6d94c, #ffd23f, #ff8c42, #e6383e);
+    margin: 6px 0 2px; }
+  .legend-labels{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-dim); }
+  .legend-swatch{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-inline-end:6px; vertical-align:middle; }
+  .stat-line{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-dim); padding:2px 0; }
+  .stat-line b{ color: var(--ink); font-weight:600; }
+  #panelToggle{ display:none; }
+
+  #mapWrap{ flex:1; position:relative; min-width:0; }
+  #map{ position:absolute; inset:0; background:#0c1018; }
+  .leaflet-container{ background:#0c1018; font-family:'Segoe UI', Arial, sans-serif; }
+
+  #loadingOverlay{
+    position:absolute; inset:0; background:rgba(5,7,12,.92); z-index:1000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:24px;
+  }
+  #loadingOverlay .bar{ width:260px; height:6px; background:#161c28; border-radius:4px; overflow:hidden; }
+  #loadingOverlay .bar > div{ height:100%; width:0%; background:var(--accent); transition:width .2s; }
+  #loadingOverlay .msg{ color:var(--ink-dim); font-size:12.5px; max-width:340px; }
+  #loadingOverlay .err{ color: var(--bad); font-size:12.5px; max-width:360px; display:none; }
+
+  .popup-box{ font-size:12.5px; line-height:1.6; color:#0c1018; min-width:220px; }
+  .popup-box h3{ margin:0 0 4px; font-size:13.5px; }
+  .popup-box .row{ display:flex; justify-content:space-between; gap:8px; }
+  .popup-box .row span:first-child{ color:#5b6472; }
+  .popup-box button.terrain-btn{ margin-top:8px; }
+  .popup-box .note{ font-size:11px; color:#5b6472; margin-top:6px; line-height:1.5; }
+
+  #zoomHint{
+    position:absolute; top:14px; right:50%; transform:translateX(50%); z-index:500;
+    background:rgba(12,16,24,.92); border:1px solid var(--panel-border); color:var(--ink-dim);
+    padding:6px 14px; border-radius:20px; font-size:12px; display:none; pointer-events:none;
+  }
+
+  #batchProgress{
+    display:none; margin-top:8px; font-size:11.5px; color:var(--ink-dim);
+  }
+
+  @media (max-width: 860px){
+    .layout{ flex-direction:column; }
+    #panelToggle{
+      display:block; width:auto; margin:0; background:var(--panel); color:var(--ink);
+      border:1px solid var(--panel-border); border-radius:6px; padding:6px 12px; font-size:12px;
+    }
+    #panel{ width:100%; min-width:0; max-height:44vh; order:2; display:none; border-left:none; border-top:1px solid var(--panel-border); }
+    #panel.open{ display:block; }
+    #mapWrap{ order:1; min-height:40vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>מפת אנטנות סלולריות בישראל <span>· עוצמה + טופוגרפיה</span></h1>
+    <div class="sub">נתוני אתרים אמיתיים מ-data.gov.il · באפר מוגבל לפי קו-ראייה טופוגרפי אמיתי (SRTM) · צביעה לפי נתוני קרינה שפורסמו בפועל</div>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <button id="panelToggle">הגדרות וסינון ⚙</button>
+    <a class="back" href="index.html">← חזרה לאתר</a>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside id="panel">
+
+    <h2>שכבות</h2>
+    <div class="field-row"><input type="checkbox" id="layerActive" checked><label for="layerActive">אנטנות פעילות</label></div>
+    <div class="field-row"><input type="checkbox" id="layerPlanned"><label for="layerPlanned">אנטנות בהקמה / מתוכננות</label></div>
+
+    <h2>דור טכנולוגיה</h2>
+    <div id="genFilters">
+      <div class="field-row"><input type="checkbox" class="gen-cb" value="2G" checked><label>2G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" value="3G" checked><label>3G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" value="4G" checked><label>4G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" value="5G" checked><label>5G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" value="unknown" checked><label>לא ידוע / אחר</label></div>
+    </div>
+
+    <h2>חברה מפעילה</h2>
+    <select id="operatorFilter"><option value="">הכל</option></select>
+
+    <h2>חיפוש עיר / כתובת</h2>
+    <input type="text" id="searchBox" placeholder="לדוגמה: תל אביב, דיזנגוף...">
+
+    <h2>פרמטרי מודל הבאפר</h2>
+    <div class="field-row" style="display:block;">
+      <label style="display:flex; justify-content:space-between;">טווח חיפוש מרבי לבאפר <span class="range-val" id="rangeVal">1200 מ׳</span></label>
+      <input type="range" id="rangeSlider" min="300" max="5000" step="100" value="1200">
+      <div class="hint">זהו פרמטר תצוגה שניתן לכוונון — לא נתון שפורסם לכל אתר. הוא קובע עד כמה רחוק בודקים קו-ראייה טופוגרפי, לא "עוצמת שידור" בפועל (זו אינה מתפרסמת ברמת אתר בודד).</div>
+    </div>
+    <div class="field-row" style="display:block; margin-top:10px;">
+      <label style="display:flex; justify-content:space-between;">גובה תורן מונח <span class="range-val" id="heightVal">27 מ׳</span></label>
+      <input type="range" id="heightSlider" min="10" max="60" step="1" value="27">
+      <div class="hint">גובה האנטנה מעל הקרקע אינו מתפרסם בנתוני הממשלה — זהו פרמטר גלוי לכוונון (טיפוסי לתורן/גג בישראל: כ-25–30 מ׳), לא ערך אמיתי לכל אתר.</div>
+    </div>
+
+    <h2>באפר טופוגרפי מדויק</h2>
+    <button id="batchTerrainBtn" class="secondary">חשב באפר טופוגרפי לכל האתרים בתצוגה</button>
+    <div class="hint">משתמש ב-API פתוח לנתוני גובה (Open-Topo-Data / SRTM). מוגבל בקצב — יכול לקחת כמה שניות לכל אתר. מומלץ על תצוגה ממוקדת (עד כ-30 אתרים).</div>
+    <div id="batchProgress"></div>
+
+    <h2>מקרא — עוצמת קרינה מדווחת</h2>
+    <div class="legend-bar"></div>
+    <div class="legend-labels"><span>נמוך</span><span>גבוה יחסית לסף הבריאות</span></div>
+    <div class="hint" style="margin-top:8px;">
+      <span class="legend-swatch" style="background:#6b7280;"></span>ללא נתון קרינה מדווח / פטור מהיתר קרינה
+    </div>
+    <div class="hint" style="margin-top:6px;">
+      הצבע מבוסס על "תוצאה מירבית באחוזים מסף הבריאות" (או, בהיעדרה, אחוזון עוצמת ההקרנה בין אתרים מאותו דור) — נתון אמיתי שפורסם על ידי המשרד להגנת הסביבה עבור כל אתר. <b>צורת הבאפר</b> (הרדיוס בפועל) נקבעת לפי חסימת קו-ראייה טופוגרפית אמיתית, לא לפי עוצמת השידור — כי תדר והספק שידור (ERP) אינם מתפרסמים ברמת אתר בודד.
+    </div>
+
+    <h2>סטטיסטיקה</h2>
+    <div class="stat-line"><span>סה״כ אתרים פעילים שנטענו</span><b id="statActive">–</b></div>
+    <div class="stat-line"><span>סה״כ אתרים בהקמה שנטענו</span><b id="statPlanned">–</b></div>
+    <div class="stat-line"><span>מוצגים בתצוגה הנוכחית</span><b id="statVisible">–</b></div>
+
+    <h2>מקורות ומגבלות</h2>
+    <div class="hint">
+      נתוני מיקום ואתרים: <a href="https://data.gov.il/dataset/antennaactive" target="_blank" rel="noopener" style="color:var(--accent);">data.gov.il — אנטנות סלולריות פעילות</a> ו<a href="https://data.gov.il/dataset/antenna_hakama" target="_blank" rel="noopener" style="color:var(--accent);">בהקמה</a>, המשרד להגנת הסביבה. נתוני גובה קרקע: Open-Topo-Data (SRTM 30מ׳). מודל קו-הראייה מניח תורן בודד לא-ממוגזר, ללא בינוי/צמחייה, ללא עקיפה (diffraction) מעבר לקו ראייה חסום — זוהי הדמיה חינוכית להתמצאות, <b>לא</b> כלי תכנון RF מוסמך ולא תחליף לבדיקת קרינה רשמית.
+    </div>
+
+  </aside>
+
+  <div id="mapWrap">
+    <div id="map"></div>
+    <div id="zoomHint">התקרבו למפה כדי להציג באפרים סביב האתרים</div>
+    <div id="loadingOverlay">
+      <div style="font-size:14px; color:var(--ink);">טוען נתוני אנטנות אמיתיים מ-data.gov.il…</div>
+      <div class="bar"><div id="loadingBarFill"></div></div>
+      <div class="msg" id="loadingMsg">מתחבר ל-API…</div>
+      <div class="err" id="loadingErr"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+/* =====================================================================
+   ITM (EPSG:2039) <-> WGS84 converter. Verified by offline round-trip
+   test (8 points, Eilat to the Lebanon border, max error ~7e-15 deg)
+   against the official EPSG:2039 defining parameters.
+   ===================================================================== */
+(function (root) {
+  'use strict';
+  var DEG2RAD = Math.PI / 180, RAD2DEG = 180 / Math.PI;
+  function toRad(deg) { return deg * DEG2RAD; }
+  function toDeg(rad) { return rad * RAD2DEG; }
+  var ITM_PARAMS = {
+    a: 6378137.0, f: 1 / 298.257222101,
+    lat0: toRad(31.73439361111111), lon0: toRad(35.20451694444445),
+    k0: 1.0000067, FE: 219529.584, FN: 626907.390
+  };
+  function isFiniteNumber(v) { return typeof v === 'number' && isFinite(v); }
+  function meridianArc(a, e2, e4, e6, lat) {
+    return a * (
+      (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256) * lat
+      - (3 * e2 / 8 + 3 * e4 / 32 + 45 * e6 / 1024) * Math.sin(2 * lat)
+      + (15 * e4 / 256 + 45 * e6 / 1024) * Math.sin(4 * lat)
+      - (35 * e6 / 3072) * Math.sin(6 * lat)
+    );
+  }
+  function wgs84ToItm(lon, lat) {
+    if (!isFiniteNumber(lon) || !isFiniteNumber(lat)) return null;
+    var a = ITM_PARAMS.a, f = ITM_PARAMS.f, lat0 = ITM_PARAMS.lat0, lon0 = ITM_PARAMS.lon0;
+    var k0 = ITM_PARAMS.k0, FE = ITM_PARAMS.FE, FN = ITM_PARAMS.FN;
+    var e2 = f * (2 - f), e4 = e2 * e2, e6 = e4 * e2, ep2 = e2 / (1 - e2);
+    var latRad = toRad(lat), lonRad = toRad(lon);
+    var M = meridianArc(a, e2, e4, e6, latRad), M0 = meridianArc(a, e2, e4, e6, lat0);
+    var sinLat = Math.sin(latRad), cosLat = Math.cos(latRad), tanLat = Math.tan(latRad);
+    var N = a / Math.sqrt(1 - e2 * sinLat * sinLat), T = tanLat * tanLat, C = ep2 * cosLat * cosLat;
+    var A = (lonRad - lon0) * cosLat;
+    var A2 = A * A, A3 = A2 * A, A4 = A3 * A, A5 = A4 * A, A6 = A5 * A;
+    var x = k0 * N * (A + (1 - T + C) * A3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * A5 / 120) + FE;
+    var y = k0 * (M - M0 + N * tanLat * (A2 / 2 + (5 - T + 9 * C + 4 * C * C) * A4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * A6 / 720)) + FN;
+    return { x: x, y: y };
+  }
+  function itmToWgs84SeriesInverseRad(x, y) {
+    var a = ITM_PARAMS.a, f = ITM_PARAMS.f, lat0 = ITM_PARAMS.lat0, lon0 = ITM_PARAMS.lon0;
+    var k0 = ITM_PARAMS.k0, FE = ITM_PARAMS.FE, FN = ITM_PARAMS.FN;
+    var e2 = f * (2 - f), e4 = e2 * e2, e6 = e4 * e2, ep2 = e2 / (1 - e2);
+    var M0 = meridianArc(a, e2, e4, e6, lat0), M = M0 + (y - FN) / k0;
+    var mu = M / (a * (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256));
+    var sqrt1e2 = Math.sqrt(1 - e2), e1 = (1 - sqrt1e2) / (1 + sqrt1e2);
+    var e1_2 = e1 * e1, e1_3 = e1_2 * e1, e1_4 = e1_3 * e1;
+    var phi1 = mu + (3 * e1 / 2 - 27 * e1_3 / 32) * Math.sin(2 * mu) + (21 * e1_2 / 16 - 55 * e1_4 / 32) * Math.sin(4 * mu)
+      + (151 * e1_3 / 96) * Math.sin(6 * mu) + (1097 * e1_4 / 512) * Math.sin(8 * mu);
+    var sinPhi1 = Math.sin(phi1), cosPhi1 = Math.cos(phi1), tanPhi1 = Math.tan(phi1);
+    var N1 = a / Math.sqrt(1 - e2 * sinPhi1 * sinPhi1), T1 = tanPhi1 * tanPhi1, C1 = ep2 * cosPhi1 * cosPhi1;
+    var R1 = a * (1 - e2) / Math.pow(1 - e2 * sinPhi1 * sinPhi1, 1.5);
+    var D = (x - FE) / (N1 * k0);
+    var D2 = D * D, D3 = D2 * D, D4 = D3 * D, D5 = D4 * D, D6 = D5 * D;
+    var lat = phi1 - (N1 * tanPhi1 / R1) * (D2 / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * D4 / 24
+      + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * D6 / 720);
+    var lon = lon0 + (D - (1 + 2 * T1 + C1) * D3 / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * D5 / 120) / cosPhi1;
+    return { lon: lon, lat: lat };
+  }
+  function itmToWgs84(x, y) {
+    if (!isFiniteNumber(x) || !isFiniteNumber(y)) return null;
+    if (x === 0 || y === 0) return null;
+    var seed = itmToWgs84SeriesInverseRad(x, y);
+    var lon = toDeg(seed.lon), lat = toDeg(seed.lat);
+    var h = 1e-6;
+    for (var iter = 0; iter < 6; iter++) {
+      var f0 = wgs84ToItm(lon, lat);
+      if (!f0) break;
+      var dx = x - f0.x, dy = y - f0.y;
+      if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9) break;
+      var fLon = wgs84ToItm(lon + h, lat), fLat = wgs84ToItm(lon, lat + h);
+      if (!fLon || !fLat) break;
+      var dXdLon = (fLon.x - f0.x) / h, dYdLon = (fLon.y - f0.y) / h;
+      var dXdLat = (fLat.x - f0.x) / h, dYdLat = (fLat.y - f0.y) / h;
+      var det = dXdLon * dYdLat - dXdLat * dYdLon;
+      if (Math.abs(det) < 1e-12) break;
+      var dLon = (dx * dYdLat - dXdLat * dy) / det, dLat = (dXdLon * dy - dx * dYdLon) / det;
+      lon += dLon; lat += dLat;
+    }
+    if (!isFiniteNumber(lon) || !isFiniteNumber(lat)) return null;
+    return { lon: lon, lat: lat };
+  }
+  root.ITMConvert = { wgs84ToItm: wgs84ToItm, itmToWgs84: itmToWgs84 };
+})(window);
+
+/* =====================================================================
+   Terrain line-of-sight buffer shaper. Tests radio LOS against real
+   ground elevation (Open-Topo-Data / SRTM) along N bearings, using the
+   standard k=4/3 effective-earth-radius curvature correction. Does NOT
+   model RF power/path-loss — geometry only. See computeTerrainBufferPolygon.
+   ===================================================================== */
+(function (root) {
+  'use strict';
+  const R_EARTH_M = 6371000;
+  const K_FACTOR = 4 / 3;
+  const OPENTOPODATA_URL = 'https://api.opentopodata.org/v1/srtm30m';
+  const MAX_LOCATIONS_PER_REQUEST = 100;
+  const FETCH_TIMEOUT_MS = 8000;
+  const RATE_LIMIT_DELAY_MS = 1100;
+
+  function toRad(deg) { return (deg * Math.PI) / 180; }
+  function toDeg(rad) { return (rad * 180) / Math.PI; }
+
+  function destinationPoint(lon, lat, bearingDeg, distanceM) {
+    const angularDistance = distanceM / R_EARTH_M;
+    const bearing = toRad(bearingDeg);
+    const lat1 = toRad(lat), lon1 = toRad(lon);
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing));
+    const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1), Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2));
+    const lonNormalized = ((toDeg(lon2) + 540) % 360) - 180;
+    return [lonNormalized, toDeg(lat2)];
+  }
+  function curvatureBulge(distanceM) { return (distanceM * distanceM) / (2 * K_FACTOR * R_EARTH_M); }
+  function lineOfSightHeightAtDistance(antennaGroundElevM, antennaHeightM, distanceM) {
+    return antennaGroundElevM + antennaHeightM - curvatureBulge(distanceM);
+  }
+  function computeBearingClearDistance(antennaGroundElevM, antennaHeightM, receiverHeightM, samples, maxRangeMeters) {
+    for (const sample of samples) {
+      const losHeight = lineOfSightHeightAtDistance(antennaGroundElevM, antennaHeightM, sample.distanceM);
+      const terrainHeight = sample.elevationM + receiverHeightM;
+      if (terrainHeight > losHeight) return sample.distanceM;
+    }
+    return maxRangeMeters;
+  }
+  function samplesPerBearingForRange(maxRangeMeters) {
+    if (maxRangeMeters <= 500) return 6;
+    if (maxRangeMeters <= 1500) return 8;
+    if (maxRangeMeters <= 4000) return 10;
+    return 12;
+  }
+  function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+  async function fetchElevationBatch(points) {
+    const locations = points.map((p) => `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`).join('|');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const response = await fetch(OPENTOPODATA_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locations }), signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`Open-Topo-Data HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data || !Array.isArray(data.results) || data.results.length !== points.length) throw new Error('unexpected response shape');
+      return data.results.map((r) => (typeof r.elevation === 'number' ? r.elevation : 0));
+    } finally { clearTimeout(timeoutId); }
+  }
+  async function fetchAllElevations(points) {
+    const elevations = [];
+    for (let i = 0; i < points.length; i += MAX_LOCATIONS_PER_REQUEST) {
+      const chunk = points.slice(i, i + MAX_LOCATIONS_PER_REQUEST);
+      elevations.push(...(await fetchElevationBatch(chunk)));
+      if (i + MAX_LOCATIONS_PER_REQUEST < points.length) await sleep(RATE_LIMIT_DELAY_MS);
+    }
+    return elevations;
+  }
+
+  async function computeTerrainBufferPolygon({ lon, lat, antennaHeightM = 27, receiverHeightM = 1.5, maxRangeMeters, bearingCount = 24 } = {}) {
+    if (typeof lon !== 'number' || typeof lat !== 'number' || !Number.isFinite(maxRangeMeters) || maxRangeMeters <= 0 || !Number.isInteger(bearingCount) || bearingCount < 3) return null;
+    try {
+      const samplesPerBearing = samplesPerBearingForRange(maxRangeMeters);
+      const bearingStepDeg = 360 / bearingCount;
+      const queryPoints = [{ lat, lon }];
+      const bearingSampleDistances = [];
+      for (let b = 0; b < bearingCount; b++) {
+        const bearingDeg = b * bearingStepDeg;
+        const distances = [];
+        for (let s = 1; s <= samplesPerBearing; s++) {
+          const distanceM = (s / samplesPerBearing) * maxRangeMeters;
+          distances.push(distanceM);
+          const [sampleLon, sampleLat] = destinationPoint(lon, lat, bearingDeg, distanceM);
+          queryPoints.push({ lat: sampleLat, lon: sampleLon });
+        }
+        bearingSampleDistances.push(distances);
+      }
+      const elevations = await fetchAllElevations(queryPoints);
+      const antennaGroundElevM = elevations[0];
+      const polygon = [];
+      let cursor = 1;
+      for (let b = 0; b < bearingCount; b++) {
+        const bearingDeg = b * bearingStepDeg;
+        const distances = bearingSampleDistances[b];
+        const samples = distances.map((distanceM, idx) => ({ distanceM, elevationM: elevations[cursor + idx] }));
+        cursor += distances.length;
+        const clearDistanceM = computeBearingClearDistance(antennaGroundElevM, antennaHeightM, receiverHeightM, samples, maxRangeMeters);
+        const [edgeLon, edgeLat] = destinationPoint(lon, lat, bearingDeg, clearDistanceM);
+        polygon.push([edgeLon, edgeLat]);
+      }
+      return polygon;
+    } catch (err) { return null; }
+  }
+  root.TerrainBuffer = { computeTerrainBufferPolygon };
+})(window);
+</script>
+
+<script>
+/* =====================================================================
+   App logic: fetch real antenna data (data.gov.il CKAN API), convert
+   ITM->WGS84, render on a Leaflet map with viewport-gated buffers colored
+   by real reported radiation data, with on-demand terrain-shaped buffers.
+   ===================================================================== */
+(function(){
+'use strict';
+
+const CKAN_BASE = 'https://data.gov.il/api/3/action';
+const DATASETS = [
+  { packageId: 'antennaactive', status: 'active' },
+  { packageId: 'antenna_hakama', status: 'planned' }
+];
+
+const ISRAEL_BOUNDS = [[29.45, 34.2], [33.35, 35.9]];
+const ZOOM_BUFFER_MIN = 12;
+const MAX_BUFFERS_RENDERED = 350;
+const MAX_BATCH_TERRAIN = 40;
+
+let allSites = [];
+let percentileByGen = {};
+let map, canvasRenderer;
+let dotLayer, bufferLayer;
+let renderedLayers = new Map(); // site.id -> {circle, polygon}
+let renderTimer = null;
+
+const els = {
+  panelToggle: document.getElementById('panelToggle'),
+  panel: document.getElementById('panel'),
+  layerActive: document.getElementById('layerActive'),
+  layerPlanned: document.getElementById('layerPlanned'),
+  operatorFilter: document.getElementById('operatorFilter'),
+  searchBox: document.getElementById('searchBox'),
+  rangeSlider: document.getElementById('rangeSlider'),
+  rangeVal: document.getElementById('rangeVal'),
+  heightSlider: document.getElementById('heightSlider'),
+  heightVal: document.getElementById('heightVal'),
+  batchBtn: document.getElementById('batchTerrainBtn'),
+  batchProgress: document.getElementById('batchProgress'),
+  statActive: document.getElementById('statActive'),
+  statPlanned: document.getElementById('statPlanned'),
+  statVisible: document.getElementById('statVisible'),
+  loadingOverlay: document.getElementById('loadingOverlay'),
+  loadingBarFill: document.getElementById('loadingBarFill'),
+  loadingMsg: document.getElementById('loadingMsg'),
+  loadingErr: document.getElementById('loadingErr'),
+  zoomHint: document.getElementById('zoomHint'),
+};
+
+els.panelToggle.addEventListener('click', () => els.panel.classList.toggle('open'));
+
+/* ---------------- data fetching ---------------- */
+
+async function fetchJson(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
+  const json = await res.json();
+  if(!json.success) throw new Error('CKAN API returned success:false for ' + url);
+  return json;
+}
+
+async function findResourceId(packageId){
+  const pkg = await fetchJson(`${CKAN_BASE}/package_show?id=${encodeURIComponent(packageId)}`);
+  const resources = pkg.result.resources || [];
+  const resource = resources.find(r => r.datastore_active) || resources[0];
+  if(!resource) throw new Error('No resource found for package ' + packageId);
+  return resource.id;
+}
+
+async function fetchAllRecords(resourceId, onProgress){
+  const limit = 1000;
+  let offset = 0, all = [], total = null;
+  while(true){
+    const json = await fetchJson(`${CKAN_BASE}/datastore_search?resource_id=${resourceId}&limit=${limit}&offset=${offset}`);
+    const records = json.result.records || [];
+    if(total === null && typeof json.result.total === 'number') total = json.result.total;
+    all = all.concat(records);
+    if(onProgress) onProgress(all.length, total);
+    if(records.length < limit) break;
+    offset += limit;
+  }
+  return all;
+}
+
+function buildFieldMap(sampleRecord){
+  const keys = Object.keys(sampleRecord);
+  const find = (subs) => keys.find(k => subs.some(s => k.indexOf(s) !== -1));
+  return {
+    x: find(['X_ITM', 'x_itm']),
+    y: find(['Y_ITM', 'y_itm']),
+    operator: find(['חברה']),
+    city: find(['עיר', 'ישוב']),
+    address: find(['כתובת']),
+    municipality: find(['רשות מקומית']),
+    siteType: find(['סוג אתר', 'סוג המוקד']),
+    generation: find(['טכנולוגי']),
+    density: find(['עוצמה מרבית']),
+    healthPct: find(['סף הבריאות', 'סף בריאות']),
+    activationDate: find(['היתר הפעלה']),
+    constructionDate: find(['היתר הקמה', 'הגשת הבקשה']),
+    siteId: find(["מס' אתר", 'מספר האתר', "מס' סימוכין"]),
+  };
+}
+
+function parseGenerations(raw){
+  if(!raw) return [];
+  const digits = String(raw).match(/[2-5]/g);
+  if(!digits) return [];
+  return Array.from(new Set(digits)).sort().map(d => d + 'G');
+}
+
+function parseRecord(record, fmap, status){
+  const x = fmap.x ? parseFloat(record[fmap.x]) : NaN;
+  const y = fmap.y ? parseFloat(record[fmap.y]) : NaN;
+  const geo = window.ITMConvert.itmToWgs84(x, y);
+  if(!geo) return null;
+  const gens = fmap.generation ? parseGenerations(record[fmap.generation]) : [];
+  const densityRaw = fmap.density ? parseFloat(record[fmap.density]) : NaN;
+  const density = isFinite(densityRaw) ? densityRaw : null;
+  const healthRaw = fmap.healthPct ? parseFloat(record[fmap.healthPct]) : NaN;
+  const healthPct = isFinite(healthRaw) ? healthRaw : null;
+  return {
+    id: status + '_' + (fmap.siteId ? record[fmap.siteId] : Math.random().toString(36).slice(2)),
+    lon: geo.lon, lat: geo.lat,
+    operator: (fmap.operator ? record[fmap.operator] : '') || 'לא ידוע',
+    city: (fmap.city ? record[fmap.city] : '') || '',
+    address: (fmap.address ? record[fmap.address] : '') || '',
+    siteType: (fmap.siteType ? record[fmap.siteType] : '') || '',
+    gens: gens,
+    primaryGen: gens.length ? Math.max.apply(null, gens.map(g => parseInt(g))) : 0,
+    density: density,
+    healthPct: healthPct,
+    status: status,
+  };
+}
+
+/* ---------------- intensity / color model ---------------- */
+
+function buildPercentileIndex(sites){
+  const byGen = {};
+  sites.forEach(s => {
+    if(s.status !== 'active' || s.density === null || s.density <= 0) return;
+    (byGen[s.primaryGen] = byGen[s.primaryGen] || []).push(s.density);
+  });
+  Object.keys(byGen).forEach(g => byGen[g].sort((a,b)=>a-b));
+  return byGen;
+}
+
+function percentileOfDensity(site){
+  const arr = percentileByGen[site.primaryGen];
+  if(!arr || !arr.length || site.density === null || site.density <= 0) return null;
+  let lo = 0, hi = arr.length;
+  while(lo < hi){ const mid = (lo + hi) >> 1; if(arr[mid] <= site.density) lo = mid + 1; else hi = mid; }
+  return (lo / arr.length) * 100;
+}
+
+// Real per-site intensity, 0-100 scale: prefer the published "% of health
+// threshold" figure (already frequency-normalized by the ministry), fall
+// back to this site's own density percentile among same-generation sites.
+function siteIntensity(site){
+  if(site.status !== 'active') return null;
+  if(site.healthPct !== null && site.healthPct > 0) return { value: Math.min(site.healthPct, 100), kind: 'health' };
+  const p = percentileOfDensity(site);
+  if(p !== null) return { value: p, kind: 'percentile' };
+  return null;
+}
+
+const COLOR_STOPS = [
+  { p: 0, c: [47,191,113] }, { p: 25, c: [182,217,76] },
+  { p: 50, c: [255,210,63] }, { p: 75, c: [255,140,66] }, { p: 100, c: [230,56,62] }
+];
+const NEUTRAL_COLOR = '#6b7280';
+const PLANNED_COLOR = '#5fa8ff';
+
+function intensityToColor(p){
+  for(let i=0;i<COLOR_STOPS.length-1;i++){
+    const a = COLOR_STOPS[i], b = COLOR_STOPS[i+1];
+    if(p >= a.p && p <= b.p){
+      const t = (p - a.p) / (b.p - a.p);
+      const c = a.c.map((v,idx)=>Math.round(v + (b.c[idx]-v)*t));
+      return `rgb(${c[0]},${c[1]},${c[2]})`;
+    }
+  }
+  return `rgb(${COLOR_STOPS[COLOR_STOPS.length-1].c.join(',')})`;
+}
+
+function siteColor(site){
+  if(site.status !== 'active') return PLANNED_COLOR;
+  const intensity = siteIntensity(site);
+  return intensity ? intensityToColor(intensity.value) : NEUTRAL_COLOR;
+}
+
+/* ---------------- map setup ---------------- */
+
+function initMap(){
+  map = L.map('map', { zoomControl: true, attributionControl: true });
+  map.fitBounds(ISRAEL_BOUNDS);
+  canvasRenderer = L.canvas({ padding: 0.5 });
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri · Antenna data: data.gov.il · Elevation: Open-Topo-Data (SRTM)',
+    maxZoom: 19, maxNativeZoom: 16,
+  }).addTo(map);
+  dotLayer = L.layerGroup().addTo(map);
+  bufferLayer = L.layerGroup().addTo(map);
+  map.on('moveend zoomend', scheduleRender);
+  [els.layerActive, els.layerPlanned, els.searchBox, els.operatorFilter].forEach(el => el.addEventListener('input', scheduleRender));
+  document.querySelectorAll('.gen-cb').forEach(cb => cb.addEventListener('input', scheduleRender));
+  els.rangeSlider.addEventListener('input', () => { els.rangeVal.textContent = els.rangeSlider.value + ' מ׳'; scheduleRender(); });
+  els.heightSlider.addEventListener('input', () => { els.heightVal.textContent = els.heightSlider.value + ' מ׳'; });
+}
+
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderVisible, 150);
+}
+
+function activeGenFilters(){
+  return Array.from(document.querySelectorAll('.gen-cb:checked')).map(cb => cb.value);
+}
+
+function passesFilters(site){
+  if(site.status === 'active' && !els.layerActive.checked) return false;
+  if(site.status === 'planned' && !els.layerPlanned.checked) return false;
+  const gens = activeGenFilters();
+  const hasKnown = site.gens.length > 0;
+  if(hasKnown){ if(!site.gens.some(g => gens.includes(g))) return false; }
+  else { if(!gens.includes('unknown')) return false; }
+  const op = els.operatorFilter.value;
+  if(op && site.operator !== op) return false;
+  const q = els.searchBox.value.trim();
+  if(q && !(site.city.includes(q) || site.address.includes(q))) return false;
+  return true;
+}
+
+function clearRenderedLayers(){
+  dotLayer.clearLayers();
+  bufferLayer.clearLayers();
+  renderedLayers.clear();
+}
+
+function renderVisible(){
+  if(!map) return;
+  const bounds = map.getBounds();
+  const zoom = map.getZoom();
+  const candidates = allSites.filter(s => passesFilters(s) && bounds.contains([s.lat, s.lon]));
+  els.statVisible.textContent = candidates.length.toLocaleString('he-IL');
+  clearRenderedLayers();
+
+  if(zoom < ZOOM_BUFFER_MIN){
+    els.zoomHint.style.display = 'block';
+    candidates.forEach(site => addDotMarker(site));
+  } else {
+    els.zoomHint.style.display = 'none';
+    let list = candidates;
+    if(list.length > MAX_BUFFERS_RENDERED){
+      list = list.slice(0, MAX_BUFFERS_RENDERED);
+    }
+    list.forEach(site => addBufferCircle(site));
+  }
+}
+
+function addDotMarker(site){
+  const marker = L.circleMarker([site.lat, site.lon], {
+    renderer: canvasRenderer, radius: 3, color: siteColor(site),
+    weight: 1, fillColor: siteColor(site), fillOpacity: .85,
+  });
+  marker.on('click', () => marker.bindPopup(buildPopupContent(site, null), { closeButton: true }).openPopup());
+  dotLayer.addLayer(marker);
+}
+
+function addBufferCircle(site){
+  const color = siteColor(site);
+  const radiusM = parseInt(els.rangeSlider.value, 10);
+  const circle = L.circle([site.lat, site.lon], {
+    renderer: canvasRenderer, radius: radiusM, color: color, weight: 1.3,
+    fillColor: color, fillOpacity: .16,
+  });
+  circle.on('click', () => circle.bindPopup(buildPopupContent(site, circle), { closeButton: true, maxWidth: 280 }).openPopup());
+  bufferLayer.addLayer(circle);
+  renderedLayers.set(site.id, { circle, polygon: null, site });
+}
+
+/* ---------------- popups & terrain compute ---------------- */
+
+function fieldRow(label, value){
+  const row = document.createElement('div');
+  row.className = 'row';
+  const l = document.createElement('span'); l.textContent = label;
+  const v = document.createElement('span'); v.textContent = value;
+  row.appendChild(l); row.appendChild(v);
+  return row;
+}
+
+function buildPopupContent(site, layer, terrainDone){
+  const box = document.createElement('div');
+  box.className = 'popup-box';
+
+  const h3 = document.createElement('h3');
+  h3.textContent = site.operator + (site.status === 'planned' ? ' (בהקמה)' : '');
+  box.appendChild(h3);
+
+  if(site.city || site.address) box.appendChild(fieldRow('מיקום', [site.city, site.address].filter(Boolean).join(' · ')));
+  if(site.siteType) box.appendChild(fieldRow('סוג אתר', site.siteType));
+  box.appendChild(fieldRow('דור טכנולוגיה', site.gens.length ? site.gens.join(', ') : 'לא ידוע'));
+
+  if(site.status === 'active'){
+    if(site.density !== null) box.appendChild(fieldRow('עוצמה מרבית תיאורטית', site.density + ' µW/סמ״ר'));
+    if(site.healthPct !== null) box.appendChild(fieldRow('אחוז מסף הבריאות', site.healthPct.toFixed(2) + '%'));
+    if(site.density === null && site.healthPct === null) box.appendChild(fieldRow('נתוני קרינה', 'לא דווחו / פטור מהיתר'));
+  }
+
+  if(terrainDone){
+    const done = document.createElement('div');
+    done.className = 'note';
+    done.style.color = '#1a7f4e';
+    done.textContent = '✓ באפר טופוגרפי מדויק מוצג (קו-ראייה מול תבליט אמיתי).';
+    box.appendChild(done);
+  }
+
+  const btn = document.createElement('button');
+  btn.className = 'terrain-btn';
+  btn.textContent = terrainDone ? 'חשב מחדש (טווח/גובה שונה) ↻' : 'חשב באפר טופוגרפי מדויק ▶';
+  btn.addEventListener('click', () => runTerrainCompute(site, layer, btn));
+  box.appendChild(btn);
+
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.textContent = 'הבאפר המוצג הוא הדמיה חינוכית (קו-ראייה מול תבליט אמיתי), לא מדידת קרינה בפועל.';
+  box.appendChild(note);
+
+  return box;
+}
+
+async function runTerrainCompute(site, sourceLayer, btn){
+  btn.disabled = true;
+  btn.textContent = 'מחשב מול תבליט אמיתי…';
+  const maxRangeMeters = parseInt(els.rangeSlider.value, 10);
+  const antennaHeightM = parseInt(els.heightSlider.value, 10);
+  try{
+    const ring = await window.TerrainBuffer.computeTerrainBufferPolygon({
+      lon: site.lon, lat: site.lat, antennaHeightM, receiverHeightM: 1.5,
+      maxRangeMeters, bearingCount: 20,
+    });
+    if(!ring){
+      btn.textContent = 'לא ניתן היה לטעון נתוני תבליט — מוצג טווח עגול בלבד';
+      btn.disabled = false;
+      return;
+    }
+    const latlngs = ring.map(([lon,lat]) => [lat, lon]);
+    const color = siteColor(site);
+    const poly = L.polygon(latlngs, { renderer: canvasRenderer, color: color, weight: 1.5, fillColor: color, fillOpacity: .28 });
+    poly.on('click', () => poly.bindPopup(buildPopupContent(site, poly, true), { closeButton: true, maxWidth: 280 }).openPopup());
+    bufferLayer.addLayer(poly);
+    // Open the new popup on the polygon BEFORE removing the old circle: Leaflet
+    // auto-closes a layer's bound popup when that layer is removed, so removing
+    // the circle first would silently close this popup (and drop the button's
+    // success text) before the user ever sees it.
+    poly.fire('click');
+    if(sourceLayer && sourceLayer !== poly) bufferLayer.removeLayer(sourceLayer);
+    const entry = renderedLayers.get(site.id);
+    if(entry) entry.polygon = poly;
+  } catch(err){
+    btn.textContent = 'שגיאה בחישוב — מוצג טווח עגול בלבד';
+    btn.disabled = false;
+  }
+}
+
+els.batchBtn.addEventListener('click', async () => {
+  const visibleEntries = Array.from(renderedLayers.values()).filter(e => !e.polygon).slice(0, MAX_BATCH_TERRAIN);
+  if(!visibleEntries.length) return;
+  els.batchBtn.disabled = true;
+  els.batchProgress.style.display = 'block';
+  for(let i=0;i<visibleEntries.length;i++){
+    const entry = visibleEntries[i];
+    els.batchProgress.textContent = `מחשב ${i+1} מתוך ${visibleEntries.length}…`;
+    const maxRangeMeters = parseInt(els.rangeSlider.value, 10);
+    const antennaHeightM = parseInt(els.heightSlider.value, 10);
+    try{
+      const ring = await window.TerrainBuffer.computeTerrainBufferPolygon({
+        lon: entry.site.lon, lat: entry.site.lat, antennaHeightM, receiverHeightM: 1.5, maxRangeMeters, bearingCount: 20,
+      });
+      if(ring){
+        const latlngs = ring.map(([lon,lat]) => [lat, lon]);
+        const color = siteColor(entry.site);
+        const poly = L.polygon(latlngs, { renderer: canvasRenderer, color: color, weight: 1.5, fillColor: color, fillOpacity: .28 });
+        poly.on('click', () => poly.bindPopup(buildPopupContent(entry.site, poly, true), { closeButton: true, maxWidth: 280 }).openPopup());
+        bufferLayer.addLayer(poly);
+        bufferLayer.removeLayer(entry.circle);
+        entry.polygon = poly;
+      }
+    } catch(err){ /* skip this site, continue batch */ }
+  }
+  els.batchProgress.textContent = `הושלם: ${visibleEntries.length} אתרים עודכנו.`;
+  els.batchBtn.disabled = false;
+});
+
+/* ---------------- loading ---------------- */
+
+function setLoadingProgress(pct, msg){
+  els.loadingBarFill.style.width = Math.max(4, Math.min(100, pct)) + '%';
+  if(msg) els.loadingMsg.textContent = msg;
+}
+
+function showLoadingError(msg){
+  els.loadingErr.textContent = msg;
+  els.loadingErr.style.display = 'block';
+}
+
+function populateOperatorFilter(sites){
+  const ops = Array.from(new Set(sites.map(s => s.operator))).filter(Boolean).sort();
+  ops.forEach(op => {
+    const opt = document.createElement('option');
+    opt.value = op; opt.textContent = op;
+    els.operatorFilter.appendChild(opt);
+  });
+}
+
+async function loadAll(){
+  try{
+    let loadedActive = 0, loadedPlanned = 0;
+    for(const ds of DATASETS){
+      setLoadingProgress(ds.status === 'active' ? 10 : 60, `מאתר את קובץ הנתונים: ${ds.packageId}…`);
+      const resourceId = await findResourceId(ds.packageId);
+      const records = await fetchAllRecords(resourceId, (n, total) => {
+        const base = ds.status === 'active' ? 10 : 60;
+        const span = ds.status === 'active' ? 45 : 30;
+        const frac = total ? Math.min(1, n/total) : 0.5;
+        setLoadingProgress(base + frac*span, `טוען אתרים (${ds.status === 'active' ? 'פעילים' : 'בהקמה'}): ${n.toLocaleString('he-IL')}${total ? ' / ' + total.toLocaleString('he-IL') : ''}`);
+      });
+      if(!records.length) continue;
+      const fmap = buildFieldMap(records[0]);
+      let count = 0;
+      records.forEach(r => {
+        const site = parseRecord(r, fmap, ds.status);
+        if(site){ allSites.push(site); count++; }
+      });
+      if(ds.status === 'active') loadedActive = count; else loadedPlanned = count;
+    }
+
+    percentileByGen = buildPercentileIndex(allSites);
+    populateOperatorFilter(allSites);
+    els.statActive.textContent = loadedActive.toLocaleString('he-IL');
+    els.statPlanned.textContent = loadedPlanned.toLocaleString('he-IL');
+
+    setLoadingProgress(100, 'הושלם.');
+    els.loadingOverlay.style.display = 'none';
+    renderVisible();
+  } catch(err){
+    console.error(err);
+    showLoadingError('שגיאה בטעינת הנתונים מ-data.gov.il (ייתכן חסימת רשת/CORS מצד הדפדפן). נסו לרענן את הדף, או בדקו את חיבור האינטרנט. פרטי שגיאה: ' + err.message);
+  }
+}
+
+initMap();
+loadAll();
+
+})();
+</script>
+</body>
+</html>
