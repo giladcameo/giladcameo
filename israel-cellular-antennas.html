@@ -689,7 +689,7 @@ function fieldRow(label, value){
   return row;
 }
 
-function buildPopupContent(site, circleLayer){
+function buildPopupContent(site, layer, terrainDone){
   const box = document.createElement('div');
   box.className = 'popup-box';
 
@@ -707,10 +707,18 @@ function buildPopupContent(site, circleLayer){
     if(site.density === null && site.healthPct === null) box.appendChild(fieldRow('נתוני קרינה', 'לא דווחו / פטור מהיתר'));
   }
 
+  if(terrainDone){
+    const done = document.createElement('div');
+    done.className = 'note';
+    done.style.color = '#1a7f4e';
+    done.textContent = '✓ באפר טופוגרפי מדויק מוצג (קו-ראייה מול תבליט אמיתי).';
+    box.appendChild(done);
+  }
+
   const btn = document.createElement('button');
   btn.className = 'terrain-btn';
-  btn.textContent = 'חשב באפר טופוגרפי מדויק ▶';
-  btn.addEventListener('click', () => runTerrainCompute(site, circleLayer, btn));
+  btn.textContent = terrainDone ? 'חשב מחדש (טווח/גובה שונה) ↻' : 'חשב באפר טופוגרפי מדויק ▶';
+  btn.addEventListener('click', () => runTerrainCompute(site, layer, btn));
   box.appendChild(btn);
 
   const note = document.createElement('div');
@@ -721,7 +729,7 @@ function buildPopupContent(site, circleLayer){
   return box;
 }
 
-async function runTerrainCompute(site, circleLayer, btn){
+async function runTerrainCompute(site, sourceLayer, btn){
   btn.disabled = true;
   btn.textContent = 'מחשב מול תבליט אמיתי…';
   const maxRangeMeters = parseInt(els.rangeSlider.value, 10);
@@ -739,12 +747,16 @@ async function runTerrainCompute(site, circleLayer, btn){
     const latlngs = ring.map(([lon,lat]) => [lat, lon]);
     const color = siteColor(site);
     const poly = L.polygon(latlngs, { renderer: canvasRenderer, color: color, weight: 1.5, fillColor: color, fillOpacity: .28 });
-    poly.on('click', () => poly.bindPopup(buildPopupContent(site, poly), { closeButton: true, maxWidth: 280 }).openPopup());
+    poly.on('click', () => poly.bindPopup(buildPopupContent(site, poly, true), { closeButton: true, maxWidth: 280 }).openPopup());
     bufferLayer.addLayer(poly);
-    if(circleLayer) bufferLayer.removeLayer(circleLayer);
+    // Open the new popup on the polygon BEFORE removing the old circle: Leaflet
+    // auto-closes a layer's bound popup when that layer is removed, so removing
+    // the circle first would silently close this popup (and drop the button's
+    // success text) before the user ever sees it.
+    poly.fire('click');
+    if(sourceLayer && sourceLayer !== poly) bufferLayer.removeLayer(sourceLayer);
     const entry = renderedLayers.get(site.id);
     if(entry) entry.polygon = poly;
-    btn.textContent = 'הושלם — באפר טופוגרפי מוצג ✓';
   } catch(err){
     btn.textContent = 'שגיאה בחישוב — מוצג טווח עגול בלבד';
     btn.disabled = false;
@@ -769,7 +781,7 @@ els.batchBtn.addEventListener('click', async () => {
         const latlngs = ring.map(([lon,lat]) => [lat, lon]);
         const color = siteColor(entry.site);
         const poly = L.polygon(latlngs, { renderer: canvasRenderer, color: color, weight: 1.5, fillColor: color, fillOpacity: .28 });
-        poly.on('click', () => poly.bindPopup(buildPopupContent(entry.site, poly), { closeButton: true, maxWidth: 280 }).openPopup());
+        poly.on('click', () => poly.bindPopup(buildPopupContent(entry.site, poly, true), { closeButton: true, maxWidth: 280 }).openPopup());
         bufferLayer.addLayer(poly);
         bufferLayer.removeLayer(entry.circle);
         entry.polygon = poly;
