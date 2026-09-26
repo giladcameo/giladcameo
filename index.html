@@ -64,6 +64,8 @@
     /* NAV */
     .site-nav {
       display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
       align-items: center;
       justify-content: space-between;
       padding: 22px 40px;
@@ -210,7 +212,7 @@
     .transit-divider svg { width: 100%; height: 14px; display: block; }
 
     /* SECTION */
-    .section { padding: 64px 0; border-top: 1px solid var(--line); }
+    .section { padding-top: 64px; padding-bottom: 64px; border-top: 1px solid var(--line); }
     .section-head {
       display: flex;
       align-items: baseline;
@@ -318,7 +320,8 @@
     .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
     @media (max-width: 760px) {
-      .row { grid-template-columns: 40px 1fr; }
+      .row { grid-template-columns: 40px minmax(0, 1fr); gap: 16px; }
+      .row-title, .row-desc { overflow-wrap: anywhere; }
       .thumb { display: none; }
       .row-num { font-size: 18px; }
       .row-title { font-size: 19px; }

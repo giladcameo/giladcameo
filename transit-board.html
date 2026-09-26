@@ -576,7 +576,20 @@ function bg(d) {
   const n = (d.line || '').toUpperCase();
   return LINE_COLORS[n] || PRODUCT_BG[d.product] || '#334466';
 }
-function fg(d) { return DARK_FG.has((d.line || '').toUpperCase()) ? '#000' : '#fff'; }
+/* Text colour for a badge: keep the traditional white/black choice, but switch
+   to whichever colour reaches WCAG AA contrast (4.5:1) if the default doesn't. */
+function lum(hex) {
+  const c = hex.replace('#', '').match(/../g).map(x => parseInt(x, 16) / 255)
+    .map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+function fg(d) {
+  const pref = DARK_FG.has((d.line || '').toUpperCase()) ? '#000000' : '#ffffff';
+  const alt  = pref === '#000000' ? '#ffffff' : '#000000';
+  const b = bg(d);
+  return contrast(pref, b) >= 4.5 ? pref : (contrast(alt, b) > contrast(pref, b) ? alt : pref);
+}
 
 /* ── Helpers ── */
 function etaMins(iso, now) {

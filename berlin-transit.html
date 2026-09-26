@@ -64,7 +64,7 @@
       border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;
       background:var(--surface);color:var(--muted);transition:all .15s;user-select:none;
       backdrop-filter:blur(8px)}
-    .fc.on{color:#000 !important;border-color:transparent}
+    .fc.on{border-color:transparent}
     .fc.off{text-decoration:line-through}
 
     /* SIDE PANEL — floating left */
@@ -140,6 +140,7 @@
     .panel-foot{flex-shrink:0;border-top:1px solid var(--border);padding:6px 12px 8px;
       font-size:10.5px;line-height:1.5;color:var(--muted)}
     .panel-foot a{color:var(--accent);display:inline-block;padding:2px 1px;min-height:24px;line-height:20px}
+    .panel-foot p a{display:inline;padding:0;min-height:0;line-height:inherit}
     .legal-footer{margin-top:2px}
 
     /* States */
@@ -159,7 +160,9 @@
     .leaflet-control-zoom a{background:var(--surface) !important;color:var(--text) !important;
       border-color:var(--border) !important}
     .leaflet-control-attribution{font-size:11px}
-    .leaflet-control-attribution a{color:#0a58ca}
+    .leaflet-container .leaflet-control-attribution{background:rgba(255,255,255,.92);color:#222}
+    .leaflet-control-attribution a{color:#0a3d91;text-decoration:underline}
+    .leaflet-top.leaflet-right{top:92px}
 
     /* Theme toggle button */
     .theme-btn{background:none;border:1px solid var(--border);color:var(--text);
@@ -224,6 +227,7 @@
       /* Debug badge + map attribution: keep above the bottom sheet so they stay visible */
       #debugBadge{bottom:calc(52% + 30px);right:8px}
       .leaflet-bottom{bottom:52%}
+      .leaflet-top.leaflet-right{top:92px}
       body[data-panel="collapsed"] .leaflet-bottom{bottom:56px}
       body[data-panel="collapsed"] #debugBadge{bottom:84px}
       body[data-panel="expanded"] .leaflet-bottom{bottom:85%}
@@ -272,7 +276,7 @@
     <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <label for="searchInput" class="sr-only">Station suchen</label>
     <input id="searchInput" type="search" placeholder="Station suchen…" autocomplete="off"
-      aria-controls="searchResults" aria-expanded="false"/>
+      aria-controls="searchResults"/>
     <button type="button" class="locate-btn" id="locateBtn" aria-label="Nächste Station zu meinem Standort finden">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" focusable="false">
         <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
@@ -542,7 +546,6 @@ const searchInput=document.getElementById('searchInput');
 const searchResults=document.getElementById('searchResults');
 function closeResults(){
   searchResults.classList.remove('open');
-  searchInput.setAttribute('aria-expanded','false');
 }
 searchInput.addEventListener('input',()=>{
   clearTimeout(searchTimer);
@@ -592,7 +595,6 @@ async function doSearch(q){
       announce('Keine Ergebnisse.');
     }
     searchResults.classList.add('open');
-    searchInput.setAttribute('aria-expanded','true');
   }catch{ announce('Suche fehlgeschlagen.'); }
 }
 
