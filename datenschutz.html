@@ -110,10 +110,10 @@
   </div>
 
   <div class="service">
-    <h3 id="transport-rest">4.2 transport.rest – Fahrplandaten Berlin/Brandenburg (VBB) und Deutsche Bahn</h3>
+    <h3 id="transport-rest">4.2 transport.rest – Fahrplandaten Berlin/Brandenburg (VBB)</h3>
     <dl>
       <dt>Anbieter</dt><dd>Open-Source-Projekt transport.rest (betrieben von Jannis Redmann), das die öffentlichen Fahrplanschnittstellen von VBB und Deutscher Bahn weiterleitet</dd>
-      <dt>Hosts</dt><dd>v6.vbb.transport.rest, v6.db.transport.rest</dd>
+      <dt>Hosts</dt><dd>v6.vbb.transport.rest</dd>
       <dt>Zweck</dt><dd>Haltestellensuche, Abfahrten, Fahrtverläufe und Fahrzeugpositionen in Echtzeit</dd>
       <dt>Daten</dt><dd>IP-Adresse, technische Browserdaten, Ihr eingegebener Suchbegriff (Haltestellenname), gewählte Haltestelle bzw. Fahrt; bei Nutzung von „Mein Standort“ (nur Berlin Transit) Ihre Koordinaten zur Suche nach nahen Haltestellen (siehe <a href="#standort">Abschnitt 5</a>)</dd>
       <dt>Drittland</dt><dd>keine Übermittlung in ein Drittland bekannt</dd>
@@ -179,12 +179,12 @@
   </div>
 
   <h2 id="standort">5. Standortermittlung (Geolocation)</h2>
-  <p>Die App „Berlin Transit“ bietet eine Schaltfläche, um die nächstgelegene Haltestelle zu finden. Nur wenn Sie diese Schaltfläche betätigen <em>und</em> die Standortabfrage in Ihrem Browser erlauben, wird Ihr Standort über die Geolocation-Schnittstelle Ihres Browsers ermittelt. Die Koordinaten werden zur Anzeige auf der Karte verwendet und an transport.rest (<a href="#transport-rest">Abschnitt 4.2</a>) übermittelt, um nahe Haltestellen zu finden. Sie werden von mir nicht gespeichert.</p>
+  <p>Die App „Berlin Transit“ bietet eine Schaltfläche, um die nächstgelegene Haltestelle zu finden. Nur wenn Sie diese Schaltfläche betätigen <em>und</em> die Standortabfrage in Ihrem Browser erlauben, wird Ihr Standort über die Geolocation-Schnittstelle Ihres Browsers ermittelt. Die Koordinaten werden zur Anzeige auf der Karte verwendet und auf etwa 100&nbsp;m gerundet an transport.rest (<a href="#transport-rest">Abschnitt 4.2</a>) übermittelt, um nahe Haltestellen zu finden; der genaue Standort verlässt Ihren Browser nicht. Sie werden von mir nicht gespeichert.</p>
   <p><strong>Rechtsgrundlage:</strong> Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO; § 25 Abs. 1 TDDDG für den Zugriff auf die Standortinformation Ihres Geräts). Sie können die Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen, indem Sie die Standortberechtigung für diese Website in Ihren Browsereinstellungen entziehen. Die Nutzung der App ist auch ohne Standortfreigabe möglich.</p>
 
   <h2 id="speicher">6. Speicherung auf Ihrem Gerät (Service Worker, Cache)</h2>
   <p>Diese Website verwendet <strong>keine Cookies</strong> und speichert keine Kennungen, mit denen Sie wiedererkannt werden könnten.</p>
-  <p>Einige Seiten registrieren einen <strong>Service Worker</strong> (sw.js). Er legt im Cache-Speicher Ihres Browsers lediglich das App-Symbol und die Web-App-Manifestdatei ab und sorgt dafür, dass die Seiten stets aktuell geladen werden und die Abfahrtsanzeige bei Verbindungsabbrüchen nicht fehlschlägt. Es werden dabei keine personenbezogenen Daten gespeichert oder an mich übermittelt. Diese Speicherung ist unbedingt erforderlich, um den von Ihnen ausdrücklich gewünschten Dienst (Website bzw. installierbare Web-App) bereitzustellen (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können den Speicher jederzeit über die Browsereinstellungen („Websitedaten löschen“) entfernen.</p>
+  <p>Einige Seiten registrieren einen <strong>Service Worker</strong> (sw.js). Er legt im Cache-Speicher Ihres Browsers lediglich öffentliche Dateien dieser Website ab (App-Symbol, Web-App-Manifest, Schriftarten und Programmbibliotheken), damit diese nicht bei jedem Aufruf neu geladen werden müssen. HTML-Seiten werden immer aktuell aus dem Netz geladen; Antworten externer Dienste (Karten, Fahrplandaten usw.) werden nicht zwischengespeichert. Es werden dabei keine personenbezogenen Daten gespeichert oder an mich übermittelt. Diese Speicherung ist unbedingt erforderlich, um den von Ihnen ausdrücklich gewünschten Dienst (Website bzw. installierbare Web-App) bereitzustellen (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können den Speicher jederzeit über die Browsereinstellungen („Websitedaten löschen“) entfernen.</p>
 
   <h2 id="links">7. Externe Links</h2>
   <p>Die Website enthält Links zu anderen Websites (z.&nbsp;B. GitHub). Erst wenn Sie einem solchen Link folgen, werden Daten an den jeweiligen Anbieter übertragen; es gilt dann dessen Datenschutzerklärung.</p>
@@ -251,7 +251,7 @@
         </thead>
         <tbody>
           <tr><th scope="row">Esri ArcGIS Online map tiles (server.arcgisonline.com) – Esri, Inc., Redlands, CA, USA</th><td>Berlin Transit, Comet Trails, NYC, Israel antennas, Shade Nav, Walkable</td><td>IP, user agent, requested tiles (reveal the map area viewed)</td><td>USA; EU–US Data Privacy Framework (Art. 45)</td><td><a href="https://www.esri.com/en-us/privacy/privacy-statements/privacy-statement" rel="noopener noreferrer">Esri</a></td></tr>
-          <tr><th scope="row">transport.rest (v6.vbb.transport.rest, v6.db.transport.rest) – open-source proxy for VBB / Deutsche Bahn timetable APIs</th><td>Berlin Transit, Comet Trails, Transit Board</td><td>IP, user agent, stop search text, selected stop/trip; with “locate me” (Berlin Transit only) your coordinates</td><td>No third-country transfer known</td><td><a href="https://transport.rest/" rel="noopener noreferrer">transport.rest</a>, <a href="https://www.vbb.de/datenschutz/" rel="noopener noreferrer">VBB</a></td></tr>
+          <tr><th scope="row">transport.rest (v6.vbb.transport.rest) – open-source proxy for the VBB timetable API</th><td>Berlin Transit, Comet Trails, Transit Board</td><td>IP, user agent, stop search text, selected stop/trip; with “locate me” (Berlin Transit only) your coordinates</td><td>No third-country transfer known</td><td><a href="https://transport.rest/" rel="noopener noreferrer">transport.rest</a>, <a href="https://www.vbb.de/datenschutz/" rel="noopener noreferrer">VBB</a></td></tr>
           <tr><th scope="row">MTA (api-endpoint.mta.info) and New York State Open Data (data.ny.gov)</th><td>NYC Line Numbers</td><td>IP, user agent; no input from you</td><td>USA; no adequacy decision/DPF; Art. 49(1)(b) GDPR – necessary for the feature you requested. Risk: US authorities may access data without equivalent legal remedies.</td><td><a href="https://new.mta.info/privacy-policy" rel="noopener noreferrer">MTA</a></td></tr>
           <tr><th scope="row">data.gov.il – Israeli government open data portal</th><td>Israel Cellular Antennas</td><td>IP, user agent; no input from you</td><td>Israel; EU adequacy decision (Art. 45)</td><td><a href="https://data.gov.il/" rel="noopener noreferrer">data.gov.il</a></td></tr>
           <tr><th scope="row">Open Topo Data (api.opentopodata.org) – public API by Andrew Nisbet</th><td>Israel Cellular Antennas</td><td>IP, user agent, coordinates of sample points around the antenna you selected (not your location)</td><td>Server location unknown; processing outside the EU possible</td><td><a href="https://www.opentopodata.org/" rel="noopener noreferrer">opentopodata.org</a></td></tr>
@@ -265,7 +265,7 @@
     <p>The “Berlin Transit” app offers a button to find the nearest station. Only if you press it <em>and</em> grant permission in your browser is your location determined via the browser’s Geolocation API. The coordinates are shown on the map and sent to transport.rest to look up nearby stops; I do not store them. Legal basis: your consent (Art. 6(1)(a) GDPR; § 25(1) TDDDG for accessing your device’s location). You can withdraw consent at any time by revoking the location permission in your browser settings. The app works without it.</p>
 
     <h3>6. Storage on your device</h3>
-    <p>No cookies and no identifiers are used. Some pages register a <strong>service worker</strong> (sw.js) that only stores the app icon and the web app manifest in your browser’s Cache Storage and keeps pages up to date / the departure board resilient to connection drops. No personal data is stored or sent to me. This storage is strictly necessary to provide the service you explicitly requested (§ 25(2) no. 2 TDDDG). You can delete it at any time via your browser’s site data settings.</p>
+    <p>No cookies and no identifiers are used. Some pages register a <strong>service worker</strong> (sw.js) that only stores this website’s own public files (app icon, web app manifest, fonts and script libraries) in your browser’s Cache Storage. HTML pages are always fetched fresh; responses from external services (maps, timetables etc.) are never cached. No personal data is stored or sent to me. This storage is strictly necessary to provide the service you explicitly requested (§ 25(2) no. 2 TDDDG). You can delete it at any time via your browser’s site data settings.</p>
 
     <h3>7. External links</h3>
     <p>Links to other websites (e.g. GitHub) only transmit data to that provider once you follow them; their privacy policy then applies.</p>

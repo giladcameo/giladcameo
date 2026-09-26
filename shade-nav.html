@@ -1257,12 +1257,6 @@ async function findRoute() {
 
 /* ── Register Service Worker ── */
 if ('serviceWorker' in navigator) {
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    location.reload();
-  });
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
