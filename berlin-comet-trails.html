@@ -215,7 +215,7 @@
     <div class="timeline">
       <label for="timeSlider">Timeline position</label>
       <input type="range" id="timeSlider" min="0" max="1000" value="500" step="1" disabled aria-describedby="timeSliderValue">
-      <output id="timeSliderValue" class="area-info" for="timeSlider"></output>
+      <span id="timeSliderValue" class="area-info"></span>
     </div>
     <p class="motion-note" id="motionNote" hidden>
       Your system asks for reduced motion, so the preview does not animate by itself. Use the timeline slider to step
@@ -328,13 +328,9 @@
   function applyCanvasSizing(){
     mainCanvas.width = CANVAS_W;
     mainCanvas.height = CANVAS_H;
-    if (CANVAS_W > MAX_DISPLAY_W){
-      mainCanvas.style.width = MAX_DISPLAY_W + "px";
-      mainCanvas.style.height = (CANVAS_H * MAX_DISPLAY_W / CANVAS_W) + "px";
-    } else {
-      mainCanvas.style.width = "";
-      mainCanvas.style.height = "";
-    }
+    // only the width is set; CSS (max-width:100%; height:auto) keeps the aspect ratio and lets it reflow on small screens
+    mainCanvas.style.width = CANVAS_W > MAX_DISPLAY_W ? MAX_DISPLAY_W + "px" : "";
+    mainCanvas.style.height = "";
     basemapCanvas.width = CANVAS_W;
     basemapCanvas.height = CANVAS_H;
     bctx.fillStyle = "#0a0e16";
@@ -404,6 +400,15 @@
   const videoBtn = document.getElementById("videoBtn");
   const loadFileBtn = document.getElementById("loadFileBtn");
   const fileInput = document.getElementById("fileInput");
+  const timeSlider = document.getElementById("timeSlider");
+  const timeSliderValue = document.getElementById("timeSliderValue");
+  const canvasDesc = document.getElementById("canvasDesc");
+  const dataTableWrap = document.getElementById("dataTableWrap");
+  const reduceMotionMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  function prefersReducedMotion(){ return !!(reduceMotionMq && reduceMotionMq.matches); }
+  function escHtml(v){
+    return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
 
 
   let groups = []; // [{ id, color, points: [{t, lat, lon}, ...] }]
@@ -620,9 +625,58 @@
     order.filter(m => modesPresent.has(m)).forEach(m => {
       const info = modeInfo(m);
       const span = document.createElement("span");
-      span.innerHTML = `<span class="dot" style="color:${info.color}"></span>${info.label}`;
+      span.setAttribute("role", "listitem");
+      span.innerHTML = `<span class="dot" aria-hidden="true" style="color:${info.color}"></span>${info.label}`;
       legendEl.appendChild(span);
     });
+    updateDataViews();
+  }
+
+  // ---------- text alternatives for the canvas ----------
+  const fmtBerlin = (t) => new Date(t).toLocaleString("en-GB", { timeZone: "Europe/Berlin" });
+
+  function updateDataViews(){
+    if (!groups.length){
+      canvasDesc.textContent = "Map of the selected area on a dark basemap. Once data is loaded, each vehicle is drawn as a glowing dot with a fading \"comet\" trail behind it, coloured by mode of transport (see legend). No data loaded yet.";
+      dataTableWrap.innerHTML = '<p class="sub">No data loaded yet.</p>';
+      timeSlider.disabled = true;
+      timeSlider.value = 500;
+      timeSlider.removeAttribute("aria-valuetext");
+      timeSliderValue.textContent = "";
+      return;
+    }
+    const counts = {};
+    for (const g of groups){ const l = modeInfo(g.mode).label; counts[l] = (counts[l] || 0) + 1; }
+    const parts = Object.entries(counts).map(([l, n]) => `${n} ${l}`).join(", ");
+    canvasDesc.textContent =
+      `Map of the area between latitude ${BBOX.minLat.toFixed(3)}–${BBOX.maxLat.toFixed(3)} and longitude ` +
+      `${BBOX.minLon.toFixed(3)}–${BBOX.maxLon.toFixed(3)} on a dark basemap, showing ${groups.length} vehicle trails ` +
+      `(${parts}) recorded between ${fmtBerlin(tMin)} and ${fmtBerlin(tMax)} (Berlin time). Each vehicle is a glowing dot ` +
+      `with a fading trail behind it, coloured by mode of transport; the current time is shown at the top of the image. ` +
+      `The same data is listed in the table below.`;
+
+    const rows = groups.slice().sort((a, b) => (a.mode || "").localeCompare(b.mode || "") || a.label.localeCompare(b.label));
+    const MAX_ROWS = 300;
+    dataTableWrap.innerHTML =
+      `<table class="data-table"><caption class="sr-only">Recorded vehicle trails</caption>
+        <thead><tr><th scope="col">Vehicle / trip</th><th scope="col">Mode</th><th scope="col">Positions</th>
+        <th scope="col">First seen</th><th scope="col">Last seen</th></tr></thead><tbody>` +
+      rows.slice(0, MAX_ROWS).map(g => `<tr><td>${escHtml(g.label)}</td><td>${escHtml(modeInfo(g.mode).label)}</td>` +
+        `<td>${g.points.length}</td><td>${escHtml(fmtBerlin(g.points[0].t))}</td>` +
+        `<td>${escHtml(fmtBerlin(g.points[g.points.length - 1].t))}</td></tr>`).join("") +
+      `</tbody></table>` +
+      (rows.length > MAX_ROWS ? `<p class="sub">Showing the first ${MAX_ROWS} of ${rows.length} vehicles.</p>` : "");
+
+    timeSlider.disabled = false;
+    syncSliderLabel();
+  }
+
+  function sliderFrac(){ return Number(timeSlider.value) / 1000; }
+  function syncSliderLabel(){
+    if (!groups.length) return;
+    const txt = berlinTimeFormatter.format(new Date(wrapT(Math.min(0.999, sliderFrac()))));
+    timeSlider.setAttribute("aria-valuetext", txt);
+    timeSliderValue.textContent = txt;
   }
 
   // ---------- rendering ----------
@@ -791,30 +845,50 @@
   }
 
   function renderStatic(){
-    drawFrame(groups.length ? wrapT(0.5) : (tMin || Date.now()));
+    drawFrame(groups.length ? wrapT(Math.min(0.999, sliderFrac())) : (tMin || Date.now()));
   }
 
   // ---------- preview playback ----------
   let playing = false;
   let rafId = null;
+  // Playback only ever starts on an explicit click and can be stopped at any time (WCAG 2.2.2).
+  function setPlayUi(){
+    playBtn.textContent = playing ? "Pause Preview" : "Play Preview";
+    playBtn.setAttribute("aria-pressed", playing ? "true" : "false");
+  }
   function togglePlay(){
     if (!groups.length) return;
     playing = !playing;
-    playBtn.textContent = playing ? "Stop Preview" : "Play Preview";
+    setPlayUi();
     if (playing) playLoop();
-    else if (rafId) cancelAnimationFrame(rafId);
+    else { if (rafId) cancelAnimationFrame(rafId); syncSliderLabel(); }
+  }
+  function stopPlayback(){
+    playing = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    setPlayUi();
   }
   function playLoop(){
     const DURATION_MS = 32000; // on-screen loop length, slowed down for a flowing feel
-    const start = performance.now();
+    const startFrac = sliderFrac() >= 0.999 ? 0 : sliderFrac();
+    const start = performance.now() - startFrac * DURATION_MS;
     function step(now){
       if (!playing) return;
       const loopFrac = ((now - start) % DURATION_MS) / DURATION_MS;
       drawFrame(wrapT(loopFrac));
+      timeSlider.value = Math.round(loopFrac * 1000);
       rafId = requestAnimationFrame(step);
     }
     rafId = requestAnimationFrame(step);
   }
+  timeSlider.addEventListener("input", () => {
+    if (playing) stopPlayback();
+    syncSliderLabel();
+    renderStatic();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && playing) stopPlayback();
+  });
 
   // ---------- video export ----------
   function pickVideoMimeType(){
@@ -834,7 +908,16 @@
     return null;
   }
 
+  let exporting = false;
+  let exportCancelled = false;
+  let cancelExport = null;
   async function exportVideo(){
+    if (exporting){
+      // second click = cancel the running export (stops the on-screen animation, WCAG 2.2.2)
+      exportCancelled = true;
+      if (cancelExport) cancelExport();
+      return;
+    }
     if (!groups.length) return;
 
     if (!mainCanvas.captureStream || !window.MediaRecorder){
@@ -847,14 +930,15 @@
       return;
     }
 
-    videoBtn.disabled = true;
-    playing = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    playBtn.textContent = "Play Preview";
+    exporting = true;
+    exportCancelled = false;
+    videoBtn.textContent = "Cancel Export";
+    stopPlayback();
+    playBtn.disabled = true;
 
     const seconds = parseFloat(document.getElementById("videoSeconds").value);
     const fps = 30;
-    setStatus(`Recording video: ${seconds} seconds, ${fps}fps...`);
+    setStatus(`Recording video: ${seconds} seconds, ${fps}fps... Press “Cancel Export” to stop.`);
 
     const stream = mainCanvas.captureStream(fps);
     const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
@@ -866,7 +950,11 @@
 
     const start = performance.now();
     let recording = true;
+    cancelExport = () => {
+      if (recording){ recording = false; try { recorder.stop(); } catch(e){} }
+    };
     function step(now){
+      if (!recording) return;
       const elapsed = now - start;
       const frac = Math.min(1, elapsed / (seconds * 1000));
       drawFrame(wrapT(frac));
@@ -889,11 +977,19 @@
 
     await stopped;
     clearTimeout(watchdog);
+    cancelExport = null;
+    exporting = false;
+    videoBtn.textContent = "Export Video (WebM)";
+    playBtn.disabled = false;
+    if (exportCancelled){
+      setStatus("Video export cancelled.", "warn");
+      renderStatic();
+      return;
+    }
 
     const blob = new Blob(chunks, { type: mimeType });
     if (blob.size === 0){
       setStatus("The recording came out empty. Try again, or check that the browser didn't block the recording.", "warn");
-      videoBtn.disabled = false;
       return;
     }
     const url = URL.createObjectURL(blob);
@@ -910,7 +1006,6 @@
     } else {
       setStatus(`This browser doesn't support recording directly to MP4, so the file came out as WebM instead (${sizeMB}MB). To get an actual MP4, you can convert this file (e.g. via ffmpeg or an online converter), or try a different browser (recent Safari supports MP4 directly).`, "warn");
     }
-    videoBtn.disabled = false;
     renderStatic();
   }
 
@@ -937,9 +1032,8 @@
     document.getElementById("videoResult").style.display = "none";
     playBtn.disabled = true;
     videoBtn.disabled = true;
-    playing = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    playBtn.textContent = "Play Preview";
+    stopPlayback();
+    updateDataViews();
 
     const tiles = (tileX1 - tileX0 + 1) * (tileY1 - tileY0 + 1);
     areaInfoEl.textContent = `Zoom ${ZOOM}${requestedZoom !== ZOOM ? ` (adjusted from ${Math.round(requestedZoom)} to keep a reasonable size)` : ""}, ${tiles} tiles, canvas ${CANVAS_W}x${CANVAS_H}`;
@@ -960,7 +1054,7 @@
     pickerMap.fitBounds([[BBOX.minLat, BBOX.minLon], [BBOX.maxLat, BBOX.maxLon]]);
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 19,
-      attribution: "Tiles &copy; Esri"
+      attribution: "Tiles &copy; Esri &mdash; Sources: Esri, HERE, Garmin, USGS, &copy; OpenStreetMap contributors, and the GIS User Community"
     }).addTo(pickerMap);
 
     useAreaBtn.addEventListener("click", () => {
@@ -992,6 +1086,13 @@
     fileInput.value = "";
   });
 
+  if (prefersReducedMotion()) document.getElementById("motionNote").hidden = false;
+  if (reduceMotionMq && reduceMotionMq.addEventListener){
+    reduceMotionMq.addEventListener("change", () => {
+      document.getElementById("motionNote").hidden = !prefersReducedMotion();
+      if (prefersReducedMotion() && playing) stopPlayback();
+    });
+  }
   initPickerMap();
   loadBasemap().then(() => {
     if (!basemapLoaded){
