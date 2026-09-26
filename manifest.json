@@ -1,20 +1,22 @@
 {
+  "id": "./transit-board.html",
   "name": "Berlin Transit Board",
   "short_name": "Berlin Transit",
   "description": "Live departure board for Berlin public transport (VBB)",
-  "start_url": "/giladcameo/",
+  "start_url": "./transit-board.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#001030",
   "theme_color": "#001640",
-  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon.png",
       "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["travel", "utilities"],
-  "lang": "en"
+  "lang": "en",
+  "dir": "ltr"
 }

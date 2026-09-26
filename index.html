@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="description" content="Portfolio of Gilad Cameo, urban planner and GIS analyst in Berlin: real-time transit maps, walkability tools and urban data apps." />
   <title>Gilad Cameo — Urban Planner &amp; GIS Analyst</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
   <style>
     :root {
       --bg: #faf9f6;
       --surface: #ffffff;
       --ink: #16161a;
       --ink-soft: #5c5c63;
-      --ink-faint: #8a8a90;
+      --ink-faint: #6b6b72; /* darkened from #8a8a90 for WCAG AA contrast (5:1) */
       --line: #dedcd3;
       --accent: #c8401d;
     }
@@ -33,18 +33,43 @@
       outline-offset: 3px;
     }
 
+    /* Skip link: first focusable element, visible on focus */
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -100px;
+      z-index: 100;
+      padding: 10px 16px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    .skip-link:focus { top: 12px; }
+    main:focus { outline: none; }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0);
+      white-space: nowrap; border: 0;
+    }
+
     .wrap { max-width: 1040px; margin: 0 auto; padding-left: 40px; padding-right: 40px; }
     @media (max-width: 680px) { .wrap { padding-left: 24px; padding-right: 24px; } }
 
     /* NAV */
-    nav {
+    .site-nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 22px 40px;
       border-bottom: 1px solid var(--line);
     }
-    @media (max-width: 680px) { nav { padding: 16px 24px; } }
+    @media (max-width: 680px) { .site-nav { padding: 16px 24px; } }
     .logo {
       font-size: 14px;
       font-weight: 700;
@@ -53,12 +78,12 @@
       white-space: nowrap;
     }
     @media (max-width: 480px) { .logo { font-size: 12px; letter-spacing: 1px; } }
-    nav ul {
+    .site-nav ul {
       list-style: none;
       display: flex;
       gap: 32px;
     }
-    @media (max-width: 480px) { nav ul { gap: 16px; } }
+    @media (max-width: 480px) { .site-nav ul { gap: 16px; } }
     nav a {
       text-decoration: none;
       font-size: 13px;
@@ -67,6 +92,9 @@
       text-transform: uppercase;
       color: var(--ink-soft);
       transition: color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
     }
     @media (max-width: 480px) { nav a { font-size: 11px; letter-spacing: 0.3px; } }
     nav a:hover { color: var(--accent); }
@@ -219,11 +247,14 @@
       transition: background 0.15s;
     }
     .rows .row:last-child { border-bottom: 1px solid var(--line); }
-    .row:hover { background: var(--surface); }
+    .row:hover, .row:focus-visible { background: var(--surface); }
     .row:hover .row-num,
     .row:hover .row-title,
-    .row:hover .row-arrow { color: var(--accent); }
-    .row:hover .thumb { border-color: var(--accent); }
+    .row:hover .row-arrow,
+    .row:focus-visible .row-num,
+    .row:focus-visible .row-title,
+    .row:focus-visible .row-arrow { color: var(--accent); }
+    .row:hover .thumb, .row:focus-visible .thumb { border-color: var(--accent); }
 
     .row-num {
       font-size: 22px;
@@ -327,7 +358,7 @@
       font-weight: 500;
     }
 
-    footer {
+    .site-footer {
       border-top: 1px solid var(--line);
       padding: 28px 40px;
       display: flex;
@@ -336,8 +367,8 @@
       flex-wrap: wrap;
       gap: 12px;
     }
-    @media (max-width: 680px) { footer { padding: 24px; } }
-    footer span {
+    @media (max-width: 680px) { .site-footer { padding: 24px; } }
+    .site-footer > span {
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -346,7 +377,10 @@
       color: var(--ink-faint);
     }
     footer .pin-ic { width: 11px; height: 11px; }
-    footer a {
+    .site-footer a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.5px;
@@ -354,20 +388,56 @@
       color: var(--ink-soft);
       text-decoration: none;
     }
-    footer a:hover { color: var(--accent); }
+    .site-footer a:hover { color: var(--accent); }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 20px;
+    }
+    .legal-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 8px;
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+
+    /* Reduced motion: no transitions or animations */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+
+    /* Windows high-contrast / forced colours: keep focus visible */
+    @media (forced-colors: active) {
+      a:focus-visible { outline: 2px solid LinkText; }
+    }
   </style>
 </head>
 <body>
 
-<nav aria-label="Main navigation">
-  <div class="logo">Gilad Cameo</div>
-  <ul>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#about">About</a></li>
-    <li><a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub</a></li>
-  </ul>
-</nav>
+<a class="skip-link" href="#main">Skip to content</a>
 
+<header>
+  <nav class="site-nav" aria-label="Main">
+    <div class="logo">Gilad Cameo</div>
+    <ul>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer">GitHub<span class="visually-hidden"> (opens in new tab)</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
 <div class="wrap hero">
   <div class="hero-meta">
     <span class="hero-index" aria-hidden="true">Portfolio &middot; 2026</span>
@@ -424,23 +494,23 @@
 
 <section class="wrap section" id="projects" aria-labelledby="projects-heading">
   <div class="section-head">
-    <span class="section-label" aria-hidden="true">Work &middot; 01&ndash;06</span>
+    <span class="section-label" aria-hidden="true">Work &middot; 01&ndash;07</span>
   </div>
   <h2 id="projects-heading">Selected Projects</h2>
   <div class="rows">
 
-    <a class="row" href="berlin-transit.html" aria-label="Berlin Transit Live — Open App">
+    <a class="row" href="berlin-transit.html" aria-labelledby="p-berlin-transit-t p-berlin-transit-a" aria-describedby="p-berlin-transit-d">
       <span class="row-num" aria-hidden="true">01</span>
       <div>
-        <h3 class="row-title">Berlin Transit Live</h3>
-        <p class="row-desc">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
+        <h3 class="row-title" id="p-berlin-transit-t">Berlin Transit Live</h3>
+        <p class="row-desc" id="p-berlin-transit-d">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
         <div class="row-tags">
           <span>Leaflet Map</span>
           <span>DB API</span>
           <span>U &middot; S &middot; Tram &middot; Bus</span>
           <span>10s Refresh</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-berlin-transit-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -456,18 +526,18 @@
       </div>
     </a>
 
-    <a class="row" href="transit-board.html" aria-label="Transit Board Near Me — Open App">
+    <a class="row" href="transit-board.html" aria-labelledby="p-transit-board-t p-transit-board-a" aria-describedby="p-transit-board-d">
       <span class="row-num" aria-hidden="true">02</span>
       <div>
-        <h3 class="row-title">Transit Board &middot; Near Me</h3>
-        <p class="row-desc">GPS-powered departure board that finds nearby transit stops anywhere in the world. Live real-time data, presented as a clean arrivals table.</p>
+        <h3 class="row-title" id="p-transit-board-t">Transit Board &middot; Near Me</h3>
+        <p class="row-desc" id="p-transit-board-d">Airport-style departure board for any Berlin &amp; Brandenburg station. Search a stop and get live real-time departures, presented as a clean arrivals table.</p>
         <div class="row-tags">
-          <span>GPS Location</span>
-          <span>DE &middot; AT &middot; CH &middot; IL</span>
+          <span>VBB API</span>
+          <span>Station Search</span>
           <span>30s Refresh</span>
-          <span>Multi-stop</span>
+          <span>Installable PWA</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-transit-board-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -484,18 +554,18 @@
       </div>
     </a>
 
-    <a class="row" href="walkable.html" aria-label="Walkable — Open App">
+    <a class="row" href="walkable.html" aria-labelledby="p-walkable-t p-walkable-a" aria-describedby="p-walkable-d">
       <span class="row-num" aria-hidden="true">03</span>
       <div>
-        <h3 class="row-title">Walkable</h3>
-        <p class="row-desc">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
+        <h3 class="row-title" id="p-walkable-t">Walkable</h3>
+        <p class="row-desc" id="p-walkable-d">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
         <div class="row-tags">
           <span>Overpass API</span>
           <span>Leaflet Map</span>
           <span>Isochrone</span>
           <span>OSM</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-walkable-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -512,18 +582,18 @@
       </div>
     </a>
 
-    <a class="row" href="shade-nav.html" aria-label="Shade Walk — Open App">
+    <a class="row" href="shade-nav.html" aria-labelledby="p-shade-nav-t p-shade-nav-a" aria-describedby="p-shade-nav-d">
       <span class="row-num" aria-hidden="true">04</span>
       <div>
-        <h3 class="row-title">Shade Walk</h3>
-        <p class="row-desc">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
+        <h3 class="row-title" id="p-shade-nav-t">Shade Walk</h3>
+        <p class="row-desc" id="p-shade-nav-d">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
         <div class="row-tags">
           <span>OSRM Foot</span>
           <span>Overpass Trees</span>
           <span>Shade Scoring</span>
           <span>Leaflet Map</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-shade-nav-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -541,18 +611,18 @@
       </div>
     </a>
 
-    <a class="row" href="berlin-comet-trails.html" aria-label="Berlin Comet Trails — Open App">
+    <a class="row" href="berlin-comet-trails.html" aria-labelledby="p-comet-t p-comet-a" aria-describedby="p-comet-d">
       <span class="row-num" aria-hidden="true">05</span>
       <div>
-        <h3 class="row-title">Berlin Comet Trails</h3>
-        <p class="row-desc">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
+        <h3 class="row-title" id="p-comet-t">Berlin Comet Trails</h3>
+        <p class="row-desc" id="p-comet-d">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
         <div class="row-tags">
           <span>VBB API</span>
           <span>Canvas Animation</span>
           <span>Video Export</span>
           <span>Leaflet Picker</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-comet-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -566,18 +636,18 @@
       </div>
     </a>
 
-    <a class="row" href="nyc-line-numbers.html" aria-label="NYC Line Numbers — Open App">
+    <a class="row" href="nyc-line-numbers.html" aria-labelledby="p-nyc-t p-nyc-a" aria-describedby="p-nyc-d">
       <span class="row-num" aria-hidden="true">06</span>
       <div>
-        <h3 class="row-title">NYC Line Numbers</h3>
-        <p class="row-desc">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
+        <h3 class="row-title" id="p-nyc-t">NYC Line Numbers</h3>
+        <p class="row-desc" id="p-nyc-d">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
         <div class="row-tags">
           <span>MTA GTFS-Realtime</span>
           <span>Canvas Animation</span>
           <span>Video Export</span>
           <span>Leaflet Picker</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-nyc-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -594,17 +664,17 @@
       </div>
     </a>
 
-    <a class="row" href="israel-cellular-antennas.html" aria-label="Israel Cellular Antenna Map — Open App">
+    <a class="row" href="israel-cellular-antennas.html" aria-labelledby="p-antennas-t p-antennas-a" aria-describedby="p-antennas-d">
       <span class="row-num" aria-hidden="true">07</span>
       <div>
-        <h3 class="row-title">Israel Cellular Antenna Map</h3>
-        <p class="row-desc">Maps every cellular antenna site in Israel from official government open data, shaping each coverage buffer against real terrain line-of-sight (SRTM) and coloring it by the radiation reading actually published for that site.</p>
+        <h3 class="row-title" id="p-antennas-t">Israel Cellular Antenna Map</h3>
+        <p class="row-desc" id="p-antennas-d">Maps every cellular antenna site in Israel from official government open data, shaping each coverage buffer against real terrain line-of-sight (SRTM) and coloring it by the radiation reading actually published for that site.</p>
         <div class="row-tags">
           <span>data.gov.il</span>
           <span>Terrain Line-of-Sight</span>
           <span>Leaflet Map</span>
         </div>
-        <span class="row-arrow">Open App &rarr;</span>
+        <span class="row-arrow" id="p-antennas-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
       <div class="thumb" aria-hidden="true">
         <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -653,12 +723,19 @@
   </div>
 </section>
 
-<footer>
+</main>
+
+<footer class="site-footer legal-footer" role="contentinfo">
   <span>
     <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
     Gilad Cameo &middot; Berlin &middot; 2026
   </span>
-  <a href="https://github.com/giladcameo" target="_blank" aria-label="Gilad Cameo on GitHub (opens in new tab)">GitHub Profile</a>
+  <div class="footer-links">
+    <nav class="legal-nav" aria-label="Rechtliches / Legal">
+      <a href="impressum.html" lang="de">Impressum</a> <span aria-hidden="true">&middot;</span> <a href="datenschutz.html" lang="de">Datenschutz</a> <span aria-hidden="true">&middot;</span> <a href="barrierefreiheit.html" lang="de">Barrierefreiheit</a>
+    </nav>
+    <a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer">GitHub Profile<span class="visually-hidden"> (opens in new tab)</span></a>
+  </div>
 </footer>
 
 <script>

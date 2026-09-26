@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <title>Berlin Transit Board</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin"/>
+  <meta name="description" content="Live departure board for any Berlin &amp; Brandenburg (VBB) public transport station."/>
+  <title>Berlin Transit Board — Live Departures</title>
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#001640"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -19,7 +21,7 @@
   --next:     #0057b5;
   --sep:      rgba(255,255,255,0.1);
   --text:     #ffffff;
-  --sub:      rgba(255,255,255,0.5);
+  --sub:      rgba(255,255,255,0.62);
   --green:    #5cff7a;
   --red:      #ff5252;
   --yellow:   #ffcc44;
@@ -53,19 +55,21 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
   color: #fff; font-family: var(--font); font-size: 14px;
   outline: none; transition: border-color .15s, background .15s;
 }
-.search-wrap input::placeholder { color: rgba(255,255,255,.3); }
+.search-wrap input::placeholder { color: rgba(255,255,255,.62); }
 .search-wrap input:focus { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.15); }
 .s-icon {
   position: absolute; left: 10px; pointer-events: none;
   color: rgba(255,255,255,.35); width: 16px; height: 16px;
 }
 .s-clear {
-  position: absolute; right: 8px;
-  background: none; border: none; color: rgba(255,255,255,.4);
+  position: absolute; right: 4px;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 28px; min-height: 28px;
+  background: none; border: none; border-radius: 4px; color: rgba(255,255,255,.75);
   font-size: 15px; line-height: 1; cursor: pointer; padding: 2px 4px;
-  opacity: 0; pointer-events: none; transition: opacity .15s;
+  opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s;
 }
-.s-clear.on { opacity: 1; pointer-events: auto; }
+.s-clear.on { opacity: 1; visibility: visible; }
 
 /* Dropdown */
 .dropdown {
@@ -87,7 +91,8 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
   transition: background .1s;
 }
 .d-row:last-child { border-bottom: none; }
-.d-row:hover { background: rgba(255,255,255,.09); }
+.d-row:hover, .d-row.active { background: rgba(255,255,255,.14); }
+.d-row.active { outline: 2px solid #fff; outline-offset: -2px; }
 .d-name { flex: 1; font-size: 14px; }
 .d-tag {
   font-size: 10px; color: rgba(255,255,255,.4);
@@ -133,10 +138,13 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 .dep-next .badge   { width: 54px; height: 54px; font-size: 15px; border-radius: 6px; flex-shrink: 0; }
 .dep-next .d-info  { flex: 1; min-width: 0; }
 .dep-next .d-dest  { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dep-next .d-time  { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 4px; }
+.dep-next .d-time  { font-size: 12px; color: rgba(255,255,255,.92); margin-top: 4px; }
 .dep-next .d-eta   { flex-shrink: 0; text-align: right; }
 .dep-next .eta-num { font-size: 32px; font-weight: 700; line-height: 1; }
-.dep-next .eta-lbl { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 2px; }
+.dep-next .eta-lbl { font-size: 11px; color: rgba(255,255,255,.92); margin-top: 2px; }
+/* colours on the bright "next" row need higher contrast than on the dark board */
+.dep-next .eta-now, .dep-next .d-delay.late { color: #fff; }
+.dep-next .d-delay.late { font-weight: 700; }
 
 /* Regular rows */
 .dep-row {
@@ -160,7 +168,8 @@ body { height: 100%; height: 100dvh; background: var(--bg); color: var(--text); 
 .d-delay.late { color: var(--red); }
 .d-delay.ok   { color: var(--green); }
 
-.eta-now  { color: var(--red); animation: blink 1s infinite; }
+/* blink only a few times (WCAG 2.2.2: no automatic blinking longer than 5 s) */
+.eta-now  { color: var(--red); animation: blink 1s 4; }
 .eta-soon { color: var(--yellow); }
 @keyframes blink { 50% { opacity: .2; } }
 
@@ -188,41 +197,91 @@ footer {
   font-size: 10px; color: var(--sub);
 }
 footer span:first-child { flex: 1; }
+footer .ftr-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+footer { flex-direction: column; align-items: stretch; gap: 0; padding-top: 2px; }
+.legal-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; font-size: 11px; }
+.legal-nav a { color: rgba(255,255,255,.85); display: inline-flex; align-items: center; min-height: 24px; }
+.legal-nav a:hover { color: #fff; }
+
+.privacy-note { font-size: 11px; line-height: 1.6; max-width: 360px; color: var(--sub); }
+.privacy-note a { color: rgba(255,255,255,.9); }
+
+/* ══ ACCESSIBILITY HELPERS ══ */
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 12px; top: -100px; z-index: 1000;
+  padding: 8px 14px; background: #fff; color: #001030; font-weight: 700;
+  border-radius: 4px; text-decoration: none;
+}
+.skip-link:focus { top: 8px; }
+a:focus-visible, button:focus-visible, input:focus-visible, .b-scroll:focus-visible {
+  outline: 2px solid #ffcc44; outline-offset: 2px;
+}
+.b-scroll:focus-visible { outline-offset: -2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .spinner { border-top-color: rgba(255,255,255,.6); }
+}
   </style>
 </head>
 <body>
 
+<a class="skip-link" href="#board-region">Skip to departures</a>
+
 <div id="main">
 
   <!-- HEADER -->
-  <div class="b-header">
-    <div class="search-wrap">
-      <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+  <header class="b-header">
+    <h1 class="visually-hidden">Berlin Transit Board — live departures</h1>
+    <div class="search-wrap" role="search">
+      <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false">
         <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
       </svg>
-      <input id="searchInput" type="text" placeholder="Search station…" autocomplete="off" spellcheck="false"/>
-      <button class="s-clear" id="clearBtn" title="Clear">✕</button>
+      <label for="searchInput" class="visually-hidden">Search a Berlin or Brandenburg station</label>
+      <input id="searchInput" type="text" placeholder="Search station…" autocomplete="off" spellcheck="false"
+        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dropdown"
+        aria-describedby="searchHint"/>
+      <span id="searchHint" class="visually-hidden">Type at least 2 characters, then use the arrow keys to choose a station and press Enter.</span>
+      <button type="button" class="s-clear" id="clearBtn" aria-label="Clear search"><span aria-hidden="true">✕</span></button>
     </div>
-    <div class="bh-clock" id="clock">--:--</div>
+    <div class="bh-clock" id="clock" aria-hidden="true">--:--</div>
     <!-- Dropdown anchors to header -->
-    <div class="dropdown" id="dropdown"></div>
-  </div>
+    <div class="dropdown" id="dropdown" role="listbox" aria-label="Matching stations"></div>
+  </header>
 
-  <!-- COLUMN LABELS -->
-  <div class="col-labels">
-    <span>Line</span><span>Destination</span><span>ETA</span>
-  </div>
+  <!-- Screen-reader announcements (search results, loading, errors) -->
+  <div id="announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- BOARD -->
-  <div class="b-scroll">
-    <div id="board">
-      <div class="state">🔍<br>Search for a Berlin station<br>to see live departures</div>
+  <main class="b-scroll" id="board-region" tabindex="-1" aria-labelledby="boardTitle">
+    <h2 id="boardTitle" class="visually-hidden">Departures</h2>
+    <!-- COLUMN LABELS (visual only; each row carries its own text for screen readers) -->
+    <div class="col-labels" aria-hidden="true">
+      <span>Line</span><span>Destination</span><span>ETA</span>
     </div>
-  </div>
+    <div id="board">
+      <div class="state">
+        <span aria-hidden="true">🔍</span>
+        <span>Search for a Berlin station<br>to see live departures</span>
+        <p class="privacy-note" id="privacyNote">Station search and departures are loaded from the public
+          VBB API at v6.vbb.transport.rest. Your IP address is transmitted to this service when you search.
+          More: <a href="datenschutz.html" lang="de">Datenschutz</a></p>
+      </div>
+    </div>
+  </main>
 
-  <footer>
-    <span id="ftrApi">—</span>
-    <span id="ftrTime">—</span>
+  <footer class="legal-footer" role="contentinfo">
+    <div class="ftr-row">
+      <span id="ftrApi">Data: VBB via v6.vbb.transport.rest</span>
+      <span id="ftrTime"></span>
+    </div>
+    <nav class="legal-nav" aria-label="Rechtliches / Legal">
+      <a href="impressum.html" lang="de">Impressum</a> <span aria-hidden="true">·</span> <a href="datenschutz.html" lang="de">Datenschutz</a> <span aria-hidden="true">·</span> <a href="barrierefreiheit.html" lang="de">Barrierefreiheit</a>
+      <span aria-hidden="true">·</span> <a href="./">Portfolio</a>
+    </nav>
   </footer>
 
 </div>

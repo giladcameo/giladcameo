@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>מפת אנטנות סלולריות בישראל — עוצמה וטופוגרפיה</title>
 <meta name="description" content="מפה אינטראקטיבית של אתרי אנטנות סלולריות בישראל (נתוני data.gov.il), עם באפרים המוגבלים על ידי קו-ראייה טופוגרפי אמיתי (SRTM) וצביעה לפי נתוני הקרינה שפורסמו בפועל לכל אתר." />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<meta name="referrer" content="no-referrer" />
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
 <style>
   :root{
     --bg: #05070c;
@@ -18,6 +19,8 @@
     --warn: #ffb454;
     --ok: #7cf29a;
     --bad: #ff6b6b;
+    --control-border: #6a7791; /* >=3:1 against the panel (WCAG 1.4.11) */
+    --focus: #ffd23f;
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; height:100%; background:var(--bg); color:var(--ink);
@@ -30,7 +33,7 @@
     background: linear-gradient(135deg, #0c1018 0%, #05070c 100%);
     display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
   }
-  header a.back{ color: var(--ink-dim); text-decoration:none; font-size:13px; white-space:nowrap; }
+  header a.back{ color: var(--ink-dim); text-decoration:none; font-size:13px; white-space:nowrap; display:inline-block; padding:4px 2px; }
   header a.back:hover{ color: var(--accent); }
   header h1{ font-size:17px; margin:0; font-weight:700; }
   header h1 span{ color: var(--accent); }
@@ -45,9 +48,10 @@
   #panel h2:first-child{ margin-top:0; }
   .field-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
   .field-row label{ flex:1; color:var(--ink); cursor:pointer; }
-  .field-row input[type=checkbox]{ accent-color: var(--accent); width:15px; height:15px; }
+  .field-row{ min-height:24px; }
+  .field-row input[type=checkbox]{ accent-color: var(--accent); width:18px; height:18px; margin:0; flex:none; }
   input[type=text], input[type=number], select{
-    width:100%; background:#161c28; border:1px solid var(--panel-border); color:var(--ink);
+    width:100%; background:#161c28; border:1px solid var(--control-border); color:var(--ink);
     border-radius:6px; padding:6px 8px; font-size:13px;
   }
   input[type=range]{ width:100%; accent-color: var(--accent); }
@@ -58,7 +62,7 @@
     padding:8px 10px; font-size:12.5px; font-weight:700; cursor:pointer; width:100%;
   }
   button:disabled{ opacity:.45; cursor:default; }
-  button.secondary{ background:#161c28; color:var(--ink); border:1px solid var(--panel-border); }
+  button.secondary{ background:#161c28; color:var(--ink); border:1px solid var(--control-border); }
   .legend-bar{ height:10px; border-radius:5px;
     background: linear-gradient(90deg, #2fbf71, #b6d94c, #ffd23f, #ff8c42, #e6383e);
     margin: 6px 0 2px; }
@@ -67,10 +71,41 @@
   .stat-line{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-dim); padding:2px 0; }
   .stat-line b{ color: var(--ink); font-weight:600; }
   #panelToggle{ display:none; }
+  #panel h2 label{ cursor:pointer; }
+  #panel a{ color:var(--accent); text-decoration:underline; }
+  .group{ border:0; margin:0; padding:0; min-width:0; }
+
+  /* ---- accessibility helpers ---- */
+  .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  .skip-link{ position:absolute; top:-100px; right:8px; z-index:3000; background:var(--accent); color:#05070c;
+    padding:8px 14px; border-radius:6px; font-weight:700; text-decoration:none; }
+  .skip-link:focus{ top:8px; }
+  #main:focus{ outline:none; }
+  :focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+  .leaflet-container:focus-visible{ outline:3px solid var(--focus); outline-offset:-3px; }
+  .leaflet-control a:focus-visible, .leaflet-popup :focus-visible{ outline:3px solid #0b4fa0; outline-offset:1px; }
+
+  /* ---- site list (non-map alternative) ---- */
+  #siteList{ list-style:none; margin:6px 0 0; padding:0; }
+  #siteList li{ margin:0 0 4px; }
+  #siteList button{ width:100%; text-align:start; font-weight:400; background:#161c28; color:var(--ink);
+    border:1px solid var(--control-border); padding:6px 8px; line-height:1.45; display:flex; gap:8px; align-items:flex-start; }
+  #siteList button:hover{ border-color:var(--accent); }
+  #siteList .legend-swatch{ margin-top:4px; flex:none; }
+
+  /* ---- legal footer ---- */
+  .legal-footer{ border-top:1px solid var(--panel-border); background:var(--panel); font-size:12px;
+    padding:2px 14px; color:var(--ink-dim); text-align:center; }
+  .legal-footer a{ color:var(--ink); display:inline-block; padding:4px 4px; min-height:24px; }
+  .legal-footer a:hover{ color:var(--accent); }
 
   #mapWrap{ flex:1; position:relative; min-width:0; }
   #map{ position:absolute; inset:0; background:#0c1018; }
-  .leaflet-container{ background:#0c1018; font-family:'Segoe UI', Arial, sans-serif; }
+  .leaflet-container{ background:#0c1018; font-family:'Segoe UI', Arial, sans-serif; direction:ltr; }
+  /* Leaflet is LTR internally; render popup text right-to-left, keep the (English) attribution LTR */
+  .leaflet-popup-content{ direction:rtl; text-align:right; }
+  .leaflet-control-attribution{ direction:ltr; }
 
   #loadingOverlay{
     position:absolute; inset:0; background:rgba(5,7,12,.92); z-index:1000;
@@ -108,9 +143,21 @@
     #panel.open{ display:block; }
     #mapWrap{ order:1; min-height:40vh; }
   }
+  /* Reflow (WCAG 1.4.10): on narrow or very short viewports let the page scroll instead of clipping */
+  @media (max-width: 860px){
+    html,body{ height:auto; }
+    body{ min-height:100vh; height:auto; overflow:auto; }
+    .layout{ flex:none; }
+    #mapWrap{ flex:none; height:60vh; min-height:240px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ transition:none !important; animation:none !important; scroll-behavior:auto !important; }
+  }
 </style>
 </head>
 <body>
+
+<a class="skip-link" href="#main">דלגו לתוכן הראשי</a>
 
 <header>
   <div>
@@ -118,56 +165,58 @@
     <div class="sub">נתוני אתרים אמיתיים מ-data.gov.il · באפר מוגבל לפי קו-ראייה טופוגרפי אמיתי (SRTM) · צביעה לפי נתוני קרינה שפורסמו בפועל</div>
   </div>
   <div style="display:flex; align-items:center; gap:10px;">
-    <button id="panelToggle">הגדרות וסינון ⚙</button>
-    <a class="back" href="index.html">← חזרה לאתר</a>
+    <button type="button" id="panelToggle" aria-controls="panel" aria-expanded="false">הגדרות וסינון <span aria-hidden="true">⚙</span></button>
+    <a class="back" href="index.html"><span aria-hidden="true">← </span>חזרה לאתר</a>
   </div>
 </header>
 
-<div class="layout">
+<main id="main" class="layout" tabindex="-1">
 
-  <aside id="panel">
+  <aside id="panel" aria-label="הגדרות, סינון ורשימת אתרים">
 
-    <h2>שכבות</h2>
-    <div class="field-row"><input type="checkbox" id="layerActive" checked><label for="layerActive">אנטנות פעילות</label></div>
-    <div class="field-row"><input type="checkbox" id="layerPlanned"><label for="layerPlanned">אנטנות בהקמה / מתוכננות</label></div>
-
-    <h2>דור טכנולוגיה</h2>
-    <div id="genFilters">
-      <div class="field-row"><input type="checkbox" class="gen-cb" value="2G" checked><label>2G</label></div>
-      <div class="field-row"><input type="checkbox" class="gen-cb" value="3G" checked><label>3G</label></div>
-      <div class="field-row"><input type="checkbox" class="gen-cb" value="4G" checked><label>4G</label></div>
-      <div class="field-row"><input type="checkbox" class="gen-cb" value="5G" checked><label>5G</label></div>
-      <div class="field-row"><input type="checkbox" class="gen-cb" value="unknown" checked><label>לא ידוע / אחר</label></div>
+    <h2 id="hLayers">שכבות</h2>
+    <div class="group" role="group" aria-labelledby="hLayers">
+      <div class="field-row"><input type="checkbox" id="layerActive" checked><label for="layerActive">אנטנות פעילות</label></div>
+      <div class="field-row"><input type="checkbox" id="layerPlanned"><label for="layerPlanned">אנטנות בהקמה / מתוכננות</label></div>
     </div>
 
-    <h2>חברה מפעילה</h2>
+    <h2 id="hGen">דור טכנולוגיה</h2>
+    <div id="genFilters" class="group" role="group" aria-labelledby="hGen">
+      <div class="field-row"><input type="checkbox" class="gen-cb" id="gen2G" value="2G" checked><label for="gen2G">2G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" id="gen3G" value="3G" checked><label for="gen3G">3G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" id="gen4G" value="4G" checked><label for="gen4G">4G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" id="gen5G" value="5G" checked><label for="gen5G">5G</label></div>
+      <div class="field-row"><input type="checkbox" class="gen-cb" id="genUnknown" value="unknown" checked><label for="genUnknown">לא ידוע / אחר</label></div>
+    </div>
+
+    <h2><label for="operatorFilter">חברה מפעילה</label></h2>
     <select id="operatorFilter"><option value="">הכל</option></select>
 
-    <h2>חיפוש עיר / כתובת</h2>
-    <input type="text" id="searchBox" placeholder="לדוגמה: תל אביב, דיזנגוף...">
+    <h2><label for="searchBox">חיפוש עיר / כתובת</label></h2>
+    <input type="text" id="searchBox" placeholder="לדוגמה: תל אביב, דיזנגוף..." autocomplete="off">
 
     <h2>פרמטרי מודל הבאפר</h2>
     <div class="field-row" style="display:block;">
-      <label style="display:flex; justify-content:space-between;">טווח חיפוש מרבי לבאפר <span class="range-val" id="rangeVal">1200 מ׳</span></label>
-      <input type="range" id="rangeSlider" min="300" max="5000" step="100" value="1200">
-      <div class="hint">זהו פרמטר תצוגה שניתן לכוונון — לא נתון שפורסם לכל אתר. הוא קובע עד כמה רחוק בודקים קו-ראייה טופוגרפי, לא "עוצמת שידור" בפועל (זו אינה מתפרסמת ברמת אתר בודד).</div>
+      <label for="rangeSlider" style="display:flex; justify-content:space-between;">טווח חיפוש מרבי לבאפר <span class="range-val" id="rangeVal" aria-hidden="true">1200 מ׳</span></label>
+      <input type="range" id="rangeSlider" min="300" max="5000" step="100" value="1200" aria-valuetext="1200 מטר" aria-describedby="rangeHint">
+      <div class="hint" id="rangeHint">זהו פרמטר תצוגה שניתן לכוונון — לא נתון שפורסם לכל אתר. הוא קובע עד כמה רחוק בודקים קו-ראייה טופוגרפי, לא "עוצמת שידור" בפועל (זו אינה מתפרסמת ברמת אתר בודד).</div>
     </div>
     <div class="field-row" style="display:block; margin-top:10px;">
-      <label style="display:flex; justify-content:space-between;">גובה תורן מונח <span class="range-val" id="heightVal">27 מ׳</span></label>
-      <input type="range" id="heightSlider" min="10" max="60" step="1" value="27">
-      <div class="hint">גובה האנטנה מעל הקרקע אינו מתפרסם בנתוני הממשלה — זהו פרמטר גלוי לכוונון (טיפוסי לתורן/גג בישראל: כ-25–30 מ׳), לא ערך אמיתי לכל אתר.</div>
+      <label for="heightSlider" style="display:flex; justify-content:space-between;">גובה תורן מונח <span class="range-val" id="heightVal" aria-hidden="true">27 מ׳</span></label>
+      <input type="range" id="heightSlider" min="10" max="60" step="1" value="27" aria-valuetext="27 מטר" aria-describedby="heightHint">
+      <div class="hint" id="heightHint">גובה האנטנה מעל הקרקע אינו מתפרסם בנתוני הממשלה — זהו פרמטר גלוי לכוונון (טיפוסי לתורן/גג בישראל: כ-25–30 מ׳), לא ערך אמיתי לכל אתר.</div>
     </div>
 
     <h2>באפר טופוגרפי מדויק</h2>
-    <button id="batchTerrainBtn" class="secondary">חשב באפר טופוגרפי לכל האתרים בתצוגה</button>
-    <div class="hint">משתמש ב-API פתוח לנתוני גובה (Open-Topo-Data / SRTM). מוגבל בקצב — יכול לקחת כמה שניות לכל אתר. מומלץ על תצוגה ממוקדת (עד כ-30 אתרים).</div>
-    <div id="batchProgress"></div>
+    <button type="button" id="batchTerrainBtn" class="secondary" aria-describedby="batchHint">חשב באפר טופוגרפי לכל האתרים בתצוגה</button>
+    <div class="hint" id="batchHint">משתמש ב-API פתוח לנתוני גובה (Open-Topo-Data / SRTM). מוגבל בקצב — יכול לקחת כמה שניות לכל אתר. מומלץ על תצוגה ממוקדת (עד כ-30 אתרים).</div>
+    <div id="batchProgress" role="status" aria-live="polite"></div>
 
     <h2>מקרא — עוצמת קרינה מדווחת</h2>
-    <div class="legend-bar"></div>
+    <div class="legend-bar" aria-hidden="true"></div>
     <div class="legend-labels"><span>נמוך</span><span>גבוה יחסית לסף הבריאות</span></div>
     <div class="hint" style="margin-top:8px;">
-      <span class="legend-swatch" style="background:#6b7280;"></span>ללא נתון קרינה מדווח / פטור מהיתר קרינה
+      <span class="legend-swatch" style="background:#6b7280;" aria-hidden="true"></span>ללא נתון קרינה מדווח / פטור מהיתר קרינה
     </div>
     <div class="hint" style="margin-top:6px;">
       הצבע מבוסס על "תוצאה מירבית באחוזים מסף הבריאות" (או, בהיעדרה, אחוזון עוצמת ההקרנה בין אתרים מאותו דור) — נתון אמיתי שפורסם על ידי המשרד להגנת הסביבה עבור כל אתר. <b>צורת הבאפר</b> (הרדיוס בפועל) נקבעת לפי חסימת קו-ראייה טופוגרפית אמיתית, לא לפי עוצמת השידור — כי תדר והספק שידור (ERP) אינם מתפרסמים ברמת אתר בודד.
@@ -178,27 +227,43 @@
     <div class="stat-line"><span>סה״כ אתרים בהקמה שנטענו</span><b id="statPlanned">–</b></div>
     <div class="stat-line"><span>מוצגים בתצוגה הנוכחית</span><b id="statVisible">–</b></div>
 
+    <h2 id="hSiteList">אתרים בתצוגה הנוכחית</h2>
+    <p class="hint" id="siteListHint">רשימה נגישה (חלופה טקסטואלית למפה) של האתרים המוצגים כעת במפה, לפי הסינון. בחירה באתר פותחת את חלון המידע שלו במפה; מקש Escape סוגר אותו.</p>
+    <p class="hint" id="siteListStatus" role="status" aria-live="polite"></p>
+    <ul id="siteList" aria-labelledby="hSiteList"></ul>
+
     <h2>מקורות ומגבלות</h2>
     <div class="hint">
-      נתוני מיקום ואתרים: <a href="https://data.gov.il/dataset/antennaactive" target="_blank" rel="noopener" style="color:var(--accent);">data.gov.il — אנטנות סלולריות פעילות</a> ו<a href="https://data.gov.il/dataset/antenna_hakama" target="_blank" rel="noopener" style="color:var(--accent);">בהקמה</a>, המשרד להגנת הסביבה. נתוני גובה קרקע: Open-Topo-Data (SRTM 30מ׳). מודל קו-הראייה מניח תורן בודד לא-ממוגזר, ללא בינוי/צמחייה, ללא עקיפה (diffraction) מעבר לקו ראייה חסום — זוהי הדמיה חינוכית להתמצאות, <b>לא</b> כלי תכנון RF מוסמך ולא תחליף לבדיקת קרינה רשמית.
+      נתוני מיקום ואתרים: <a href="https://data.gov.il/dataset/antennaactive" target="_blank" rel="noopener noreferrer">data.gov.il — אנטנות סלולריות פעילות<span class="sr-only"> (נפתח בכרטיסייה חדשה)</span></a> ו<a href="https://data.gov.il/dataset/antenna_hakama" target="_blank" rel="noopener noreferrer">בהקמה<span class="sr-only"> (נפתח בכרטיסייה חדשה)</span></a>, המשרד להגנת הסביבה. נתוני גובה קרקע: Open-Topo-Data (SRTM 30מ׳). מודל קו-הראייה מניח תורן בודד לא-ממוגזר, ללא בינוי/צמחייה, ללא עקיפה (diffraction) מעבר לקו ראייה חסום — זוהי הדמיה חינוכית להתמצאות, <b>לא</b> כלי תכנון RF מוסמך ולא תחליף לבדיקת קרינה רשמית.
+    </div>
+
+    <h2 id="hPrivacy">פרטיות</h2>
+    <div class="hint" id="privacyNotice">
+      מפה זו טוענת תוכן משירותים חיצוניים: אריחי מפה מ-Esri (server.arcgisonline.com) ונתוני אנטנות מ-data.gov.il — מיד עם טעינת הדף; ונתוני גובה מ-Open-Topo-Data (api.opentopodata.org) — רק כשאתם מפעילים חישוב באפר טופוגרפי, ואז נשלחות אליו קואורדינטות של האתר הנבחר בלבד (לא המיקום שלכם). במסגרת זו כתובת ה-IP שלכם מועברת לשירותים אלה. הדף אינו משתמש בעוגיות, באחסון מקומי או בכלי מעקב/סטטיסטיקה, ואינו מבקש את מיקומכם.
+      מידע נוסף: <a href="datenschutz.html" lang="de">Datenschutz</a>
     </div>
 
   </aside>
 
   <div id="mapWrap">
-    <div id="map"></div>
-    <div id="zoomHint">התקרבו למפה כדי להציג באפרים סביב האתרים</div>
+    <div id="map" role="region" aria-label="מפת אנטנות סלולריות בישראל" aria-describedby="mapDesc"></div>
+    <p id="mapDesc" class="sr-only">מפה אינטראקטיבית המציגה אתרי אנטנות סלולריות בישראל, צבועים לפי עוצמת הקרינה המדווחת (מירוק — נמוך, עד אדום — גבוה יחסית לסף הבריאות; אפור — ללא נתון; כחול — בהקמה). כשהמפה בפוקוס: מקשי החצים מזיזים את המפה, מקשי פלוס ומינוס משנים את הזום. חלופה טקסטואלית: הרשימה "אתרים בתצוגה הנוכחית" בחלונית ההגדרות.</p>
+    <div id="zoomHint" aria-hidden="true">התקרבו למפה כדי להציג באפרים סביב האתרים</div>
     <div id="loadingOverlay">
       <div style="font-size:14px; color:var(--ink);">טוען נתוני אנטנות אמיתיים מ-data.gov.il…</div>
-      <div class="bar"><div id="loadingBarFill"></div></div>
-      <div class="msg" id="loadingMsg">מתחבר ל-API…</div>
-      <div class="err" id="loadingErr"></div>
+      <div class="bar" id="loadingBar" role="progressbar" aria-label="התקדמות טעינת הנתונים" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loadingBarFill"></div></div>
+      <div class="msg" id="loadingMsg" role="status" aria-live="polite">מתחבר ל-API…</div>
+      <div class="err" id="loadingErr" role="alert"></div>
     </div>
   </div>
 
-</div>
+</main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<footer class="legal-footer"><nav aria-label="מידע משפטי">
+  <a href="impressum.html" lang="de">Impressum</a> · <a href="datenschutz.html" lang="de">Datenschutz</a> · <a href="barrierefreiheit.html" lang="de">Barrierefreiheit</a>
+</nav></footer>
+
+<script src="assets/vendor/leaflet/leaflet.js"></script>
 <script>
 /* =====================================================================
    ITM (EPSG:2039) <-> WGS84 converter. Verified by offline round-trip
@@ -443,9 +508,25 @@ const els = {
   loadingMsg: document.getElementById('loadingMsg'),
   loadingErr: document.getElementById('loadingErr'),
   zoomHint: document.getElementById('zoomHint'),
+  loadingBar: document.getElementById('loadingBar'),
+  siteList: document.getElementById('siteList'),
+  siteListStatus: document.getElementById('siteListStatus'),
 };
 
-els.panelToggle.addEventListener('click', () => els.panel.classList.toggle('open'));
+const SITE_LIST_MAX = 50;
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+els.panelToggle.addEventListener('click', () => {
+  const open = els.panel.classList.toggle('open');
+  els.panelToggle.setAttribute('aria-expanded', String(open));
+});
+// On wide screens the panel is always visible; keep aria-expanded truthful.
+function syncPanelToggle(){
+  const toggleVisible = getComputedStyle(els.panelToggle).display !== 'none';
+  els.panelToggle.setAttribute('aria-expanded', String(!toggleVisible || els.panel.classList.contains('open')));
+}
+window.addEventListener('resize', syncPanelToggle);
+syncPanelToggle();
 
 /* ---------------- data fetching ---------------- */
 
@@ -591,7 +672,13 @@ function siteColor(site){
 /* ---------------- map setup ---------------- */
 
 function initMap(){
-  map = L.map('map', { zoomControl: true, attributionControl: true });
+  map = L.map('map', {
+    zoomControl: false, attributionControl: true,
+    zoomAnimation: !REDUCED_MOTION, fadeAnimation: !REDUCED_MOTION, markerZoomAnimation: !REDUCED_MOTION,
+  });
+  // RTL page: put the zoom control at the reading-start (right) corner, with Hebrew labels.
+  L.control.zoom({ position: 'topright', zoomInTitle: 'התקרבות', zoomOutTitle: 'התרחקות' }).addTo(map);
+  map.attributionControl.getContainer().setAttribute('lang', 'en');
   map.fitBounds(ISRAEL_BOUNDS);
   canvasRenderer = L.canvas({ padding: 0.5 });
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
@@ -603,9 +690,41 @@ function initMap(){
   map.on('moveend zoomend', scheduleRender);
   [els.layerActive, els.layerPlanned, els.searchBox, els.operatorFilter].forEach(el => el.addEventListener('input', scheduleRender));
   document.querySelectorAll('.gen-cb').forEach(cb => cb.addEventListener('input', scheduleRender));
-  els.rangeSlider.addEventListener('input', () => { els.rangeVal.textContent = els.rangeSlider.value + ' מ׳'; scheduleRender(); });
-  els.heightSlider.addEventListener('input', () => { els.heightVal.textContent = els.heightSlider.value + ' מ׳'; });
+  els.rangeSlider.addEventListener('input', () => {
+    els.rangeVal.textContent = els.rangeSlider.value + ' מ׳';
+    els.rangeSlider.setAttribute('aria-valuetext', els.rangeSlider.value + ' מטר');
+    scheduleRender();
+  });
+  els.heightSlider.addEventListener('input', () => {
+    els.heightVal.textContent = els.heightSlider.value + ' מ׳';
+    els.heightSlider.setAttribute('aria-valuetext', els.heightSlider.value + ' מטר');
+  });
+  // Popups: Hebrew label for Leaflet's close button, Escape closes, focus returns to the trigger.
+  map.on('popupopen', (e) => {
+    const el = e.popup.getElement();
+    if(!el) return;
+    const closeBtn = el.querySelector('.leaflet-popup-close-button');
+    if(closeBtn) closeBtn.setAttribute('aria-label', 'סגירת חלון המידע');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'פרטי אתר אנטנה');
+    if(!el._escBound){
+      el._escBound = true;
+      el.addEventListener('keydown', (ev) => {
+        if(ev.key === 'Escape'){ ev.preventDefault(); map.closePopup(); }
+      });
+    }
+  });
+  map.on('popupclose', () => {
+    const el = document.activeElement;
+    const inPopup = el && el.closest && el.closest('.leaflet-popup');
+    if(popupReturnFocus && (inPopup || !el || el === document.body) && document.contains(popupReturnFocus)){
+      popupReturnFocus.focus();
+    }
+    popupReturnFocus = null;
+  });
 }
+
+let popupReturnFocus = null;
 
 function scheduleRender(){
   clearTimeout(renderTimer);
@@ -655,6 +774,65 @@ function renderVisible(){
     }
     list.forEach(site => addBufferCircle(site));
   }
+  renderSiteList(candidates);
+}
+
+/* ---------------- accessible site list (non-map alternative) ---------------- */
+
+function siteSummary(site){
+  const parts = [site.operator + (site.status === 'planned' ? ' (בהקמה)' : '')];
+  const loc = [site.city, site.address].filter(Boolean).join(' · ');
+  if(loc) parts.push(loc);
+  parts.push(site.gens.length ? site.gens.join(', ') : 'דור לא ידוע');
+  const intensity = siteIntensity(site);
+  if(intensity) parts.push(intensity.kind === 'health'
+    ? 'קרינה: ' + site.healthPct.toFixed(2) + '% מסף הבריאות'
+    : 'קרינה: אחוזון ' + Math.round(intensity.value));
+  else if(site.status === 'active') parts.push('ללא נתון קרינה');
+  return parts.join(' — ');
+}
+
+let lastListAnnouncement = '';
+let listAnnounceTimer = null;
+function renderSiteList(candidates){
+  els.siteList.textContent = '';
+  const shown = candidates.slice(0, SITE_LIST_MAX);
+  const frag = document.createDocumentFragment();
+  shown.forEach(site => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    const sw = document.createElement('span');
+    sw.className = 'legend-swatch';
+    sw.style.background = siteColor(site);
+    sw.setAttribute('aria-hidden', 'true');
+    const t = document.createElement('span');
+    t.textContent = siteSummary(site);
+    b.appendChild(sw); b.appendChild(t);
+    b.addEventListener('click', () => openSitePopupFromList(site, b));
+    li.appendChild(b);
+    frag.appendChild(li);
+  });
+  els.siteList.appendChild(frag);
+  let msg;
+  if(!candidates.length) msg = 'אין אתרים בתצוגה הנוכחית. הזיזו את המפה או שנו את הסינון.';
+  else if(candidates.length > SITE_LIST_MAX) msg = `מוצגים ${SITE_LIST_MAX} הראשונים מתוך ${candidates.length.toLocaleString('he-IL')} אתרים בתצוגה. התקרבו במפה או צמצמו את הסינון כדי לראות את כולם.`;
+  else msg = `${candidates.length.toLocaleString('he-IL')} אתרים בתצוגה.`;
+  // Debounced so panning does not flood screen readers.
+  clearTimeout(listAnnounceTimer);
+  listAnnounceTimer = setTimeout(() => {
+    if(msg !== lastListAnnouncement){ els.siteListStatus.textContent = msg; lastListAnnouncement = msg; }
+  }, 800);
+}
+
+function openSitePopupFromList(site, trigger){
+  const entry = renderedLayers.get(site.id);
+  const layer = entry ? (entry.polygon || entry.circle) : null;
+  const content = buildPopupContent(site, layer, !!(entry && entry.polygon));
+  popupReturnFocus = trigger;
+  L.popup({ closeButton: true, maxWidth: 280 }).setLatLng([site.lat, site.lon]).setContent(content).openOn(map);
+  const btn = content.querySelector('button');
+  if(btn) btn.focus({ preventScroll: true });
 }
 
 function addDotMarker(site){
@@ -711,13 +889,18 @@ function buildPopupContent(site, layer, terrainDone){
     const done = document.createElement('div');
     done.className = 'note';
     done.style.color = '#1a7f4e';
-    done.textContent = '✓ באפר טופוגרפי מדויק מוצג (קו-ראייה מול תבליט אמיתי).';
+    done.textContent = 'באפר טופוגרפי מדויק מוצג (קו-ראייה מול תבליט אמיתי).';
     box.appendChild(done);
   }
 
   const btn = document.createElement('button');
   btn.className = 'terrain-btn';
-  btn.textContent = terrainDone ? 'חשב מחדש (טווח/גובה שונה) ↻' : 'חשב באפר טופוגרפי מדויק ▶';
+  btn.type = 'button';
+  btn.textContent = terrainDone ? 'חשב מחדש (טווח/גובה שונה)' : 'חשב באפר טופוגרפי מדויק';
+  const glyph = document.createElement('span');
+  glyph.setAttribute('aria-hidden', 'true');
+  glyph.textContent = terrainDone ? ' ↻' : ' ▶';
+  btn.appendChild(glyph);
   btn.addEventListener('click', () => runTerrainCompute(site, layer, btn));
   box.appendChild(btn);
 
@@ -730,6 +913,10 @@ function buildPopupContent(site, layer, terrainDone){
 }
 
 async function runTerrainCompute(site, sourceLayer, btn){
+  const hadFocus = btn === document.activeElement;
+  // The map may have re-rendered (e.g. popup auto-pan) since the popup opened; use the current layer.
+  const current = renderedLayers.get(site.id);
+  if(current && (!sourceLayer || !bufferLayer.hasLayer(sourceLayer))) sourceLayer = current.polygon || current.circle;
   btn.disabled = true;
   btn.textContent = 'מחשב מול תבליט אמיתי…';
   const maxRangeMeters = parseInt(els.rangeSlider.value, 10);
@@ -753,7 +940,14 @@ async function runTerrainCompute(site, sourceLayer, btn){
     // auto-closes a layer's bound popup when that layer is removed, so removing
     // the circle first would silently close this popup (and drop the button's
     // success text) before the user ever sees it.
+    const returnTo = popupReturnFocus;
     poly.fire('click');
+    popupReturnFocus = returnTo;
+    if(hadFocus){
+      const pEl = poly.getPopup() && poly.getPopup().getElement();
+      const newBtn = pEl && pEl.querySelector('.terrain-btn');
+      if(newBtn) newBtn.focus({ preventScroll: true });
+    }
     if(sourceLayer && sourceLayer !== poly) bufferLayer.removeLayer(sourceLayer);
     const entry = renderedLayers.get(site.id);
     if(entry) entry.polygon = poly;
@@ -796,6 +990,7 @@ els.batchBtn.addEventListener('click', async () => {
 
 function setLoadingProgress(pct, msg){
   els.loadingBarFill.style.width = Math.max(4, Math.min(100, pct)) + '%';
+  els.loadingBar.setAttribute('aria-valuenow', String(Math.round(Math.min(100, pct))));
   if(msg) els.loadingMsg.textContent = msg;
 }
 
