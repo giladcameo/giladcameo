@@ -4,656 +4,434 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta name="description" content="Portfolio of Gilad Cameo, urban planner and GIS analyst in Berlin: real-time transit maps, walkability tools and urban data apps." />
-  <title>Gilad Cameo — Urban Planner &amp; GIS Analyst</title>
-  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <meta name="description" content="Gilad Cameo — urban planner and GIS analyst in Berlin who builds working tools from city data: real-time transit maps, walkability and shade routing, and urban data visualisations." />
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)" />
+  <title>Gilad Cameo — Urban Planner &amp; GIS Analyst, Berlin</title>
+  <link rel="icon" href="icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="assets/fonts/fonts.css" />
   <style>
     :root {
-      --bg: #faf9f6;
-      --surface: #ffffff;
-      --ink: #16161a;
-      --ink-soft: #5c5c63;
-      --ink-faint: #6b6b72; /* darkened from #8a8a90 for WCAG AA contrast (5:1) */
-      --line: #dedcd3;
-      --accent: #c8401d;
+      --bg: #f4f1ea;
+      --surface: #fbf9f4;
+      --ink: #141416;
+      --ink-soft: #4b4b53;
+      --rule: #d8d2c4;
+      --rule-strong: #b9b2a2;
+      /* Line colours. -ui is used for strokes on the page background,
+         -badge carries white text (all >= 4.5:1). */
+      --t-ui: #d9480f;  --t-badge: #b93a0a;
+      --w-ui: #1f8a55;  --w-badge: #17704a;
+      --d-ui: #2b62c4;  --d-badge: #234fa0;
+      --focus: #141416;
+      --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --max: 1180px;
+      color-scheme: light;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111214;
+        --surface: #18191c;
+        --ink: #f1eee7;
+        --ink-soft: #b3b1ab;
+        --rule: #2c2d31;
+        --rule-strong: #45464c;
+        --t-ui: #ff7a3d;  --w-ui: #3fcb86;  --d-ui: #6f9cff;
+        --focus: #f1eee7;
+        color-scheme: dark;
+      }
+    }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
     body {
       background: var(--bg);
       color: var(--ink);
-      font-family: 'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      font-family: var(--sans);
+      font-size: 17px;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
+      overflow-x: hidden;
     }
-
     a { color: inherit; }
-    a:focus-visible, button:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 3px;
-    }
-
-    /* Skip link: first focusable element, visible on focus */
-    .skip-link {
-      position: absolute;
-      left: 16px;
-      top: -100px;
-      z-index: 100;
-      padding: 10px 16px;
-      background: var(--ink);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      border-radius: 4px;
-    }
-    .skip-link:focus { top: 12px; }
-    main:focus { outline: none; }
-
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
     .visually-hidden {
-      position: absolute !important;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0 0 0 0);
-      white-space: nowrap; border: 0;
+      position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
     }
+    .skip-link {
+      position: absolute; left: 16px; top: -60px; z-index: 100;
+      background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+      font-weight: 600; text-decoration: none;
+    }
+    .skip-link:focus { top: 16px; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+    .mono { font-family: var(--mono); }
 
-    .wrap { max-width: 1040px; margin: 0 auto; padding-left: 40px; padding-right: 40px; }
-    @media (max-width: 680px) { .wrap { padding-left: 24px; padding-right: 24px; } }
+    /* ── Header ─────────────────────────────────────────── */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: saturate(1.4) blur(10px);
+      -webkit-backdrop-filter: saturate(1.4) blur(10px);
+      border-bottom: 1px solid var(--rule);
+    }
+    .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 700; letter-spacing: -0.01em; }
+    .roundel {
+      display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+      background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0;
+    }
+    .site-nav ul { list-style: none; display: flex; gap: clamp(4px, 2vw, 20px); }
+    .site-nav a {
+      display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 8px;
+      text-decoration: none; font-size: 15px; font-weight: 500; color: var(--ink-soft);
+    }
+    .site-nav a:hover { color: var(--ink); background: var(--surface); }
+    .site-nav a.cta { color: var(--bg); background: var(--ink); font-weight: 600; }
+    .site-nav a.cta:hover { opacity: .88; background: var(--ink); color: var(--bg); }
+    @media (max-width: 560px) { .site-nav .opt { display: none; } .brand .name { display: none; } }
 
-    /* NAV */
-    .site-nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 22px 40px;
-      border-bottom: 1px solid var(--line);
+    /* ── Hero ───────────────────────────────────────────── */
+    .hero { padding-top: clamp(40px, 9vw, 104px); padding-bottom: clamp(40px, 6vw, 72px); position: relative; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: center; }
+    @media (max-width: 1000px) { .hero-grid { grid-template-columns: 1fr; } .netmap { max-width: 640px; } }
+    .eyebrow {
+      display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+      font-family: var(--mono); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft);
+      margin-bottom: 28px;
     }
-    @media (max-width: 680px) { .site-nav { padding: 16px 24px; } }
-    .logo {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      white-space: nowrap;
+    .status {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+      border: 1px solid var(--rule-strong); color: var(--ink); text-transform: none; letter-spacing: 0; font-size: 13px;
     }
-    @media (max-width: 480px) { .logo { font-size: 12px; letter-spacing: 1px; } }
-    .site-nav ul {
-      list-style: none;
-      display: flex;
-      gap: 32px;
+    .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--w-ui); box-shadow: 0 0 0 4px color-mix(in srgb, var(--w-ui) 22%, transparent); }
+    h1 {
+      font-size: clamp(38px, 5.4vw, 74px); line-height: .98; letter-spacing: -0.035em; font-weight: 800;
+      margin-bottom: 28px; text-wrap: balance;
     }
-    @media (max-width: 480px) { .site-nav ul { gap: 16px; } }
-    nav a {
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--ink-soft);
-      transition: color 0.15s;
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
+    h1 .hl { position: relative; white-space: nowrap; }
+    h1 .hl svg { position: absolute; left: -2%; bottom: -0.14em; width: 104%; height: .32em; overflow: visible; }
+    h1 .hl path { fill: none; stroke: var(--t-ui); stroke-width: 7; stroke-linecap: round; }
+    .lede { font-size: clamp(18px, 1.6vw, 20px); color: var(--ink-soft); max-width: 36em; margin-bottom: 32px; }
+    .lede strong { color: var(--ink); font-weight: 600; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 12px;
+      font-weight: 600; font-size: 16px; text-decoration: none; border: 1.5px solid var(--ink);
+      transition: transform .15s ease, background-color .15s ease, color .15s ease;
     }
-    @media (max-width: 480px) { nav a { font-size: 11px; letter-spacing: 0.3px; } }
-    nav a:hover { color: var(--accent); }
+    .btn-primary { background: var(--ink); color: var(--bg); }
+    .btn-ghost { background: transparent; color: var(--ink); }
+    .btn-ghost:hover { background: var(--ink); color: var(--bg); }
+    .btn:hover { transform: translateY(-1px); }
+    .btn .arr { transition: transform .15s ease; }
+    .btn:hover .arr { transform: translateX(3px); }
 
-    /* HERO */
-    .hero { padding-top: 72px; padding-bottom: 72px; }
-    .hero-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 40px;
-    }
-    .hero-index {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-    }
-    .hero-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--ink-soft);
-    }
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
-    }
+    /* network map */
+    .netmap { position: relative; }
+    .netmap svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .netmap .grid line { stroke: var(--rule); stroke-width: 1; }
+    .netmap .route { fill: none; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+    .netmap .route.t { stroke: var(--t-ui); }
+    .netmap .route.w { stroke: var(--w-ui); }
+    .netmap .route.d { stroke: var(--d-ui); }
+    .netmap .stn circle { fill: var(--bg); stroke: var(--ink); stroke-width: 4; transition: r .2s ease, stroke-width .2s ease; }
+    .netmap .stn.x rect { fill: var(--bg); stroke: var(--ink); stroke-width: 4; }
+    .netmap .stn text { font-family: var(--mono); font-size: 15px; font-weight: 600; fill: var(--ink); }
+    .netmap .stn text.sub { font-weight: 400; font-size: 12px; fill: var(--ink-soft); }
+    .netmap a { cursor: pointer; }
+    .netmap a:hover circle, .netmap .stn.is-hot circle { stroke-width: 6; r: 12; }
+    .netmap a:hover text:not(.sub), .netmap .stn.is-hot text:not(.sub) { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+    .netmap .term { font-family: var(--mono); font-size: 13px; font-weight: 700; fill: #fff; }
+    .netmap .caption { font-family: var(--mono); font-size: 12px; fill: var(--ink-soft); letter-spacing: .06em; text-transform: uppercase; }
     @media (prefers-reduced-motion: no-preference) {
-      .status-dot { animation: pulse 2.4s ease-in-out infinite; }
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-
-    .hero h1 {
-      font-size: clamp(44px, 8.5vw, 108px);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 0.98;
-      margin-bottom: 24px;
-    }
-    .hero h1 .last { color: var(--accent); }
-
-    .hero-role {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--ink-soft);
-      margin-bottom: 10px;
-    }
-    .pin-ic {
-      width: 13px;
-      height: 13px;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    .hero-geo {
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 1px;
-      font-variant-numeric: tabular-nums;
-      color: var(--ink-faint);
-      margin-bottom: 28px;
-      padding-bottom: 28px;
-      border-bottom: 1px solid var(--line);
+      .netmap .route { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.6s cubic-bezier(.6,.05,.25,1) forwards; }
+      .netmap .route.w { animation-delay: .35s; }
+      .netmap .route.d { animation-delay: .7s; }
+      .netmap .stn, .netmap .badge-g { opacity: 0; animation: pop .4s ease forwards; animation-delay: calc(1.1s + var(--i, 0) * 90ms); }
+      h1 .hl path { stroke-dasharray: 420; stroke-dashoffset: 420; animation: draw .9s .5s ease forwards; }
+      @keyframes draw { to { stroke-dashoffset: 0; } }
+      @keyframes pop { to { opacity: 1; } }
     }
 
-    .hero-bio {
-      font-size: 19px;
-      color: var(--ink-soft);
-      line-height: 1.65;
-      max-width: 620px;
-      margin-bottom: 28px;
-    }
-    .hero-bio strong { color: var(--ink); font-weight: 700; }
+    /* ── Sections ───────────────────────────────────────── */
+    section { padding: clamp(56px, 8vw, 112px) 0; border-top: 1px solid var(--rule); }
+    .kicker { font-family: var(--mono); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    .kicker::before { content: ""; width: 28px; height: 3px; border-radius: 2px; background: var(--ink); }
+    h2 { font-size: clamp(30px, 4.2vw, 52px); line-height: 1.04; letter-spacing: -0.03em; font-weight: 800; max-width: 18em; text-wrap: balance; }
+    .section-intro { color: var(--ink-soft); max-width: 40em; margin-top: 18px; font-size: 18px; }
 
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0 14px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--ink-faint);
+    /* lines + project cards */
+    .line-group { margin-top: clamp(40px, 6vw, 72px); }
+    .line-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .line-head h3 { font-size: 20px; letter-spacing: -0.01em; font-weight: 700; }
+    .line-head p { color: var(--ink-soft); font-size: 15px; }
+    .line-head .track { flex: 1; height: 6px; border-radius: 3px; min-width: 24px; }
+    .t .track, .badge.t { background: var(--t-badge); }
+    .w .track, .badge.w { background: var(--w-badge); }
+    .d .track, .badge.d { background: var(--d-badge); }
+    .line-group.t .track { background: var(--t-ui); }
+    .line-group.w .track { background: var(--w-ui); }
+    .line-group.d .track { background: var(--d-ui); }
+    .badge {
+      display: inline-grid; place-items: center; min-width: 40px; height: 32px; padding: 0 8px; border-radius: 7px;
+      color: #fff; font-family: var(--mono); font-weight: 700; font-size: 15px; flex: none;
     }
-    .tags span:not(:last-child)::after {
-      content: '/';
-      margin-left: 14px;
-      color: var(--line);
+    .cards { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+    .card {
+      position: relative; height: 100%; display: flex; flex-direction: column;
+      background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     }
+    .card:hover, .card:focus-within, .card.is-hot {
+      transform: translateY(-3px); border-color: var(--rule-strong);
+      box-shadow: 0 18px 40px -22px rgba(0,0,0,.35);
+    }
+    .card .thumb { aspect-ratio: 200 / 96; border-bottom: 1px solid var(--rule); background: var(--bg); position: relative; }
+    .card .thumb svg { width: 100%; height: 100%; display: block; }
+    .card .thumb .badge { position: absolute; top: 14px; left: 14px; }
+    .card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .card h4 { font-size: 21px; letter-spacing: -0.015em; line-height: 1.2; }
+    .card h4 a { text-decoration: none; }
+    .card h4 a::after { content: ""; position: absolute; inset: 0; border-radius: 18px; }
+    .card h4 a:focus-visible { outline: none; }
+    .card h4 a:focus-visible::after { outline: 3px solid var(--focus); outline-offset: -3px; }
+    .card p { color: var(--ink-soft); font-size: 15.5px; line-height: 1.55; }
+    .card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; list-style: none; }
+    .card .tags li { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--rule); color: var(--ink-soft); }
+    .card .go { font-weight: 600; font-size: 15px; display: inline-flex; gap: 8px; align-items: center; margin-top: 4px; }
+    .card .go .arr { transition: transform .15s ease; }
+    .card:hover .go .arr { transform: translateX(4px); }
+    /* thumbnail palette */
+    .f-ink { fill: var(--ink); } .s-ink { stroke: var(--ink); }
+    .f-acc { fill: var(--acc); } .s-acc { stroke: var(--acc); }
+    .f-mid { fill: var(--ink-soft); } .s-mid { stroke: var(--ink-soft); }
+    .f-rule { fill: var(--rule-strong); } .s-rule { stroke: var(--rule-strong); }
+    .f-soft { fill: var(--rule); } .s-soft { stroke: var(--rule); }
+    .line-group.t { --acc: var(--t-ui); } .line-group.w { --acc: var(--w-ui); } .line-group.d { --acc: var(--d-ui); }
 
-    /* SKYLINE */
-    .skyline {
-      margin-top: 48px;
-      line-height: 0;
-    }
-    .skyline svg { width: 100%; height: clamp(64px, 9vw, 110px); display: block; }
+    /* approach */
+    .pillars { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 3vw, 40px); margin-top: clamp(36px, 5vw, 56px); counter-reset: p; }
+    @media (max-width: 820px) { .pillars { grid-template-columns: 1fr; } }
+    .pillars li { border-top: 3px solid var(--ink); padding-top: 20px; }
+    .pillars .num { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); display: block; margin-bottom: 10px; }
+    .pillars h3 { font-size: 22px; letter-spacing: -0.015em; margin-bottom: 10px; line-height: 1.2; }
+    .pillars p { color: var(--ink-soft); }
 
-    /* TRANSIT LINE DIVIDER */
-    .transit-divider { margin-bottom: 28px; line-height: 0; }
-    .transit-divider svg { width: 100%; height: 14px; display: block; }
+    /* about */
+    .about-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); margin-top: clamp(28px, 4vw, 44px); }
+    @media (max-width: 820px) { .about-grid { grid-template-columns: 1fr; } }
+    .about-grid .prose p { font-size: 19px; line-height: 1.65; color: var(--ink-soft); }
+    .about-grid .prose p + p { margin-top: 16px; }
+    .about-grid .prose strong { color: var(--ink); font-weight: 600; }
+    .facts { list-style: none; border-top: 1px solid var(--rule); }
+    .facts li { display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 16px; }
+    .facts .k { font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); padding-top: 2px; }
 
-    /* SECTION */
-    .section { padding-top: 64px; padding-bottom: 64px; border-top: 1px solid var(--line); }
-    .section-head {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .section-label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-    }
-    .section h2 {
-      font-size: clamp(28px, 4vw, 40px);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin: 6px 0 44px;
-    }
+    /* contact */
+    .contact { text-align: left; }
+    .contact h2 { font-size: clamp(38px, 7vw, 96px); max-width: 12em; }
+    .contact h2 .next { display: block; font-family: var(--mono); font-size: 15px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 18px; }
+    .contact .actions { margin-top: 36px; }
+    .mail { font-size: clamp(18px, 2.4vw, 26px); font-weight: 600; word-break: break-all; }
 
-    /* PROJECT ROWS */
-    .rows { display: flex; flex-direction: column; }
-    .row {
-      display: grid;
-      grid-template-columns: 64px 1fr 168px;
-      gap: 28px;
-      align-items: center;
-      padding: 36px 20px;
-      margin: 0 -20px;
-      border-top: 1px solid var(--line);
-      text-decoration: none;
-      color: inherit;
-      border-radius: 6px;
-      transition: background 0.15s;
-    }
-    .rows .row:last-child { border-bottom: 1px solid var(--line); }
-    .row:hover, .row:focus-visible { background: var(--surface); }
-    .row:hover .row-num,
-    .row:hover .row-title,
-    .row:hover .row-arrow,
-    .row:focus-visible .row-num,
-    .row:focus-visible .row-title,
-    .row:focus-visible .row-arrow { color: var(--accent); }
-    .row:hover .thumb, .row:focus-visible .thumb { border-color: var(--accent); }
+    /* footer */
+    .site-footer { border-top: 1px solid var(--rule); padding: 28px 0 40px; font-size: 14px; color: var(--ink-soft); }
+    .site-footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; align-items: center; }
+    .site-footer nav { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+    .site-footer a { display: inline-flex; align-items: center; min-height: 32px; text-decoration: underline; text-underline-offset: 3px; }
+    .site-footer a:hover { color: var(--ink); }
 
-    .row-num {
-      font-size: 22px;
-      font-weight: 300;
-      font-variant-numeric: tabular-nums;
-      color: var(--ink-faint);
-      transition: color 0.15s;
-    }
-    .row-title {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-bottom: 8px;
-      transition: color 0.15s;
-    }
-    .row-desc {
-      font-size: 14.5px;
-      color: var(--ink-soft);
-      line-height: 1.65;
-      max-width: 520px;
-      margin-bottom: 14px;
-    }
-    .row-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-      margin-bottom: 14px;
-    }
-    .row-tags span:not(:last-child)::after {
-      content: '\00b7';
-      margin-left: 12px;
-      color: var(--line);
-    }
-    .row-arrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--ink);
-      transition: color 0.15s;
-    }
-
-    .thumb {
-      width: 100%;
-      height: 118px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--surface);
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.15s;
-    }
-    .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-    @media (max-width: 760px) {
-      .row { grid-template-columns: 40px minmax(0, 1fr); gap: 16px; }
-      .row-title, .row-desc { overflow-wrap: anywhere; }
-      .thumb { display: none; }
-      .row-num { font-size: 18px; }
-      .row-title { font-size: 19px; }
-    }
-
-    /* ABOUT */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 56px;
-    }
-    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; gap: 36px; } }
-    .about-grid h3 {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 16px;
-    }
-    .about-grid p {
-      font-size: 15.5px;
-      color: var(--ink-soft);
-      line-height: 1.75;
-    }
-    .about-grid ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      border-top: 1px solid var(--line);
-      padding-top: 16px;
-    }
-    .about-grid li {
-      font-size: 15px;
-      color: var(--ink);
-      font-weight: 500;
-    }
-
-    .site-footer {
-      border-top: 1px solid var(--line);
-      padding: 28px 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    @media (max-width: 680px) { .site-footer { padding: 24px; } }
-    .site-footer > span {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      letter-spacing: 0.5px;
-      color: var(--ink-faint);
-    }
-    footer .pin-ic { width: 11px; height: 11px; }
-    .site-footer a {
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--ink-soft);
-      text-decoration: none;
-    }
-    .site-footer a:hover { color: var(--accent); }
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px 20px;
-    }
-    .legal-nav {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0 8px;
-      font-size: 12px;
-      color: var(--ink-faint);
-    }
-
-    /* Reduced motion: no transitions or animations */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-        scroll-behavior: auto !important;
-      }
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      html { scroll-behavior: smooth; }
-    }
-
-    /* Windows high-contrast / forced colours: keep focus visible */
-    @media (forced-colors: active) {
-      a:focus-visible { outline: 2px solid LinkText; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
-
 <a class="skip-link" href="#main">Skip to content</a>
 
-<header>
-  <nav class="site-nav" aria-label="Main">
-    <div class="logo">Gilad Cameo</div>
-    <ul>
-      <li><a href="#projects">Projects</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer">GitHub<span class="visually-hidden"> (opens in new tab)</span></a></li>
-    </ul>
-  </nav>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Gilad Cameo — home">
+      <span class="roundel" aria-hidden="true">GC</span><span class="name">Gilad Cameo</span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#work">Work</a></li>
+        <li class="opt"><a href="#approach">Approach</a></li>
+        <li class="opt"><a href="#about">About</a></li>
+        <li><a class="cta" href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
 
 <main id="main" tabindex="-1">
-<div class="wrap hero">
-  <div class="hero-meta">
-    <span class="hero-index" aria-hidden="true">Portfolio &middot; 2026</span>
-    <span class="hero-status">
-      <span class="status-dot" aria-hidden="true"></span>
-      Open to collaboration
-    </span>
-  </div>
-  <h1>Gilad<br><span class="last">Cameo</span></h1>
-  <div class="hero-role">
-    <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-    Urban Planner &amp; GIS Analyst &mdash; Berlin
-  </div>
-  <div class="hero-geo" aria-hidden="true">52.5200&deg; N &middot; 13.4050&deg; E</div>
-  <p class="hero-bio">
-    I'm a GIS analyst who builds <strong>data tools for cities</strong> &mdash; real-time transit dashboards,
-    location-aware apps, and urban analytics &mdash; using <strong>AI-assisted development</strong> to turn
-    spatial analysis into working software. Interested in the intersection of
-    <strong>transportation</strong>, <strong>open data</strong>, and code.
-  </p>
-  <div class="tags">
-    <span>Urban Planning</span>
-    <span>Transportation</span>
-    <span>AI-assisted Dev</span>
-    <span>QGIS &middot; ArcGIS</span>
-    <span>Open Data</span>
-    <span>Geospatial</span>
-  </div>
-  <div class="skyline" aria-hidden="true">
-    <svg viewBox="0 0 1000 120" preserveAspectRatio="none">
-      <rect x="0"   y="80"  width="50" height="40" fill="#dedcd3"/>
-      <rect x="54"  y="45"  width="70" height="75" fill="#c9c7bc"/>
-      <rect x="128" y="85"  width="40" height="35" fill="#dedcd3"/>
-      <rect x="172" y="20"  width="85" height="100" fill="#8a8a90"/>
-      <rect x="261" y="65"  width="55" height="55" fill="#dedcd3"/>
-      <rect x="320" y="35"  width="65" height="85" fill="#c9c7bc"/>
-      <rect x="389" y="80"  width="45" height="40" fill="#dedcd3"/>
-      <line x1="505" y1="120" x2="505" y2="28" stroke="#16161a" stroke-width="3"/>
-      <circle cx="505" cy="22" r="9" fill="var(--bg)" stroke="#16161a" stroke-width="3"/>
-      <line x1="505" y1="13" x2="505" y2="4" stroke="#16161a" stroke-width="2"/>
-      <circle cx="505" cy="4" r="3" fill="#c8401d"/>
-      <rect x="517" y="70"  width="50" height="50" fill="#dedcd3"/>
-      <rect x="571" y="50"  width="60" height="70" fill="#c9c7bc"/>
-      <rect x="635" y="85"  width="40" height="35" fill="#dedcd3"/>
-      <rect x="679" y="15"  width="80" height="105" fill="#8a8a90"/>
-      <rect x="763" y="60"  width="55" height="60" fill="#dedcd3"/>
-      <rect x="822" y="40"  width="65" height="80" fill="#c9c7bc"/>
-      <rect x="891" y="75"  width="45" height="45" fill="#dedcd3"/>
-      <rect x="940" y="30"  width="60" height="90" fill="#c9c7bc"/>
-      <line x1="0" y1="120" x2="1000" y2="120" stroke="#dedcd3" stroke-width="1"/>
-    </svg>
-  </div>
-</div>
-
-<section class="wrap section" id="projects" aria-labelledby="projects-heading">
-  <div class="section-head">
-    <span class="section-label" aria-hidden="true">Work &middot; 01&ndash;07</span>
-  </div>
-  <h2 id="projects-heading">Selected Projects</h2>
-  <div class="rows">
-
-    <a class="row" href="berlin-transit.html" aria-labelledby="p-berlin-transit-t p-berlin-transit-a" aria-describedby="p-berlin-transit-d">
-      <span class="row-num" aria-hidden="true">01</span>
+  <div class="hero wrap">
+    <div class="hero-grid">
       <div>
-        <h3 class="row-title" id="p-berlin-transit-t">Berlin Transit Live</h3>
-        <p class="row-desc" id="p-berlin-transit-d">Full-screen map of Berlin's public transport with real-time departures. Filter by line type, search any stop, auto-refreshes every 10 seconds.</p>
-        <div class="row-tags">
-          <span>Leaflet Map</span>
-          <span>DB API</span>
-          <span>U &middot; S &middot; Tram &middot; Bus</span>
-          <span>10s Refresh</span>
+        <p class="eyebrow">
+          <span>Urban planner · GIS analyst · Berlin</span>
+          <span class="status"><span class="dot" aria-hidden="true"></span>Open to new roles</span>
+        </p>
+        <h1>I turn city data&nbsp;into <span class="hl">tools people use<svg viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true"><path d="M4 14 C 90 4, 220 4, 396 12"/></svg></span>.</h1>
+        <p class="lede">
+          I'm Gilad — a Technion-trained <strong>urban planner and GIS analyst</strong>.
+          I take open transport and spatial data and ship it as <strong>live, working apps</strong>:
+          real-time transit maps, walkability and shade routing, and data stories about how cities move.
+        </p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#work">See the work <span class="arr" aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="#contact">Get in touch</a>
         </div>
-        <span class="row-arrow" id="p-berlin-transit-a">Open App <span aria-hidden="true">&rarr;</span></span>
       </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <polyline points="0,58 30,58 55,44 90,44 125,40 200,32" stroke="#c9c7bc" stroke-width="2" fill="none"/>
-          <polyline points="10,86 40,86 65,72 100,68 140,58 200,54" stroke="#c9c7bc" stroke-width="2" fill="none"/>
-          <polyline points="25,36 55,64 87,86 130,94 200,94" stroke="#c9c7bc" stroke-width="2" fill="none"/>
-          <circle cx="55" cy="44" r="3" fill="#16161a"/>
-          <circle cx="100" cy="68" r="3" fill="#16161a"/>
-          <circle cx="87" cy="86" r="3" fill="#16161a"/>
-          <circle cx="100" cy="45" r="4.5" fill="#c8401d"/>
-          <circle cx="140" cy="58" r="3" fill="#16161a"/>
+
+      <!-- Portfolio drawn as a transit network. Decorative duplicate of the
+           project list below, so it is hidden from assistive tech and its
+           links are not tab stops (the cards are the accessible route). -->
+      <div class="netmap" aria-hidden="true">
+        <svg viewBox="0 0 700 470" role="presentation">
+          <path class="route w" style="--len:360" d="M60 70 H200 L300 170 V250"/>
+          <path class="route t" style="--len:560" d="M40 250 H580"/>
+          <path class="route d" style="--len:420" d="M460 250 L560 350 V440"/>
+
+          <g class="badge-g" style="--i:0"><rect x="8" y="236" width="30" height="28" rx="6" fill="var(--t-badge)"/><text class="term" x="23" y="255" text-anchor="middle">T</text></g>
+          <g class="badge-g" style="--i:0"><rect x="22" y="56" width="30" height="28" rx="6" fill="var(--w-badge)"/><text class="term" x="37" y="75" text-anchor="middle">W</text></g>
+          <g class="badge-g" style="--i:0"><rect x="545" y="446" width="30" height="28" rx="6" fill="var(--d-badge)"/><text class="term" x="560" y="465" text-anchor="middle">D</text></g>
+
+          <a href="walkable.html" tabindex="-1" data-p="walkable"><g class="stn" style="--i:1"><circle cx="110" cy="70" r="10"/><text x="110" y="44" text-anchor="middle">Walkable</text></g></a>
+          <a href="shade-nav.html" tabindex="-1" data-p="shade"><g class="stn" style="--i:2"><circle cx="250" cy="120" r="10"/><text x="270" y="112">Shade Walk</text></g></a>
+          <a href="transit-board.html" tabindex="-1" data-p="board"><g class="stn" style="--i:3"><circle cx="130" cy="250" r="10"/><text x="130" y="290" text-anchor="middle">Transit Board</text></g></a>
+          <a href="berlin-transit.html" tabindex="-1" data-p="transit"><g class="stn x" style="--i:4"><rect x="286" y="234" width="28" height="32" rx="14"/><text x="316" y="296" text-anchor="middle">Berlin Transit Live</text><text class="sub" x="316" y="314" text-anchor="middle">interchange T · W</text></g></a>
+          <a href="berlin-comet-trails.html" tabindex="-1" data-p="comet"><g class="stn x" style="--i:5"><rect x="446" y="234" width="28" height="32" rx="14"/><text x="460" y="220" text-anchor="middle">Comet Trails</text><text class="sub" x="460" y="202" text-anchor="middle">interchange T · D</text></g></a>
+          <a href="nyc-line-numbers.html" tabindex="-1" data-p="nyc"><g class="stn" style="--i:6"><circle cx="510" cy="300" r="10"/><text x="528" y="298">NYC Line Numbers</text></g></a>
+          <a href="israel-cellular-antennas.html" tabindex="-1" data-p="antennas"><g class="stn" style="--i:7"><circle cx="560" cy="400" r="10"/><text x="540" y="405" text-anchor="end">Antenna Map</text></g></a>
+
+          <text class="caption" x="700" y="20" text-anchor="end">Portfolio network · 3 lines · 7 stops</text>
         </svg>
       </div>
-    </a>
+    </div>
+  </div>
 
-    <a class="row" href="transit-board.html" aria-labelledby="p-transit-board-t p-transit-board-a" aria-describedby="p-transit-board-d">
-      <span class="row-num" aria-hidden="true">02</span>
-      <div>
-        <h3 class="row-title" id="p-transit-board-t">Transit Board &middot; Near Me</h3>
-        <p class="row-desc" id="p-transit-board-d">Airport-style departure board for any Berlin &amp; Brandenburg station. Search a stop and get live real-time departures, presented as a clean arrivals table.</p>
-        <div class="row-tags">
-          <span>VBB API</span>
-          <span>Station Search</span>
-          <span>30s Refresh</span>
-          <span>Installable PWA</span>
-        </div>
-        <span class="row-arrow" id="p-transit-board-a">Open App <span aria-hidden="true">&rarr;</span></span>
-      </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <line x1="14" y1="30" x2="186" y2="30" stroke="#dedcd3" stroke-width="1"/>
-          <line x1="14" y1="56" x2="186" y2="56" stroke="#dedcd3" stroke-width="1"/>
-          <line x1="14" y1="82" x2="186" y2="82" stroke="#dedcd3" stroke-width="1"/>
-          <rect x="14" y="18" width="20" height="12" rx="2" fill="#c8401d"/>
-          <rect x="14" y="44" width="20" height="12" rx="2" fill="#16161a"/>
-          <rect x="14" y="70" width="20" height="12" rx="2" fill="#16161a"/>
-          <rect x="150" y="18" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
-          <rect x="150" y="44" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
-          <rect x="150" y="70" width="36" height="12" rx="2" fill="none" stroke="#8a8a90" stroke-width="1"/>
-        </svg>
-      </div>
-    </a>
+  <section id="work" aria-labelledby="work-h">
+    <div class="wrap">
+      <p class="kicker">Selected work</p>
+      <h2 id="work-h">Seven live apps, organised like a transit map.</h2>
+      <p class="section-intro">Every project runs in the browser on real, open data. Pick a line — or jump straight in; each card opens the working app.</p>
 
-    <a class="row" href="walkable.html" aria-labelledby="p-walkable-t p-walkable-a" aria-describedby="p-walkable-d">
-      <span class="row-num" aria-hidden="true">03</span>
-      <div>
-        <h3 class="row-title" id="p-walkable-t">Walkable</h3>
-        <p class="row-desc" id="p-walkable-d">Enter any address and instantly see everything within walking distance &mdash; restaurants, transit, parks, pharmacies and more, mapped on a real pedestrian isochrone.</p>
-        <div class="row-tags">
-          <span>Overpass API</span>
-          <span>Leaflet Map</span>
-          <span>Isochrone</span>
-          <span>OSM</span>
-        </div>
-        <span class="row-arrow" id="p-walkable-a">Open App <span aria-hidden="true">&rarr;</span></span>
-      </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <circle cx="100" cy="59" r="44" stroke="#dedcd3" stroke-width="1.5" fill="none"/>
-          <circle cx="100" cy="59" r="28" stroke="#dedcd3" stroke-width="1.5" fill="none"/>
-          <circle cx="100" cy="59" r="12" stroke="#c9c7bc" stroke-width="1.5" fill="none"/>
-          <circle cx="100" cy="59" r="4" fill="#c8401d"/>
-          <circle cx="128" cy="40" r="3" fill="#16161a"/>
-          <circle cx="120" cy="78" r="3" fill="#16161a"/>
-          <circle cx="72" cy="46" r="3" fill="#16161a"/>
-          <circle cx="132" cy="64" r="3" fill="#16161a"/>
-          <circle cx="82" cy="88" r="3" fill="#16161a"/>
-        </svg>
-      </div>
-    </a>
-
-    <a class="row" href="shade-nav.html" aria-labelledby="p-shade-nav-t p-shade-nav-a" aria-describedby="p-shade-nav-d">
-      <span class="row-num" aria-hidden="true">04</span>
-      <div>
-        <h3 class="row-title" id="p-shade-nav-t">Shade Walk</h3>
-        <p class="row-desc" id="p-shade-nav-d">Navigate on foot from A to B along the shadiest path. Fetches real tree canopy data from OpenStreetMap, scores multiple route alternatives, and highlights where tree cover protects you from the sun.</p>
-        <div class="row-tags">
-          <span>OSRM Foot</span>
-          <span>Overpass Trees</span>
-          <span>Shade Scoring</span>
-          <span>Leaflet Map</span>
-        </div>
-        <span class="row-arrow" id="p-shade-nav-a">Open App <span aria-hidden="true">&rarr;</span></span>
-      </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <circle cx="45" cy="52" r="14" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
-          <circle cx="78" cy="38" r="11" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
-          <circle cx="115" cy="50" r="15" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
-          <circle cx="155" cy="42" r="12" fill="none" stroke="#c9c7bc" stroke-width="1.5"/>
-          <polyline points="20,66 45,60 62,55 78,49 98,53 115,57 132,64 155,50 180,53" stroke="#16161a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <polyline points="20,66 45,60" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <polyline points="62,55 78,49 98,53 115,57" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <polyline points="132,64 155,50 180,53" stroke="#c8401d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <circle cx="20" cy="66" r="4" fill="#16161a"/>
-          <circle cx="180" cy="53" r="4" fill="#16161a"/>
-        </svg>
-      </div>
-    </a>
-
-    <a class="row" href="berlin-comet-trails.html" aria-labelledby="p-comet-t p-comet-a" aria-describedby="p-comet-d">
-      <span class="row-num" aria-hidden="true">05</span>
-      <div>
-        <h3 class="row-title" id="p-comet-t">Berlin Comet Trails</h3>
-        <p class="row-desc" id="p-comet-d">Records live vehicle positions across Berlin and renders them as fading comet trails over a dark basemap, exportable as a video.</p>
-        <div class="row-tags">
-          <span>VBB API</span>
-          <span>Canvas Animation</span>
-          <span>Video Export</span>
-          <span>Leaflet Picker</span>
-        </div>
-        <span class="row-arrow" id="p-comet-a">Open App <span aria-hidden="true">&rarr;</span></span>
-      </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <div class="line-group t">
+        <div class="line-head"><span class="badge t" aria-hidden="true">T</span><h3>Line T · Live transit</h3><span class="track" aria-hidden="true"></span></div>
+        <ul class="cards">
+          <li class="card" data-p="transit">
+            <div class="thumb" aria-hidden="true"><span class="badge t">T1</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <polyline class="s-rule" points="0,58 30,58 55,44 90,44 125,40 200,32" stroke-width="2" fill="none"/>
+          <polyline class="s-rule" points="10,86 40,86 65,72 100,68 140,58 200,54" stroke-width="2" fill="none"/>
+          <polyline class="s-rule" points="25,36 55,64 87,86 130,94 200,94" stroke-width="2" fill="none"/>
+          <circle class="f-ink" cx="55" cy="44" r="3"/>
+          <circle class="f-ink" cx="100" cy="68" r="3"/>
+          <circle class="f-ink" cx="87" cy="86" r="3"/>
+          <circle class="f-acc" cx="100" cy="45" r="4.5"/>
+          <circle class="f-ink" cx="140" cy="58" r="3"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-transit"><a href="berlin-transit.html"><span class="visually-hidden">T1: </span>Berlin Transit Live</a></h4>
+              <p>Full-screen map of Berlin's public transport with live vehicle positions and real-time departures. Filter by mode, search any stop, tap a departure to see its route.</p>
+              <ul class="tags" aria-label="Built with"><li>VBB API</li><li>Leaflet</li><li>Real-time</li><li>U · S · Tram · Bus</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+          <li class="card" data-p="board">
+            <div class="thumb" aria-hidden="true"><span class="badge t">T2</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <line class="s-soft" x1="14" y1="30" x2="186" y2="30" stroke-width="1"/>
+          <line class="s-soft" x1="14" y1="56" x2="186" y2="56" stroke-width="1"/>
+          <line class="s-soft" x1="14" y1="82" x2="186" y2="82" stroke-width="1"/>
+          <rect class="f-acc" x="14" y="18" width="20" height="12" rx="2"/>
+          <rect class="f-ink" x="14" y="44" width="20" height="12" rx="2"/>
+          <rect class="f-ink" x="14" y="70" width="20" height="12" rx="2"/>
+          <rect class="s-mid" x="150" y="18" width="36" height="12" rx="2" fill="none" stroke-width="1"/>
+          <rect class="s-mid" x="150" y="44" width="36" height="12" rx="2" fill="none" stroke-width="1"/>
+          <rect class="s-mid" x="150" y="70" width="36" height="12" rx="2" fill="none" stroke-width="1"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-board"><a href="transit-board.html"><span class="visually-hidden">T2: </span>Transit Board</a></h4>
+              <p>An airport-style departure board for any station in Berlin &amp; Brandenburg — search a stop and watch live departures roll in.</p>
+              <ul class="tags" aria-label="Built with"><li>VBB API</li><li>Station search</li><li>Installable PWA</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+          <li class="card" data-p="comet">
+            <div class="thumb" aria-hidden="true"><span class="badge t">T3</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <rect x="0" y="0" width="200" height="118" fill="#0c1018"/>
-          <path d="M10,90 Q60,70 90,50 T170,20" stroke="#c8401d" stroke-width="2" fill="none" opacity="0.85"/>
-          <path d="M10,90 Q60,70 90,50 T170,20" stroke="#c8401d" stroke-width="6" fill="none" opacity="0.18"/>
-          <circle cx="170" cy="20" r="4" fill="#c8401d"/>
-          <path d="M20,30 Q70,40 100,70 T160,100" stroke="#8a8a90" stroke-width="1.5" fill="none" opacity="0.7"/>
-          <circle cx="160" cy="100" r="3" fill="#8a8a90"/>
-        </svg>
+          <path class="s-acc" d="M10,90 Q60,70 90,50 T170,20" stroke-width="2" fill="none" opacity="0.85"/>
+          <path class="s-acc" d="M10,90 Q60,70 90,50 T170,20" stroke-width="6" fill="none" opacity="0.18"/>
+          <circle class="f-acc" cx="170" cy="20" r="4"/>
+          <path class="s-mid" d="M20,30 Q70,40 100,70 T160,100" stroke-width="1.5" fill="none" opacity="0.7"/>
+          <circle class="f-mid" cx="160" cy="100" r="3"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-comet"><a href="berlin-comet-trails.html"><span class="visually-hidden">T3: </span>Berlin Comet Trails</a></h4>
+              <p>Records live vehicle positions across the city and renders them as fading comet trails — exportable as a video.</p>
+              <ul class="tags" aria-label="Built with"><li>VBB API</li><li>Canvas animation</li><li>Video export</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+        </ul>
       </div>
-    </a>
 
-    <a class="row" href="nyc-line-numbers.html" aria-labelledby="p-nyc-t p-nyc-a" aria-describedby="p-nyc-d">
-      <span class="row-num" aria-hidden="true">06</span>
-      <div>
-        <h3 class="row-title" id="p-nyc-t">NYC Line Numbers</h3>
-        <p class="row-desc" id="p-nyc-d">Records live NYC subway train positions from the MTA's real-time feeds and renders each train as its actual line-number bullet (1, 6, L, A, N&hellip;) over a dark basemap, exportable as a video.</p>
-        <div class="row-tags">
-          <span>MTA GTFS-Realtime</span>
-          <span>Canvas Animation</span>
-          <span>Video Export</span>
-          <span>Leaflet Picker</span>
-        </div>
-        <span class="row-arrow" id="p-nyc-a">Open App <span aria-hidden="true">&rarr;</span></span>
+      <div class="line-group w">
+        <div class="line-head"><span class="badge w" aria-hidden="true">W</span><h3>Line W · Streets &amp; walking</h3><span class="track" aria-hidden="true"></span></div>
+        <ul class="cards">
+          <li class="card" data-p="walkable">
+            <div class="thumb" aria-hidden="true"><span class="badge w">W1</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle class="s-soft" cx="100" cy="59" r="44" stroke-width="1.5" fill="none"/>
+          <circle class="s-soft" cx="100" cy="59" r="28" stroke-width="1.5" fill="none"/>
+          <circle class="s-rule" cx="100" cy="59" r="12" stroke-width="1.5" fill="none"/>
+          <circle class="f-acc" cx="100" cy="59" r="4"/>
+          <circle class="f-ink" cx="128" cy="40" r="3"/>
+          <circle class="f-ink" cx="120" cy="78" r="3"/>
+          <circle class="f-ink" cx="72" cy="46" r="3"/>
+          <circle class="f-ink" cx="132" cy="64" r="3"/>
+          <circle class="f-ink" cx="82" cy="88" r="3"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-walkable"><a href="walkable.html"><span class="visually-hidden">W1: </span>Walkable</a></h4>
+              <p>Enter an address and see everything within walking distance — food, transit, parks, pharmacies — on a real pedestrian isochrone.</p>
+              <ul class="tags" aria-label="Built with"><li>Valhalla isochrone</li><li>Overpass</li><li>OpenStreetMap</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+          <li class="card" data-p="shade">
+            <div class="thumb" aria-hidden="true"><span class="badge w">W2</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle class="s-rule" cx="45" cy="52" r="14" fill="none" stroke-width="1.5"/>
+          <circle class="s-rule" cx="78" cy="38" r="11" fill="none" stroke-width="1.5"/>
+          <circle class="s-rule" cx="115" cy="50" r="15" fill="none" stroke-width="1.5"/>
+          <circle class="s-rule" cx="155" cy="42" r="12" fill="none" stroke-width="1.5"/>
+          <polyline class="s-ink" points="20,66 45,60 62,55 78,49 98,53 115,57 132,64 155,50 180,53" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline class="s-acc" points="20,66 45,60" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline class="s-acc" points="62,55 78,49 98,53 115,57" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <polyline class="s-acc" points="132,64 155,50 180,53" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle class="f-ink" cx="20" cy="66" r="4"/>
+          <circle class="f-ink" cx="180" cy="53" r="4"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-shade"><a href="shade-nav.html"><span class="visually-hidden">W2: </span>Shade Walk</a></h4>
+              <p>Routes you from A to B along the shadiest path, scoring alternatives by real tree-canopy and building data from OpenStreetMap.</p>
+              <ul class="tags" aria-label="Built with"><li>OSRM foot</li><li>Tree canopy</li><li>Shade scoring</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+        </ul>
       </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+
+      <div class="line-group d">
+        <div class="line-head"><span class="badge d" aria-hidden="true">D</span><h3>Line D · Data stories</h3><span class="track" aria-hidden="true"></span></div>
+        <ul class="cards">
+          <li class="card" data-p="nyc">
+            <div class="thumb" aria-hidden="true"><span class="badge d">D1</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <rect x="0" y="0" width="200" height="118" fill="#0c1018"/>
           <line x1="15" y1="90" x2="185" y2="30" stroke="#2a3242" stroke-width="2"/>
           <line x1="15" y1="30" x2="185" y2="90" stroke="#2a3242" stroke-width="2"/>
@@ -663,89 +441,113 @@
           <text x="120" y="51" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#fff">6</text>
           <circle cx="155" cy="80" r="12" fill="#A7A9AC"/>
           <text x="155" y="85" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#0b0e14">L</text>
-        </svg>
-      </div>
-    </a>
-
-    <a class="row" href="israel-cellular-antennas.html" aria-labelledby="p-antennas-t p-antennas-a" aria-describedby="p-antennas-d">
-      <span class="row-num" aria-hidden="true">07</span>
-      <div>
-        <h3 class="row-title" id="p-antennas-t">Israel Cellular Antenna Map</h3>
-        <p class="row-desc" id="p-antennas-d">Maps every cellular antenna site in Israel from official government open data, shaping each coverage buffer against real terrain line-of-sight (SRTM) and coloring it by the radiation reading actually published for that site.</p>
-        <div class="row-tags">
-          <span>data.gov.il</span>
-          <span>Terrain Line-of-Sight</span>
-          <span>Leaflet Map</span>
-        </div>
-        <span class="row-arrow" id="p-antennas-a">Open App <span aria-hidden="true">&rarr;</span></span>
-      </div>
-      <div class="thumb" aria-hidden="true">
-        <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-nyc"><a href="nyc-line-numbers.html"><span class="visually-hidden">D1: </span>NYC Line Numbers</a></h4>
+              <p>Captures live subway positions from the MTA's real-time feeds and draws each train as its own line bullet — 1, 6, L, A, N — exportable as a video.</p>
+              <ul class="tags" aria-label="Built with"><li>GTFS-Realtime</li><li>Protobuf</li><li>Canvas</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+          <li class="card" data-p="antennas">
+            <div class="thumb" aria-hidden="true"><span class="badge d">D2</span><svg viewBox="0 11 200 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <rect x="0" y="0" width="200" height="118" fill="#0c1018"/>
           <path d="M0,95 L30,80 L55,88 L80,60 L105,70 L130,40 L155,55 L200,30" stroke="#2a3242" stroke-width="2" fill="none"/>
-          <circle cx="105" cy="70" r="26" fill="#c8401d" opacity="0.18"/>
-          <circle cx="105" cy="70" r="16" fill="#c8401d" opacity="0.28"/>
-          <line x1="105" y1="70" x2="105" y2="40" stroke="#c8401d" stroke-width="2.5"/>
-          <circle cx="105" cy="38" r="3.5" fill="#c8401d"/>
-        </svg>
+          <circle class="f-acc" cx="105" cy="70" r="26" opacity="0.18"/>
+          <circle class="f-acc" cx="105" cy="70" r="16" opacity="0.28"/>
+          <line class="s-acc" x1="105" y1="70" x2="105" y2="40" stroke-width="2.5"/>
+          <circle class="f-acc" cx="105" cy="38" r="3.5"/>
+        </svg></div>
+            <div class="card-body">
+              <h4 id="c-antennas"><a href="israel-cellular-antennas.html"><span class="visually-hidden">D2: </span>Israel Cellular Antenna Map</a></h4>
+              <p>Every cellular antenna site in Israel from official open data, with coverage buffers shaped by terrain line-of-sight and coloured by published radiation readings.</p>
+              <ul class="tags" aria-label="Built with"><li>Government open data</li><li>SRTM terrain</li><li>Hebrew · RTL</li></ul>
+              <span class="go" aria-hidden="true">Open the app <span class="arr">→</span></span>
+            </div>
+          </li>
+        </ul>
       </div>
-    </a>
-
-  </div>
-</section>
-
-<section class="wrap section" id="about" aria-labelledby="about-heading">
-  <div class="transit-divider" aria-hidden="true">
-    <svg viewBox="0 0 1000 14" preserveAspectRatio="none">
-      <line x1="0" y1="7" x2="1000" y2="7" stroke="#dedcd3" stroke-width="1.5"/>
-      <circle cx="80" cy="7" r="3" fill="#8a8a90"/>
-      <circle cx="280" cy="7" r="3" fill="#8a8a90"/>
-      <circle cx="500" cy="7" r="4.5" fill="var(--bg)" stroke="#c8401d" stroke-width="2"/>
-      <circle cx="720" cy="7" r="3" fill="#8a8a90"/>
-      <circle cx="920" cy="7" r="3" fill="#8a8a90"/>
-    </svg>
-  </div>
-  <div class="section-head">
-    <span class="section-label" aria-hidden="true">About</span>
-  </div>
-  <h2 id="about-heading">Background</h2>
-  <div class="about-grid">
-    <div>
-      <h3>Interests</h3>
-      <p>Urban planner and GIS analyst based in <strong style="color:var(--ink)">Berlin</strong>. Technion graduate passionate about how cities move &mdash; I cycle whenever I can and take public transport everywhere else. I'm not a traditional developer, so I lean on <strong style="color:var(--ink)">AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand <strong style="color:var(--ink)">urban mobility</strong>.</p>
     </div>
-    <div>
-      <h3>Stack</h3>
-      <ul>
-        <li>AI-assisted development</li>
-        <li>QGIS &middot; ArcGIS</li>
-        <li>OpenStreetMap &middot; GTFS &middot; Open APIs</li>
-        <li>Leaflet &middot; Geospatial Tools</li>
-      </ul>
-    </div>
-  </div>
-</section>
+  </section>
 
+  <section id="approach" aria-labelledby="approach-h">
+    <div class="wrap">
+      <p class="kicker">How I work</p>
+      <h2 id="approach-h">A planner's questions, answered with working software.</h2>
+      <ol class="pillars">
+        <li><span class="num">01 — Planning</span><h3>Start from the street</h3><p>Trained as an urban planner, I start with how people actually move — on foot, by bike, on transit — and what a planner or commuter needs to decide.</p></li>
+        <li><span class="num">02 — Analysis</span><h3>Get the geodata right</h3><p>QGIS and ArcGIS, OpenStreetMap, GTFS and open government APIs: I find the data, clean it and model it — isochrones, line-of-sight, shade scores.</p></li>
+        <li><span class="num">03 — Delivery</span><h3>Ship it as a tool</h3><p>Using AI-assisted development, I turn analysis into fast, accessible web apps that anyone can open — not a static PDF that ends up in a drawer.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="about" aria-labelledby="about-h">
+    <div class="wrap">
+      <p class="kicker">About</p>
+      <h2 id="about-h">Based in Berlin. Always on a bike or a train.</h2>
+      <div class="about-grid">
+        <div class="prose">
+          <p>I'm an <strong>urban planner and GIS analyst</strong> and a <strong>Technion</strong> graduate, fascinated by how cities move. I cycle whenever I can and take public transport everywhere else — which is where most of these projects started.</p>
+          <p>I'm not a traditional software developer. I lean on <strong>AI-assisted development</strong> to turn spatial analysis into data tools that help planners and commuters understand urban mobility — and I care that those tools are accessible and respect people's privacy.</p>
+        </div>
+        <ul class="facts">
+          <li><span class="k">Focus</span><span>Transportation, walkability, open data</span></li>
+          <li><span class="k">GIS</span><span>QGIS · ArcGIS · OpenStreetMap</span></li>
+          <li><span class="k">Data</span><span>GTFS / GTFS-RT · Overpass · open APIs</span></li>
+          <li><span class="k">Build</span><span>Leaflet · JavaScript · AI-assisted dev</span></li>
+          <li><span class="k">Education</span><span>Technion – Israel Institute of Technology</span></li>
+          <li><span class="k">Base</span><span>Berlin, Germany</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact" aria-labelledby="contact-h">
+    <div class="wrap">
+      <h2 id="contact-h"><span class="next">Next stop</span>Your team?</h2>
+      <p class="section-intro">I'm looking for roles in urban planning, GIS and mobility data. If you're working on how cities move, I'd love to hear from you.</p>
+      <div class="actions">
+        <a class="btn btn-primary mail" href="mailto:gilad.cameo@gmail.com">gilad.cameo@gmail.com <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer">GitHub<span class="visually-hidden"> (opens in new tab)</span></a>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer legal-footer" role="contentinfo">
-  <span>
-    <svg class="pin-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-    Gilad Cameo &middot; Berlin &middot; 2026
-  </span>
-  <div class="footer-links">
-    <nav class="legal-nav" aria-label="Rechtliches / Legal">
-      <a href="datenschutz.html" lang="de">Datenschutz</a> <span aria-hidden="true">&middot;</span> <a href="barrierefreiheit.html" lang="de">Barrierefreiheit</a>
+  <div class="wrap">
+    <span>© 2026 Gilad Cameo · Berlin</span>
+    <nav aria-label="Rechtliches / Legal">
+      <a href="datenschutz.html" lang="de">Datenschutz</a>
+      <a href="barrierefreiheit.html" lang="de">Barrierefreiheit</a>
     </nav>
-    <a href="https://github.com/giladcameo" target="_blank" rel="noopener noreferrer">GitHub Profile<span class="visually-hidden"> (opens in new tab)</span></a>
   </div>
 </footer>
 
 <script>
+/* Link hover between the network map and the project cards. */
+(function () {
+  var stations = document.querySelectorAll('.netmap a[data-p]');
+  function set(p, on) {
+    document.querySelectorAll('[data-p="' + p + '"]').forEach(function (el) {
+      var t = el.matches('.netmap a') ? el.querySelector('.stn') : el;
+      if (t) t.classList.toggle('is-hot', on);
+    });
+  }
+  document.querySelectorAll('[data-p]').forEach(function (el) {
+    var p = el.getAttribute('data-p');
+    el.addEventListener('mouseenter', function () { set(p, true); });
+    el.addEventListener('mouseleave', function () { set(p, false); });
+    el.addEventListener('focusin', function () { set(p, true); });
+    el.addEventListener('focusout', function () { set(p, false); });
+  });
+})();
+
 /* Register the service worker. No automatic reload on update: HTML is
    fetched network-first, and an unexpected reload is disorienting. */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').catch(function () {});
 }
 </script>
 </body>
