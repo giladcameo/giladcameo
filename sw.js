@@ -9,7 +9,7 @@
  *   intercepted at all: the browser handles them normally and the service
  *   worker never stores their responses. Search queries, addresses and
  *   locations therefore never end up in the cache.
- * - HTML pages (incl. impressum.html, datenschutz.html, barrierefreiheit.html)
+ * - HTML pages (incl. datenschutz.html, barrierefreiheit.html)
  *   are always fetched from the network so legal texts are never stale. They
  *   are not written to the cache.
  */
