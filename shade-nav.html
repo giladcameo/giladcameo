@@ -412,7 +412,8 @@
     h1.logo-wrap { margin: 0; font-size: inherit; line-height: 1; }
     :focus-visible { outline: 2px solid #fcd34d !important; outline-offset: 2px; }
     .time-ctrl:focus-within { border-color: #fcd34d; }
-    .leaflet-container a { color: #0078a8; }
+    .point-field input[type="text"] { min-width: 0; width: 100%; }
+    .leaflet-control-attribution a { color: #004a6b; text-decoration: underline; }
 
     @media (max-width: 640px) {
       body { height: auto; min-height: 100vh; overflow: auto; }
@@ -420,8 +421,10 @@
       #map { flex: none; height: 60vh; min-height: 280px; order: 1; }
       #panel { width: 100%; min-width: 0; border-right: none; border-top: 1px solid #21262d; order: 2; overflow: visible; }
       .legal-footer { position: static; }
-      .inputs-row { flex-direction: column; align-items: stretch; }
-      .point-field { min-width: 0; }
+      header { padding: 10px 12px; }
+      .inputs-row { flex-direction: column; align-items: stretch; flex: 1 1 100%; width: 100%; }
+      .point-field { min-width: 0; flex: none; }
+      .time-ctrl { align-self: flex-start; }
     }
 
     @media (prefers-reduced-motion: reduce) {

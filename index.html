@@ -739,13 +739,9 @@
 </footer>
 
 <script>
+/* Register the service worker. No automatic reload on update: HTML is
+   fetched network-first, and an unexpected reload is disorienting. */
 if ('serviceWorker' in navigator) {
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    location.reload();
-  });
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>

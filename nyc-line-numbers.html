@@ -161,6 +161,7 @@
   .legal-footer{ margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
   .legal-footer a{ color: var(--accent); display:inline-block; padding: 3px 2px; }
   summary{ padding: 4px 0; }
+  .leaflet-control-attribution a{ color:#004a6b; text-decoration: underline; }
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ transition: none !important; animation: none !important; scroll-behavior: auto !important; }
   }
@@ -230,7 +231,7 @@
     </details>
   </section>
 
-  <div class="stage">
+  <div class="stage" tabindex="0" role="group" aria-label="Animation canvas (scrollable)">
     <canvas id="mainCanvas" width="900" height="700" role="img"
       aria-label="Animated map of New York City subway trains, each drawn as its line-number bullet. The lines currently shown are listed below the map and the status message above summarises the data."></canvas>
   </div>

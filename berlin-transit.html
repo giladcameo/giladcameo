@@ -221,8 +221,13 @@
       .dep-time{font-size:13px}
       .countdown{font-size:11px;padding:2px 8px}
 
-      /* Debug badge: move above panel */
-      #debugBadge{bottom:calc(52% + 8px);right:8px}
+      /* Debug badge + map attribution: keep above the bottom sheet so they stay visible */
+      #debugBadge{bottom:calc(52% + 30px);right:8px}
+      .leaflet-bottom{bottom:52%}
+      body[data-panel="collapsed"] .leaflet-bottom{bottom:56px}
+      body[data-panel="collapsed"] #debugBadge{bottom:84px}
+      body[data-panel="expanded"] .leaflet-bottom{bottom:85%}
+      body[data-panel="expanded"] #debugBadge{display:none}
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -373,7 +378,7 @@ function initMap(){
   L.control.zoom({position:'topright',zoomInTitle:'Hineinzoomen',zoomOutTitle:'Herauszoomen'}).addTo(map);
   map.zoomControl = null;
   tileLayer = L.tileLayer(TILES.dark,{
-    attribution:'Kacheln &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap-Mitwirkende | Fahrplandaten: VBB via transport.rest',
+    attribution:'Kacheln &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap-Mitwirkende und die GIS User Community | Fahrplandaten: VBB via transport.rest',
     maxZoom:19,maxNativeZoom:16
   }).addTo(map);
 }
@@ -834,6 +839,7 @@ function togglePanel(){
     panel.classList.remove('expanded');
     panelState = 'collapsed';
   }
+  document.body.dataset.panel = panelState;
   handle.setAttribute('aria-label', panelState==='expanded' ? 'Bereich einklappen'
     : panelState==='collapsed' ? 'Bereich öffnen' : 'Bereich vergrößern');
   setTimeout(()=> map && map.invalidateSize(), 320);

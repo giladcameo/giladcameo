@@ -687,7 +687,14 @@ function initMap(){
   }).addTo(map);
   dotLayer = L.layerGroup().addTo(map);
   bufferLayer = L.layerGroup().addTo(map);
-  map.on('moveend zoomend', scheduleRender);
+  // A popup's auto-pan must not trigger a full re-render: that would remove the layer the popup
+  // is bound to (closing the popup and dropping keyboard focus) right after it opened.
+  let skipAutoPanRender = false;
+  map.on('autopanstart', () => { skipAutoPanRender = true; });
+  map.on('moveend zoomend', (e) => {
+    if(skipAutoPanRender && e.type === 'moveend'){ skipAutoPanRender = false; return; }
+    scheduleRender();
+  });
   [els.layerActive, els.layerPlanned, els.searchBox, els.operatorFilter].forEach(el => el.addEventListener('input', scheduleRender));
   document.querySelectorAll('.gen-cb').forEach(cb => cb.addEventListener('input', scheduleRender));
   els.rangeSlider.addEventListener('input', () => {
@@ -795,6 +802,9 @@ function siteSummary(site){
 let lastListAnnouncement = '';
 let listAnnounceTimer = null;
 function renderSiteList(candidates){
+  // Preserve keyboard focus / popup return target across the rebuild.
+  const focusedId = els.siteList.contains(document.activeElement) ? document.activeElement.dataset.siteId : null;
+  const returnId = popupReturnFocus && popupReturnFocus.dataset ? popupReturnFocus.dataset.siteId : null;
   els.siteList.textContent = '';
   const shown = candidates.slice(0, SITE_LIST_MAX);
   const frag = document.createDocumentFragment();
@@ -802,6 +812,7 @@ function renderSiteList(candidates){
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
+    b.dataset.siteId = site.id;
     const sw = document.createElement('span');
     sw.className = 'legend-swatch';
     sw.style.background = siteColor(site);
@@ -814,6 +825,9 @@ function renderSiteList(candidates){
     frag.appendChild(li);
   });
   els.siteList.appendChild(frag);
+  const byId = (id) => id && Array.from(els.siteList.querySelectorAll('button')).find(x => x.dataset.siteId === id);
+  if(returnId){ const nb = byId(returnId); popupReturnFocus = nb || els.siteList.querySelector('button') || null; }
+  if(focusedId){ const nb = byId(focusedId) || els.siteList.querySelector('button'); if(nb) nb.focus({ preventScroll: true }); }
   let msg;
   if(!candidates.length) msg = 'אין אתרים בתצוגה הנוכחית. הזיזו את המפה או שנו את הסינון.';
   else if(candidates.length > SITE_LIST_MAX) msg = `מוצגים ${SITE_LIST_MAX} הראשונים מתוך ${candidates.length.toLocaleString('he-IL')} אתרים בתצוגה. התקרבו במפה או צמצמו את הסינון כדי לראות את כולם.`;
