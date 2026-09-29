@@ -4,14 +4,22 @@
   "description": "Native iOS/Android wrapper for Berlin Transit Live",
   "private": true,
   "scripts": {
-    "sync-web": "cp -f ../berlin-transit.html www/index.html && cp -f ../icon.png www/icon.png",
-    "sync": "npm run sync-web && npx cap sync"
+    "sync-web": "node scripts/sync-web.mjs",
+    "sync": "npm run sync-web && cap sync",
+    "sync:android": "npm run sync-web && cap sync android",
+    "sync:ios": "npm run sync-web && cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/geolocation": "^8.2.0",
-    "@capacitor/ios": "^8.4.2"
+    "@capacitor/ios": "^8.4.2",
+    "@capacitor/status-bar": "^8.0.3",
+    "leaflet": "^1.9.4"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
