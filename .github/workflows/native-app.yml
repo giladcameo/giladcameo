@@ -1,0 +1,151 @@
+name: Native app (Android APK + iOS build check)
+
+on:
+  push:
+    paths:
+      - 'native-app/**'
+      - 'berlin-transit.html'
+      - 'icon.png'
+      - '.github/workflows/native-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-app-${{ github.ref }}
+  cancel-in-progress: true
+
+# Capacitor 8 toolchain: Node 22+, JDK 21, Android SDK 36 (AGP 8.13), Xcode 26+.
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native-app
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      HAS_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' && secrets.ANDROID_KEY_ALIAS != '' && secrets.ANDROID_KEY_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: native-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+          cache-dependency-path: |
+            native-app/android/*.gradle*
+            native-app/android/app/*.gradle*
+            native-app/android/gradle/wrapper/gradle-wrapper.properties
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+      - run: npm run sync-web
+      - run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: native-app/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: berlin-transit-debug-apk
+          path: native-app/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # Signed release APK + AAB, only when all four signing secrets are set.
+      - name: Decode release keystore
+        if: env.HAS_SIGNING_KEY == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK + AAB
+        if: env.HAS_SIGNING_KEY == 'true'
+        working-directory: native-app/android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_SIGNING_KEY == 'true'
+        with:
+          name: berlin-transit-release
+          path: |
+            native-app/android/app/build/outputs/apk/release/*.apk
+            native-app/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: Note about release signing
+        if: env.HAS_SIGNING_KEY != 'true'
+        run: echo "::notice::Release signing secrets not set - built the debug APK only."
+
+  ios:
+    name: iOS simulator build (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: native-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: native-app/package-lock.json
+
+      # Capacitor 8 needs Xcode 26+; pick the newest stable Xcode on the runner.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - run: xcodebuild -version
+
+      - run: npm ci
+      - run: npm run sync-web
+      - run: npx cap sync ios
+
+      # Swift Package Manager project (CapApp-SPM), so no CocoaPods step.
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Zip simulator app
+        run: ditto -c -k --keepParent ios/build/Build/Products/Debug-iphonesimulator/App.app "$RUNNER_TEMP/BerlinTransit-simulator.app.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: berlin-transit-ios-simulator-app
+          path: ${{ runner.temp }}/BerlinTransit-simulator.app.zip
+          if-no-files-found: error
+
+      # A signed .ipa (TestFlight / App Store / real iPhone) needs a paid Apple
+      # Developer account: import a distribution certificate + provisioning
+      # profile (e.g. from secrets), then `xcodebuild archive` and
+      # `xcodebuild -exportArchive -exportOptionsPlist ...`. Out of scope for now.

@@ -489,12 +489,24 @@ async function doSearch(q){
 
 /* ── LOCATE ME ── */
 let userMarker=null;
+// In the native (Capacitor) app use the Geolocation plugin; on the web use the browser API.
+function nativeGeo(){
+  return window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.Geolocation;
+}
+function getPosition(onOk,onErr,opts){
+  const geo=nativeGeo();
+  if(!geo) return navigator.geolocation.getCurrentPosition(onOk,onErr,opts);
+  geo.getCurrentPosition({enableHighAccuracy:false,...opts}).then(onOk,e=>{
+    const denied=/0003|0008|denied/i.test(`${e&&e.code} ${e&&e.message}`);
+    onErr({code:denied?1:2,message:(e&&e.message)||'unknown error'});
+  });
+}
 async function locateMe(){
-  if(!navigator.geolocation)
+  if(!nativeGeo() && !navigator.geolocation)
     return alert('Geolocation not supported by this browser.');
   const btn=document.getElementById('locateBtn');
   btn.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(async pos=>{
+  getPosition(async pos=>{
     btn.classList.remove('locating');
     const {latitude:lat,longitude:lon}=pos.coords;
 
@@ -720,7 +732,8 @@ renderFilters();
 loadStation(stationId,stationName);
 
 /* ── Register Service Worker ── */
-if ('serviceWorker' in navigator) {
+// Skipped inside the native (Capacitor) app, which ships its files locally.
+if ('serviceWorker' in navigator && !window.Capacitor) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;

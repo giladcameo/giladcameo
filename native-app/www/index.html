@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Berlin Transit Live</title>
-  <link rel="preconnect" href="https://unpkg.com"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>
   <style>
     :root{
       --bg:rgba(13,17,23,.93);--surface:rgba(22,27,34,.95);--surface2:rgba(33,38,45,.95);
@@ -199,6 +198,30 @@
       #debugBadge{bottom:calc(52% + 8px);right:8px}
     }
   </style>
+<style id="native-safe-area">
+  :root{
+    --sat:var(--safe-area-inset-top,env(safe-area-inset-top,0px));
+    --sar:var(--safe-area-inset-right,env(safe-area-inset-right,0px));
+    --sab:var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px));
+    --sal:var(--safe-area-inset-left,env(safe-area-inset-left,0px));
+  }
+  header{height:calc(46px + var(--sat));padding-top:var(--sat);
+    padding-left:calc(14px + var(--sal));padding-right:calc(14px + var(--sar))}
+  .filter-bar{top:calc(56px + var(--sat));right:calc(10px + var(--sar))}
+  .panel{top:calc(56px + var(--sat));left:calc(10px + var(--sal));bottom:calc(10px + var(--sab))}
+  #debugBadge{bottom:calc(10px + var(--sab));right:calc(10px + var(--sar))}
+  .leaflet-top{top:var(--sat)}
+  .leaflet-left{left:var(--sal)}
+  @media(max-width:768px){
+    header{height:calc(44px + var(--sat));
+      padding-left:calc(12px + var(--sal));padding-right:calc(12px + var(--sar))}
+    .filter-bar{top:calc(44px + var(--sat));right:0;
+      padding-left:calc(10px + var(--sal));padding-right:calc(10px + var(--sar))}
+    .panel{top:auto;left:0;bottom:0;padding-bottom:var(--sab)}
+    .panel.collapsed{height:calc(56px + var(--sab))}
+    #debugBadge{bottom:calc(52% + 8px);right:calc(8px + var(--sar))}
+  }
+</style>
 </head>
 <body>
 
@@ -256,7 +279,7 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script>
 const API    = 'https://v6.vbb.transport.rest'; // U-Bahn + departures board
 const API_DB = 'https://v6.db.transport.rest';  // S-Bahn (DB-operated, cleaner radar)
@@ -298,14 +321,14 @@ setInterval(()=>{
 
 /* ── MAP ── */
 const TILES = {
-  dark:  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark:  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
 };
 
 function initMap(){
   map = L.map('map',{zoomControl:true}).setView([52.52,13.405],12);
   tileLayer = L.tileLayer(TILES.dark,{
-    attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
+    attribution:'Tiles &copy; Esri',maxZoom:19,maxNativeZoom:16
   }).addTo(map);
 }
 
@@ -489,12 +512,24 @@ async function doSearch(q){
 
 /* ── LOCATE ME ── */
 let userMarker=null;
+// In the native (Capacitor) app use the Geolocation plugin; on the web use the browser API.
+function nativeGeo(){
+  return window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.Geolocation;
+}
+function getPosition(onOk,onErr,opts){
+  const geo=nativeGeo();
+  if(!geo) return navigator.geolocation.getCurrentPosition(onOk,onErr,opts);
+  geo.getCurrentPosition({enableHighAccuracy:false,...opts}).then(onOk,e=>{
+    const denied=/0003|0008|denied/i.test(`${e&&e.code} ${e&&e.message}`);
+    onErr({code:denied?1:2,message:(e&&e.message)||'unknown error'});
+  });
+}
 async function locateMe(){
-  if(!navigator.geolocation)
+  if(!nativeGeo() && !navigator.geolocation)
     return alert('Geolocation not supported by this browser.');
   const btn=document.getElementById('locateBtn');
   btn.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(async pos=>{
+  getPosition(async pos=>{
     btn.classList.remove('locating');
     const {latitude:lat,longitude:lon}=pos.coords;
 
@@ -720,7 +755,8 @@ renderFilters();
 loadStation(stationId,stationName);
 
 /* ── Register Service Worker ── */
-if ('serviceWorker' in navigator) {
+// Skipped inside the native (Capacitor) app, which ships its files locally.
+if ('serviceWorker' in navigator && !window.Capacitor) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -730,5 +766,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
+<script src="native.js"></script>
 </body>
 </html>

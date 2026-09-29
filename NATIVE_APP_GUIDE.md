@@ -111,11 +111,10 @@ Test the golden paths: map loads, live departures fetch from `vbb.transport.rest
 Every time you update `berlin-transit.html` in the main repo, sync the change into the native shell:
 
 ```bash
-cp ../giladcameo/berlin-transit.html www/index.html
-npx cap sync
+cd native-app && npm run sync   # regenerates www/ (bundled Leaflet, safe areas, native glue) + cap sync
 ```
 
-Then rebuild in Android Studio / Xcode. (Optional next step: script this copy + `cap sync` so it's one command, or point Capacitor's `webDir` straight at a build step if you ever add a bundler.)
+Or just push: `.github/workflows/native-app.yml` rebuilds the Android APK (and checks the iOS build) on every change to `berlin-transit.html` or `native-app/`. See `native-app/README.md`.
 
 ## 8. Android release build (Play Store)
 
