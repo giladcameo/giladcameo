@@ -97,6 +97,21 @@
     .tab-btn{padding:3px 10px;border-radius:5px;border:1px solid transparent;
       background:transparent;color:var(--muted);cursor:pointer;font-size:11px}
     .tab-btn.active{background:var(--surface2);border-color:var(--border);color:var(--text)}
+    .ss-actions{margin-left:auto;display:flex;gap:3px}
+    .ss-btn{padding:3px 8px;border-radius:5px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);cursor:pointer;font-size:11px}
+    .ss-btn:hover{color:var(--accent)}
+
+    /* SCREENSAVER MODE (?screensaver=1): map only, slow drift, tap to exit */
+    #ssInfo{display:none}
+    body.screensaver{cursor:none}
+    body.screensaver header,body.screensaver .filter-bar,body.screensaver .panel,
+    body.screensaver #debugBadge,body.screensaver .leaflet-control-container{display:none !important}
+    body.screensaver #ssInfo{display:block;position:fixed;z-index:600;pointer-events:none;
+      left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));
+      color:rgba(230,237,243,.38);text-shadow:0 1px 3px rgba(0,0,0,.6);transition:transform 2s ease}
+    #ssClock{font-size:34px;font-weight:300;font-variant-numeric:tabular-nums;line-height:1}
+    #ssStation{font-size:13px;margin-top:4px}
 
     /* Board */
     .board{flex:1;overflow-y:auto;padding:6px 8px}
@@ -205,6 +220,7 @@
 <!-- Full-screen map -->
 <div id="map"></div>
 <div id="debugBadge">Radar: warte…</div>
+<div id="ssInfo"><div id="ssClock"></div><div id="ssStation"></div></div>
 
 <!-- Header -->
 <header>
@@ -248,6 +264,10 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('departures')">Abfahrt</button>
       <button class="tab-btn" onclick="switchTab('arrivals')">Ankunft</button>
+      <div class="ss-actions">
+        <button class="ss-btn" onclick="setScreensaver(true,true)" title="Screensaver mode: full-screen live map, tap to exit">Screensaver</button>
+        <button class="ss-btn" id="ssLinkBtn" onclick="copyScreensaverLink()" title="Copy a screensaver link for this station">Link</button>
+      </div>
     </div>
   </div>
 
@@ -289,11 +309,18 @@ let activeRouteTripId = null;
 let depAbort=null, radarAbort=null, refreshTimer=null, searchTimer=null;
 let map, tileLayer, stationMarker=null, vehicleMarkers={};
 let isDark = true;
+let stationLatLng = null;
+const DEFAULT_STATION = {id:'900003201', name:'Berlin Hauptbahnhof'};
+const STATION_KEY = 'bt_station';
+const PARAMS = new URLSearchParams(location.search);
+const SCREENSAVER_PARAM = PARAMS.get('screensaver') === '1';
 
 /* ── CLOCK ── */
 setInterval(()=>{
   document.getElementById('clock').textContent =
     new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(screensaverOn) document.getElementById('ssClock').textContent =
+    new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 },1000);
 
 /* ── MAP ── */
@@ -317,6 +344,7 @@ function toggleTheme(){
 }
 
 function setStationMarker(lat,lon,name){
+  stationLatLng = [lat,lon];
   if(stationMarker) stationMarker.remove();
   stationMarker = L.circleMarker([lat,lon],{
     radius:9,color:'#58a6ff',fillColor:'#58a6ff',fillOpacity:.4,weight:2,zIndexOffset:1000
@@ -660,22 +688,119 @@ async function loadAll(){
     }
   }
   await fetchRadar();
-  refreshTimer=setTimeout(loadAll,REFRESH_MS);
+  refreshTimer=setTimeout(loadAll,screensaverOn?SS_REFRESH_MS:REFRESH_MS);
 }
 
 /* ── LOAD STATION ── */
 async function loadStation(id,name){
+  id=String(id||'').trim();
+  if(!/^[\w:.-]{1,64}$/.test(id)) ({id,name}=DEFAULT_STATION);
+  name=String(name||'').slice(0,80) || 'Station '+id;
   stationId=id; stationName=name;
   document.getElementById('stationName').textContent=name;
   document.getElementById('stationMeta').textContent=`Stop: ${id}`;
+  document.getElementById('ssStation').textContent=name;
   document.getElementById('board').innerHTML='<div class="state-box"><div class="spinner"></div>Lade…</div>';
   clearRoute();
   try{
-    const r=await fetch(`${API}/stops/${id}`);
+    const r=await fetch(`${API}/stops/${encodeURIComponent(id)}`);
+    // Unknown stop id (e.g. from a URL): fall back to the default station.
+    if(r.status>=400 && r.status<500 && id!==DEFAULT_STATION.id)
+      return loadStation(DEFAULT_STATION.id, DEFAULT_STATION.name);
     const s=await r.json();
+    if(name==='Station '+id && s.name){
+      stationName=name=s.name;
+      document.getElementById('stationName').textContent=name;
+      document.getElementById('ssStation').textContent=name;
+    }
     if(s.location) setStationMarker(s.location.latitude,s.location.longitude,name);
   }catch{}
+  try{ localStorage.setItem(STATION_KEY, JSON.stringify({id,name})); }catch{}
   loadAll();
+}
+
+/* ── SCREENSAVER MODE ──
+   ?screensaver=1 (or the Screensaver button): UI hidden, dark theme, the map
+   drifts slowly around the chosen station while the radar keeps updating.
+   Any tap/key exits. No alerts or location prompts in this mode. */
+const PUBLIC_URL = 'https://gcameo.com/berlin-transit.html';
+const SS_REFRESH_MS = 30000;          // radar poll interval (normal: REFRESH_MS)
+const SS_DRIFT_MS = 45000;            // time between drift moves
+const SS_RADIUS = [0.027, 0.045];     // ~3 km in lat/lon around the station
+const SS_FALLBACK = [52.515, 13.39];  // central Berlin (inside the Ringbahn)
+let screensaverOn=false, ssDriftTimer=null, ssShiftTimer=null, ssRestoreLight=false, ssWakeLock=null;
+
+function ssDrift(){
+  const [lat,lon]=stationLatLng||SS_FALLBACK;
+  const r=()=>Math.random()*2-1;
+  map.flyTo([lat+r()*SS_RADIUS[0], lon+r()*SS_RADIUS[1]], Math.random()<.35?14:13,
+    {duration:12,easeLinearity:.1});
+}
+function ssShiftInfo(){ // avoid burn-in: nudge the clock/station label
+  const r=()=>Math.round(Math.random()*40);
+  document.getElementById('ssInfo').style.transform=`translate(${r()}px,${-r()}px)`;
+}
+async function ssKeepAwake(on){
+  try{
+    const ka=window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.KeepAwake;
+    if(ka) return await (on?ka.keepAwake():ka.allowSleep());
+    if(on && navigator.wakeLock) ssWakeLock=await navigator.wakeLock.request('screen');
+    else if(!on && ssWakeLock){ await ssWakeLock.release(); ssWakeLock=null; }
+  }catch{}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(screensaverOn && document.visibilityState==='visible') ssKeepAwake(true);
+});
+function ssSwallowClick(e){ e.preventDefault(); e.stopPropagation(); }
+function ssExit(e){
+  if(e){ e.preventDefault(); e.stopPropagation();
+    addEventListener('click',ssSwallowClick,true);
+    setTimeout(()=>removeEventListener('click',ssSwallowClick,true),600); }
+  setScreensaver(false);
+}
+const SS_EXIT_EVENTS=['pointerdown','keydown','wheel'];
+function setScreensaver(on,fromUser){
+  if(on===screensaverOn) return;
+  screensaverOn=on;
+  document.body.classList.toggle('screensaver',on);
+  clearInterval(ssDriftTimer); clearInterval(ssShiftTimer);
+  SS_EXIT_EVENTS.forEach(t=>removeEventListener(t,ssExit,true));
+  if(on){
+    ssRestoreLight=!isDark;
+    if(!isDark) toggleTheme();
+    document.getElementById('searchResults').classList.remove('open');
+    document.getElementById('ssClock').textContent=
+      new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    ssShiftInfo();
+    ssDriftTimer=setInterval(ssDrift,SS_DRIFT_MS);
+    ssShiftTimer=setInterval(ssShiftInfo,180000);
+    setTimeout(ssDrift,1500);
+    // Arm "tap to exit" after the click that started it has finished.
+    setTimeout(()=>{ if(screensaverOn) SS_EXIT_EVENTS.forEach(t=>addEventListener(t,ssExit,true)); },800);
+    if(fromUser && document.documentElement.requestFullscreen)
+      document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    if(ssRestoreLight && isDark) toggleTheme();
+    if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  }
+  ssKeepAwake(on);
+  setTimeout(()=>map && map.invalidateSize(),50);
+  // Re-arm polling at the new rate.
+  clearTimeout(refreshTimer);
+  refreshTimer=setTimeout(loadAll,on?SS_REFRESH_MS:1000);
+}
+function screensaverLink(){
+  return `${PUBLIC_URL}?screensaver=1&station=${encodeURIComponent(stationId)}&name=${encodeURIComponent(stationName)}`;
+}
+async function copyScreensaverLink(){
+  const link=screensaverLink(), btn=document.getElementById('ssLinkBtn');
+  try{
+    await navigator.clipboard.writeText(link);
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Link',2000);
+  }catch{
+    prompt('Screensaver link for this station:',link);
+  }
 }
 
 /* ── TAB ── */
@@ -715,7 +840,8 @@ function togglePanel(){
   const fmt = n => n.toLocaleString('en-US');
   // Only count once per browser session — avoids inflating the total on
   // every SW auto-reload or manual refresh within the same tab.
-  const alreadyCounted = sessionStorage.getItem('bt_view_counted') === '1';
+  // Screensaver sessions (e.g. a Mac/Android screensaver) don't count as visits.
+  const alreadyCounted = SCREENSAVER_PARAM || sessionStorage.getItem('bt_view_counted') === '1';
   const url = alreadyCounted
     ? `https://abacus.jasoncameron.dev/get/${NS}/${KEY}`
     : `https://abacus.jasoncameron.dev/hit/${NS}/${KEY}`;
@@ -729,7 +855,15 @@ function togglePanel(){
 /* ── INIT ── */
 initMap();
 renderFilters();
-loadStation(stationId,stationName);
+(function(){
+  // Start station: ?station=<id>[&name=<label>], else the last one picked, else Hbf.
+  let start=null;
+  if(PARAMS.get('station')) start={id:PARAMS.get('station'), name:PARAMS.get('name')};
+  else try{ start=JSON.parse(localStorage.getItem(STATION_KEY)||'null'); }catch{}
+  if(!start || !start.id) start=DEFAULT_STATION;
+  loadStation(start.id, start.name);
+})();
+if(SCREENSAVER_PARAM) setScreensaver(true);
 
 /* ── Register Service Worker ── */
 // Skipped inside the native (Capacitor) app, which ships its files locally.

@@ -21,12 +21,30 @@
     };
   }
 
+  // Screensaver mode (body.screensaver): hide the status bar while it runs.
+  // Keep-awake is handled by the page itself via the KeepAwake plugin.
+  if (P.StatusBar) {
+    let ss = false;
+    new MutationObserver(() => {
+      const on = document.body.classList.contains('screensaver');
+      if (on === ss) return;
+      ss = on;
+      (on ? P.StatusBar.hide() : P.StatusBar.show()).catch(() => {});
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    if (document.body.classList.contains('screensaver')) {
+      ss = true;
+      P.StatusBar.hide().catch(() => {});
+    }
+  }
+
   // Android hardware back button: close whatever is open, else minimize.
   if (P.App && cap.getPlatform() === 'android') {
     P.App.addListener('backButton', () => {
       const results = document.getElementById('searchResults');
       const panel = document.getElementById('panel');
-      if (results && results.classList.contains('open')) {
+      if (document.body.classList.contains('screensaver')) {
+        setScreensaver(false);
+      } else if (results && results.classList.contains('open')) {
         results.classList.remove('open');
         document.getElementById('searchInput').blur();
       } else if (panel && panelState === 'expanded') {
