@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>One Transfer Berlin</title>
+  <meta name="description" content="Where can you get from any Berlin/Brandenburg stop with at most two rides? Map of everything reachable directly or with one transfer."/>
+  <link rel="preconnect" href="https://unpkg.com"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root{
+      --bg:rgba(13,17,23,.93);--surface:rgba(22,27,34,.95);--surface2:rgba(33,38,45,.95);
+      --border:rgba(48,54,61,.8);--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
+      --direct:#58a6ff;--transfer:#f0883e;--idle:rgba(139,148,158,.45);
+      --map-bg:#1a1f2e;
+    }
+    [data-theme="light"]{
+      --bg:rgba(248,250,252,.95);--surface:rgba(255,255,255,.97);--surface2:rgba(241,245,249,.97);
+      --border:rgba(203,213,225,.8);--text:#1e293b;--muted:#64748b;--accent:#2563eb;
+      --direct:#2563eb;--transfer:#d9480f;--idle:rgba(100,116,139,.45);
+      --map-bg:#e8edf2;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;width:100%;overflow:hidden;background:#0d1117;
+      font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--text)}
+    #map{position:fixed;inset:0;z-index:0}
+    .leaflet-container{background:var(--map-bg)}
+    .leaflet-control-zoom a{background:var(--surface) !important;color:var(--text) !important;
+      border-color:var(--border) !important}
+    .leaflet-tooltip.stn-tip{background:var(--surface);color:var(--text);border:1px solid var(--border);
+      box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:11px;padding:4px 7px}
+    .leaflet-tooltip.stn-tip::before{display:none}
+
+    header{position:fixed;top:0;left:0;right:0;height:46px;z-index:500;
+      background:var(--bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:10px;padding:0 14px}
+    .logo-mark{background:#f5a800;color:#000;font-weight:900;font-size:12px;
+      width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .logo-text{font-size:14px;font-weight:700;white-space:nowrap}
+    .logo-sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .spacer{flex:1}
+    .icon-btn{background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;
+      padding:3px 8px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;text-decoration:none}
+
+    .panel{position:fixed;top:56px;left:10px;bottom:10px;width:340px;z-index:400;
+      background:var(--surface);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:12px;
+      display:flex;flex-direction:column;overflow:hidden}
+    .panel-handle{display:none}
+
+    .search-wrap{position:relative;padding:10px;border-bottom:1px solid var(--border)}
+    .search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+      padding:8px 34px 8px 30px;border-radius:8px;font-size:13px;outline:none}
+    .search-wrap input:focus{border-color:var(--accent)}
+    .s-icon{position:absolute;left:20px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    .locate-btn{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:none;border:none;
+      cursor:pointer;color:var(--muted);padding:3px;display:flex}
+    .locate-btn:hover,.locate-btn.busy{color:var(--accent)}
+    .search-results{position:absolute;top:calc(100% - 6px);left:10px;right:10px;background:var(--surface2);
+      border:1px solid var(--border);border-radius:8px;z-index:9999;max-height:280px;overflow-y:auto;display:none;
+      box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .search-results.open{display:block}
+    .sr-item{padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--border)}
+    .sr-item:last-child{border-bottom:none}
+    .sr-item:hover,.sr-item.sel{background:var(--surface)}
+    .sr-name{font-weight:600;font-size:12px}
+    .sr-sub{margin-top:3px;display:flex;gap:3px;flex-wrap:wrap}
+
+    .body{flex:1;overflow-y:auto;padding:10px 12px 14px}
+    .body::-webkit-scrollbar{width:4px}
+    .body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+    .origin-name{font-size:16px;font-weight:800;color:var(--accent);line-height:1.25}
+    .origin-lines{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+    .hint{color:var(--muted);font-size:12px;line-height:1.5}
+
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+    .stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+    .stat-num{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+    .stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;
+      display:flex;align-items:center;gap:5px}
+    .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+    .sec{margin-top:14px}
+    .sec-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .chips{display:flex;gap:5px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);
+      cursor:pointer;font-size:11px;font-weight:700;background:var(--surface2);color:var(--muted);user-select:none}
+    .chip.on{color:var(--text);border-color:var(--accent)}
+    .chip .dot{opacity:.35}.chip.on .dot{opacity:1}
+    .seg{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:2px}
+    .seg button{flex:1;border:none;background:none;color:var(--muted);padding:5px 4px;border-radius:6px;cursor:pointer;
+      font-size:11px;font-weight:600}
+    .seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+    .range-row{display:flex;align-items:center;gap:10px}
+    .range-row input{flex:1;accent-color:var(--accent)}
+    .range-val{font-variant-numeric:tabular-nums;font-weight:700;min-width:58px;text-align:right}
+
+    .badge{display:inline-flex;align-items:center;justify-content:center;min-width:28px;padding:1px 5px;border-radius:4px;
+      font-weight:800;font-size:10px;line-height:15px;white-space:nowrap}
+
+    .route{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:12px}
+    .route-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+    .route-dest{font-weight:800;font-size:14px}
+    .route-time{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .route-sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .legs{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+    .leg{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.4}
+    .leg .badge{margin-top:1px}
+    .leg-walk{color:var(--muted);font-size:11px;padding-left:4px}
+    .route-actions{display:flex;gap:6px;margin-top:10px}
+    .btn{flex:1;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;padding:6px 8px;
+      font-size:11px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+    .dest-list{display:flex;flex-direction:column}
+    .dest-row{display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:6px;cursor:pointer}
+    .dest-row:hover{background:var(--surface2)}
+    .dest-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+    .dest-min{font-variant-numeric:tabular-nums;font-weight:700;font-size:12px}
+    .filter-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+      padding:6px 9px;border-radius:7px;font-size:12px;outline:none;margin-bottom:6px}
+
+    .legend{position:fixed;right:10px;bottom:24px;z-index:400;background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:8px 10px;font-size:11px;backdrop-filter:blur(8px);min-width:170px}
+    .legend-ramp{height:8px;border-radius:4px;margin:5px 0 3px}
+    .legend-scale{display:flex;justify-content:space-between;color:var(--muted);font-variant-numeric:tabular-nums;font-size:10px}
+    .legend-row{display:flex;align-items:center;gap:6px;margin-top:3px}
+    .foot{font-size:10px;color:var(--muted);line-height:1.5;margin-top:16px;border-top:1px solid var(--border);padding-top:10px}
+    .foot a{color:var(--muted)}
+
+    .loading{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;flex-direction:column;
+      gap:10px;background:rgba(13,17,23,.75);color:#e6edf3;font-size:12px}
+    .spinner{width:26px;height:26px;border:2px solid rgba(255,255,255,.2);border-top-color:#58a6ff;border-radius:50%;
+      animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media(max-width:768px){
+      header{height:44px;padding:0 12px}
+      .logo-sub{display:none}
+      .panel{top:auto;left:0;right:0;width:100%;bottom:0;height:46%;border-radius:16px 16px 0 0;
+        border-left:none;border-right:none;border-bottom:none;transition:height .3s cubic-bezier(.4,0,.2,1)}
+      .panel.collapsed{height:118px}
+      .panel.expanded{height:85%}
+      .panel-handle{display:flex;justify-content:center;padding:8px 0 2px;cursor:pointer;flex-shrink:0}
+      .panel-handle-bar{width:36px;height:4px;background:var(--border);border-radius:2px}
+      .search-wrap{padding-top:6px}
+      .legend{top:54px;bottom:auto;right:8px;min-width:140px;padding:6px 8px}
+      .chip{padding:6px 12px;font-size:12px}
+      .dest-row{padding:8px 4px}
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="loading" id="loading"><div class="spinner"></div><span>Loading the VBB network…</span></div>
+
+<header>
+  <div class="logo-mark">1×</div>
+  <div class="logo-text">One Transfer</div>
+  <div class="logo-sub">Everywhere you can go from one stop with at most two rides</div>
+  <div class="spacer"></div>
+  <a class="icon-btn" href="index.html" title="Back to portfolio">←</a>
+  <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+</header>
+
+<div class="panel" id="panel">
+  <div class="panel-handle" id="panelHandle"><div class="panel-handle-bar"></div></div>
+  <div class="search-wrap">
+    <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="searchInput" type="text" placeholder="Start stop, e.g. Hermannplatz" autocomplete="off" spellcheck="false"/>
+    <button class="locate-btn" id="locateBtn" title="Nearest stop">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/>
+      </svg>
+    </button>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+  <div class="body" id="body"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ── CONFIG ── */
+const DATA_URL = 'data/vbb-network.json?v=2026-03-24';
+const PRODUCT_DEFS = {
+  suburban:{label:'S-Bahn', color:'#007734'},
+  subway:  {label:'U-Bahn', color:'#224f9e'},
+  tram:    {label:'Tram',   color:'#cc2222'},
+  bus:     {label:'Bus',    color:'#95276e'},
+  regional:{label:'Regional',color:'#e30613'},
+  ferry:   {label:'Ferry',  color:'#0a5f98'},
+};
+const LINE_COLORS = {
+  U1:'#55a822',U2:'#dd6e14',U3:'#16683d',U4:'#f0d722',U5:'#7d4427',U6:'#8b5ca3',U7:'#528dba',U8:'#224f9e',U9:'#f7931e',
+  S1:'#da6ba2',S2:'#007734',S25:'#007734',S26:'#007734',S3:'#0a5f98',S41:'#ab2626',S42:'#cb6418',
+  S45:'#c97a2f',S46:'#c97a2f',S47:'#c97a2f',S5:'#ef7c00',S7:'#775e38',S75:'#775e38',S8:'#55a822',S85:'#55a822',S9:'#990000',
+};
+const DARK_FG = new Set(['U4']);
+const TRANSFER_MIN = 3;       // minimum change time, minutes
+const WALK_M_PER_MIN = 70;    // walking speed incl. stairs
+const DAY_WINDOW_MIN = 14*60; // trip counts in the data cover 06–20h
+const MAX_WAIT = 30;          // cap for "half the headway"
+const TIME_STEPS = [15,20,30,45,60,75,90,120,150,180,Infinity];
+// Sequential ramp for travel time (fast → slow), readable on dark and light tiles.
+const RAMP = ['#fde725','#a0da39','#4ac16d','#1fa187','#277f8e','#365c8d','#46327e','#440154'];
+
+/* ── STATE ── */
+let NET = null;             // decoded network
+let origin = null;          // station index
+let result = null;          // {best: Float64Array, rides: Uint8Array, via: []}
+let selected = null;        // destination station index
+const state = {
+  products: new Set(['suburban','subway','tram','bus','regional','ferry']),
+  maxTime: Infinity,
+  walk: 200,                // metres allowed for changing between nearby stops
+  colorBy: 'time',
+  listFilter: '',
+};
+let map, tileLayer, dotLayer, routeLayer, originLayer, isDark = true;
+let dots = [];
+
+/* ── HELPERS ── */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/ß/g,'ss').replace(/straße|strasse/g,'str').replace(/[^a-z0-9]+/g,' ').trim();
+function lineColor(li){
+  const [name, p] = NET.lines[li];
+  if (LINE_COLORS[name]) return LINE_COLORS[name];
+  return PRODUCT_DEFS[NET.products[p]].color;
+}
+function badge(li){
+  const name = NET.lines[li][0];
+  const bg = lineColor(li);
+  return `<span class="badge" style="background:${bg};color:${DARK_FG.has(name)?'#000':'#fff'}">${esc(name)}</span>`;
+}
+function fmtMin(m){
+  if (!isFinite(m)) return 'any';
+  m = Math.round(m);
+  return m < 60 ? `${m} min` : `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}`;
+}
+function rampColor(t){
+  const max = isFinite(state.maxTime) ? state.maxTime : 120;
+  const x = Math.min(1, Math.max(0, t / max)) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(x)), f = x - i;
+  const a = RAMP[i], b = RAMP[i+1];
+  const mix = k => Math.round(parseInt(a.substr(k,2),16)*(1-f) + parseInt(b.substr(k,2),16)*f);
+  return `rgb(${mix(1)},${mix(3)},${mix(5)})`;
+}
+function distM(a, b){
+  const [, la1, lo1] = NET.stations[a], [, la2, lo2] = NET.stations[b];
+  const dy = (la2-la1)*111320, dx = (lo2-lo1)*111320*Math.cos(la1*Math.PI/180);
+  return Math.hypot(dx, dy);
+}
+
+/* ── DATA ── */
+function decode(raw){
+  const lineProduct = raw.lines.map(l => raw.products[l[1]]);
+  const patterns = raw.patterns.map(([li, day, st, deltas]) => {
+    const m = new Array(deltas.length); let acc = 0;
+    for (let i = 0; i < deltas.length; i++){ acc += deltas[i]; m[i] = acc; }
+    return {li, day, st, m, prod: lineProduct[li]};
+  });
+  // Where each station is served: [pattern, position] pairs.
+  const at = raw.stations.map(() => []);
+  // Trips per line leaving a station towards the next one, summed over all variants —
+  // so a line with short-turn variants still gets its real frequency.
+  const freq = new Map();
+  patterns.forEach((p, pi) => {
+    p.st.forEach((s, i) => {
+      at[s].push(pi, i);
+      if (i < p.st.length - 1){
+        const k = (p.li * 16384 + s) * 16384 + p.st[i+1];
+        freq.set(k, (freq.get(k) || 0) + p.day);
+      }
+    });
+  });
+  // Importance for search ranking: daytime departures at the stop.
+  const weight = raw.stations.map((_, s) => {
+    let w = 0; const a = at[s];
+    for (let k = 0; k < a.length; k += 2) w += patterns[a[k]].day;
+    return w;
+  });
+  // Spatial grid (≈ 330 m cells) for nearby-stop lookups.
+  const grid = new Map();
+  const cell = (la, lo) => `${Math.floor(la/0.003)},${Math.floor(lo/0.005)}`;
+  raw.stations.forEach(([, la, lo], s) => {
+    const k = cell(la, lo); (grid.get(k) || grid.set(k, []).get(k)).push(s);
+  });
+  const searchKeys = raw.stations.map(r => norm(r[0]));
+  return {...raw, patterns, at, freq, weight, grid, cell, searchKeys};
+}
+
+function nearby(s, radius){
+  const out = [[s, 0]];
+  if (radius <= 0) return out;
+  const [, la, lo] = NET.stations[s];
+  const ci = Math.floor(la/0.003), cj = Math.floor(lo/0.005);
+  for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++){
+    const list = NET.grid.get(`${ci+di},${cj+dj}`); if (!list) continue;
+    for (const t of list){
+      if (t === s) continue;
+      const d = distM(s, t);
+      if (d <= radius) out.push([t, d * 1.25 / WALK_M_PER_MIN]); // 1.25: streets aren't straight
+    }
+  }
+  return out;
+}
+
+function waitAt(p, i){
+  const pat = NET.patterns[p];
+  const f = NET.freq.get((pat.li * 16384 + pat.st[i]) * 16384 + pat.st[i+1]) || 0;
+  return f ? Math.min(MAX_WAIT, DAY_WINDOW_MIN / f / 2) : MAX_WAIT;
+}
+
+/* ── REACHABILITY ──
+   Ride 1: every pattern serving the origin (or a stop within walking distance),
+   every later stop on it. Ride 2: from each of those stops (again plus nearby stops),
+   every pattern of another line, every later stop. Time = waiting (half headway)
+   + in-vehicle minutes + change time + walking. */
+function compute(o){
+  const N = NET.stations.length;
+  const t1 = new Float64Array(N).fill(Infinity), t2 = new Float64Array(N).fill(Infinity);
+  const via1 = new Array(N), via2 = new Array(N);
+  const P = NET.patterns, ok = p => state.products.has(P[p].prod);
+
+  for (const [b, walk] of nearby(o, state.walk)){
+    const a = NET.at[b];
+    for (let k = 0; k < a.length; k += 2){
+      const p = a[k], i = a[k+1], pat = P[p];
+      if (!ok(p) || i === pat.st.length - 1) continue;
+      const start = walk + waitAt(p, i) - pat.m[i];
+      for (let j = i + 1; j < pat.st.length; j++){
+        const s = pat.st[j], t = start + pat.m[j];
+        if (t < t1[s]){ t1[s] = t; via1[s] = {p, i, j, board: b, walk}; }
+      }
+    }
+  }
+  t1[o] = 0; via1[o] = null;
+
+  for (let x = 0; x < N; x++){
+    if (!isFinite(t1[x]) || x === o) continue;
+    const firstLine = P[via1[x].p].li;
+    for (const [b, walk] of nearby(x, state.walk)){
+      const a = NET.at[b];
+      for (let k = 0; k < a.length; k += 2){
+        const p = a[k], i = a[k+1], pat = P[p];
+        if (!ok(p) || pat.li === firstLine || i === pat.st.length - 1) continue;
+        const start = t1[x] + walk + TRANSFER_MIN + waitAt(p, i) - pat.m[i];
+        for (let j = i + 1; j < pat.st.length; j++){
+          const s = pat.st[j], t = start + pat.m[j];
+          if (t < t2[s]){ t2[s] = t; via2[s] = {x, p, i, j, board: b, walk}; }
+        }
+      }
+    }
+  }
+
+  const best = new Float64Array(N), rides = new Uint8Array(N);
+  for (let s = 0; s < N; s++){
+    if (s === o){ best[s] = 0; rides[s] = 0; continue; }
+    best[s] = Math.min(t1[s], t2[s]);
+    // A stop counts as "direct" when a single ride gets there, even if changing is faster.
+    rides[s] = isFinite(t1[s]) ? 1 : isFinite(t2[s]) ? 2 : 0;
+  }
+  return {t1, t2, via1, via2, best, rides};
+}
+
+function counts(){
+  let direct = 0, change = 0;
+  if (!result) return {direct, change};
+  for (let s = 0; s < result.best.length; s++){
+    if (s === origin || result.best[s] > state.maxTime) continue;
+    if (result.rides[s] === 1) direct++; else if (result.rides[s] === 2) change++;
+  }
+  return {direct, change};
+}
+
+/* Legs of the fastest way to s, and of the best single-ride way if that is different. */
+function legsTo(s){
+  const P = NET.patterns, r = result, legs = [];
+  const useTwo = r.t2[s] < r.t1[s];
+  if (useTwo){
+    const v2 = r.via2[s], v1 = r.via1[v2.x];
+    legs.push({...v1, kind:'ride'});
+    legs.push({...v2, kind:'ride', changeWalk: v2.board !== v2.x ? v2.walk : 0, changeFrom: v2.x});
+  } else {
+    legs.push({...r.via1[s], kind:'ride'});
+  }
+  return legs.map(l => {
+    const pat = P[l.p];
+    return {...l, li: pat.li, from: pat.st[l.i], to: pat.st[l.j], mins: pat.m[l.j] - pat.m[l.i],
+      stops: l.j - l.i, wait: waitAt(l.p, l.i), path: pat.st.slice(l.i, l.j + 1)};
+  });
+}
+
+/* ── MAP ── */
+const TILES = {
+  dark:  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+};
+function initMap(){
+  map = L.map('map', {zoomControl: true, preferCanvas: true}).setView([52.515, 13.4], 11);
+  tileLayer = L.tileLayer(TILES.dark, {attribution: 'Tiles &copy; Esri · Timetable &copy; VBB (CC BY 4.0)', maxZoom: 19, maxNativeZoom: 16}).addTo(map);
+  routeLayer = L.layerGroup().addTo(map);
+  originLayer = L.layerGroup().addTo(map);
+}
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function buildDots(){
+  const renderer = L.canvas({padding: .3, tolerance: 4});
+  dotLayer = L.featureGroup().addTo(map);
+  dots = NET.stations.map(([name, la, lo], s) => {
+    const m = L.circleMarker([la, lo], {renderer, radius: 2, weight: 0, fillOpacity: .5, fillColor: cssVar('--idle')});
+    m._sid = s; m.addTo(dotLayer); return m;
+  });
+  const tip = L.tooltip({className: 'stn-tip', direction: 'top', offset: [0, -6]});
+  dotLayer.on('mouseover', e => {
+    const s = e.layer._sid; let txt = `<b>${esc(NET.stations[s][0])}</b>`;
+    if (result && s !== origin && result.rides[s] && result.best[s] <= state.maxTime)
+      txt += `<br>${fmtMin(result.best[s])} · ${result.rides[s] === 1 ? 'direct' : 'one change'}`;
+    else if (origin === null || !result || !result.rides[s]) txt += `<br><span style="opacity:.7">click to start here</span>`;
+    tip.setLatLng(e.layer.getLatLng()).setContent(txt); map.openTooltip(tip);
+  });
+  dotLayer.on('mouseout', () => map.closeTooltip(tip));
+  dotLayer.on('click', e => {
+    const s = e.layer._sid;
+    if (origin !== null && s !== origin && result.rides[s] && result.best[s] <= state.maxTime) selectDest(s);
+    else setOrigin(s);
+  });
+}
+
+function styleDots(){
+  const idle = cssVar('--idle'), dCol = cssVar('--direct'), tCol = cssVar('--transfer');
+  const zoom = map.getZoom(), rBase = zoom >= 14 ? 4.5 : zoom >= 12 ? 3.2 : 2.3;
+  const order = [];
+  for (let s = 0; s < dots.length; s++){
+    const reach = result && s !== origin && result.rides[s] && result.best[s] <= state.maxTime;
+    if (!reach){
+      dots[s].setStyle({radius: result ? 1.4 : rBase * .8, fillColor: idle, fillOpacity: result ? .35 : .6, weight: 0});
+      continue;
+    }
+    const col = state.colorBy === 'time' ? rampColor(result.best[s]) : (result.rides[s] === 1 ? dCol : tCol);
+    const big = s === selected;
+    dots[s].setStyle({radius: big ? rBase + 4 : rBase, fillColor: col, fillOpacity: .92,
+      weight: big ? 2 : 0, color: '#fff'});
+    order.push(s);
+  }
+  // Direct / faster stops drawn on top.
+  order.sort((a, b) => result.best[b] - result.best[a]).forEach(s => dots[s].bringToFront());
+  if (selected !== null) dots[selected].bringToFront();
+}
+
+function drawOrigin(){
+  originLayer.clearLayers();
+  if (origin === null) return;
+  const [name, la, lo] = NET.stations[origin];
+  // Lines out of the origin, drawn faintly so the network shape is readable.
+  const seen = new Set();
+  for (const [b] of nearby(origin, state.walk)){
+    const a = NET.at[b];
+    for (let k = 0; k < a.length; k += 2){
+      const p = NET.patterns[a[k]];
+      if (!state.products.has(p.prod) || seen.has(a[k])) continue;
+      seen.add(a[k]);
+      L.polyline(p.st.map(s => [NET.stations[s][1], NET.stations[s][2]]),
+        {color: lineColor(p.li), weight: 2, opacity: .45, interactive: false}).addTo(originLayer);
+    }
+  }
+  L.circleMarker([la, lo], {radius: 10, color: '#fff', weight: 3, fillColor: cssVar('--accent'), fillOpacity: 1, interactive: false})
+    .addTo(originLayer);
+}
+
+function drawRoute(){
+  routeLayer.clearLayers();
+  if (selected === null) return;
+  for (const leg of legsTo(selected)){
+    const pts = leg.path.map(s => [NET.stations[s][1], NET.stations[s][2]]);
+    L.polyline(pts, {color: '#000', weight: 8, opacity: .35, interactive: false}).addTo(routeLayer);
+    L.polyline(pts, {color: lineColor(leg.li), weight: 5, opacity: 1, interactive: false}).addTo(routeLayer);
+    if (leg.changeWalk){
+      const a = NET.stations[leg.changeFrom], b = NET.stations[leg.board];
+      L.polyline([[a[1], a[2]], [b[1], b[2]]], {color: cssVar('--text'), weight: 3, dashArray: '2 6', interactive: false}).addTo(routeLayer);
+    }
+  }
+}
+
+/* ── PANEL ── */
+function renderPanel(){
+  const body = $('body');
+  if (origin === null){
+    body.innerHTML = `
+      <div class="hint" style="margin-top:4px">Pick a start stop — search above, use your location, or click any dot on the map.
+      The map then shows every stop you can reach <b>directly</b> or with <b>one change</b>, and roughly how long it takes.</div>
+      ${controlsHtml()}${footHtml()}`;
+    bindControls(); return;
+  }
+  const {direct, change} = counts();
+  const originLines = new Set();
+  for (const [b] of nearby(origin, 0)){
+    const a = NET.at[b]; for (let k = 0; k < a.length; k += 2) originLines.add(NET.patterns[a[k]].li);
+  }
+  const lineBadges = [...originLines].sort((a, b) => NET.lines[a][1] - NET.lines[b][1] ||
+    NET.lines[a][0].localeCompare(NET.lines[b][0], 'de', {numeric: true})).map(badge).join('');
+  const dCol = state.colorBy === 'time' ? rampColor(10) : cssVar('--direct');
+  const tCol = state.colorBy === 'time' ? rampColor(60) : cssVar('--transfer');
+  body.innerHTML = `
+    <div class="origin-name">${esc(NET.stations[origin][0])}</div>
+    <div class="origin-lines">${lineBadges || '<span class="hint">No lines of the selected modes stop here.</span>'}</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">${direct.toLocaleString('en-US')}</div>
+        <div class="stat-lbl"><span class="dot" style="background:${state.colorBy==='time'?'var(--muted)':dCol}"></span>stops · 1 ride</div></div>
+      <div class="stat"><div class="stat-num">${change.toLocaleString('en-US')}</div>
+        <div class="stat-lbl"><span class="dot" style="background:${state.colorBy==='time'?'var(--muted)':tCol}"></span>more · 1 change</div></div>
+    </div>
+    <div id="routeBox">${routeHtml()}</div>
+    ${controlsHtml()}
+    <div class="sec"><div class="sec-title">Reachable stops</div>
+      <input class="filter-input" id="listFilter" placeholder="Filter by name…" value="${esc(state.listFilter)}"/>
+      <div class="dest-list" id="destList"></div></div>
+    ${footHtml()}`;
+  bindControls();
+  $('listFilter').addEventListener('input', e => { state.listFilter = e.target.value; renderList(); });
+  renderList();
+}
+
+function routeHtml(){
+  if (selected === null) return `<div class="hint">Click a coloured stop to see how to get there.</div>`;
+  const s = selected, legs = legsTo(s), r = result;
+  const walkFirst = legs[0].board !== origin ? legs[0].walk : 0;
+  let html = `<div class="route"><div class="route-head"><div class="route-dest">${esc(NET.stations[s][0])}</div>
+    <div class="route-time">≈ ${fmtMin(r.best[s])}</div></div>
+    <div class="route-sub">${legs.length === 1 ? 'Direct — no change' : 'One change'} · typical weekday daytime, incl. waiting</div><div class="legs">`;
+  legs.forEach((l, n) => {
+    if (n === 0 && walkFirst) html += `<div class="leg-walk">🚶 Walk ${Math.round(walkFirst)} min to ${esc(NET.stations[l.board][0])}</div>`;
+    if (n === 1) html += `<div class="leg-walk">🔁 Change${l.changeWalk ? `, walk ${Math.max(1, Math.round(l.changeWalk))} min to ${esc(NET.stations[l.board][0])}` : ''}</div>`;
+    html += `<div class="leg">${badge(l.li)}<div>${esc(NET.stations[l.from][0])} → <b>${esc(NET.stations[l.to][0])}</b>
+      <div class="route-sub">${l.stops} stop${l.stops > 1 ? 's' : ''} · ${l.mins} min ride · ~${Math.round(l.wait)} min wait</div></div></div>`;
+  });
+  html += `</div>`;
+  if (legs.length === 2 && isFinite(r.t1[s]))
+    html += `<div class="route-sub" style="margin-top:6px">Also reachable without changing (${badge(NET.patterns[r.via1[s].p].li)} ≈ ${fmtMin(r.t1[s])}).</div>`;
+  html += `<div class="route-actions"><button class="btn" id="clearSel">Close</button>
+    <button class="btn primary" id="startHere">Start from here</button></div></div>`;
+  return html;
+}
+
+function renderList(){
+  const el = $('destList'); if (!el) return;
+  const q = norm(state.listFilter);
+  const items = [];
+  for (let s = 0; s < result.best.length; s++){
+    if (s === origin || !result.rides[s] || result.best[s] > state.maxTime) continue;
+    if (q && !NET.searchKeys[s].includes(q)) continue;
+    items.push(s);
+  }
+  items.sort((a, b) => result.best[a] - result.best[b]);
+  const shown = items.slice(0, 200);
+  el.innerHTML = shown.map(s => {
+    const col = state.colorBy === 'time' ? rampColor(result.best[s]) : (result.rides[s] === 1 ? cssVar('--direct') : cssVar('--transfer'));
+    return `<div class="dest-row" data-s="${s}"><span class="dot" style="background:${col}"></span>
+      <span class="dest-name">${esc(NET.stations[s][0])}</span>
+      <span class="hint" style="font-size:10px">${result.rides[s] === 1 ? 'direct' : '1 change'}</span>
+      <span class="dest-min">${fmtMin(result.best[s])}</span></div>`;
+  }).join('') + (items.length > shown.length ? `<div class="hint" style="padding:6px 4px">+ ${items.length - shown.length} more — filter by name or zoom the map</div>` : '')
+    + (!items.length ? `<div class="hint">Nothing matches.</div>` : '');
+  el.querySelectorAll('.dest-row').forEach(r => r.addEventListener('click', () => {
+    const s = +r.dataset.s; selectDest(s);
+    map.panTo([NET.stations[s][1], NET.stations[s][2]]);
+  }));
+}
+
+function controlsHtml(){
+  const chips = Object.entries(PRODUCT_DEFS).map(([k, d]) =>
+    `<span class="chip ${state.products.has(k) ? 'on' : ''}" data-prod="${k}"><span class="dot" style="background:${d.color}"></span>${d.label}</span>`).join('');
+  const ti = TIME_STEPS.indexOf(state.maxTime);
+  return `
+    <div class="sec"><div class="sec-title">Modes</div><div class="chips">${chips}</div></div>
+    <div class="sec"><div class="sec-title">Max travel time</div>
+      <div class="range-row"><input type="range" id="maxTime" min="0" max="${TIME_STEPS.length-1}" value="${ti}"/>
+      <span class="range-val" id="maxTimeVal">${fmtMin(state.maxTime)}</span></div></div>
+    <div class="sec"><div class="sec-title">Walk between nearby stops when changing</div>
+      <div class="seg" id="walkSeg">${[0,200,400].map(w => `<button data-w="${w}" class="${state.walk===w?'on':''}">${w ? `up to ${w} m` : 'same stop only'}</button>`).join('')}</div></div>
+    <div class="sec"><div class="sec-title">Colour stops by</div>
+      <div class="seg" id="colorSeg"><button data-c="time" class="${state.colorBy==='time'?'on':''}">Travel time</button>
+      <button data-c="rides" class="${state.colorBy==='rides'?'on':''}">Direct vs. change</button></div></div>`;
+}
+function footHtml(){
+  return `<div class="foot">Estimates from the VBB timetable for a regular weekday (${NET.refDay}), not live data.
+    Time = half the line's daytime headway as waiting + scheduled ride + ${TRANSFER_MIN} min per change + walking.
+    Night-only and rare lines assume a ${MAX_WAIT} min wait. Data: VBB GTFS (CC BY 4.0) via
+    <a href="https://github.com/derhuerst/vbb-trips" target="_blank" rel="noopener">vbb-trips</a>.</div>`;
+}
+function bindControls(){
+  document.querySelectorAll('.chip[data-prod]').forEach(c => c.addEventListener('click', () => {
+    const k = c.dataset.prod;
+    if (state.products.has(k)){ if (state.products.size > 1) state.products.delete(k); } else state.products.add(k);
+    recompute();
+  }));
+  const mt = $('maxTime');
+  mt.addEventListener('input', () => { state.maxTime = TIME_STEPS[+mt.value]; $('maxTimeVal').textContent = fmtMin(state.maxTime); });
+  mt.addEventListener('change', () => {
+    if (selected !== null && result && result.best[selected] > state.maxTime){ selected = null; drawRoute(); }
+    refresh();
+  });
+  document.querySelectorAll('#walkSeg button').forEach(b => b.addEventListener('click', () => { state.walk = +b.dataset.w; recompute(); }));
+  document.querySelectorAll('#colorSeg button').forEach(b => b.addEventListener('click', () => { state.colorBy = b.dataset.c; refresh(); }));
+  const cs = $('clearSel'), sh = $('startHere');
+  if (cs) cs.addEventListener('click', () => { selected = null; drawRoute(); refresh(); });
+  if (sh) sh.addEventListener('click', () => setOrigin(selected));
+}
+
+function renderLegend(){
+  const el = $('legend');
+  if (origin === null){ el.style.display = 'none'; return; }
+  el.style.display = '';
+  if (state.colorBy === 'time'){
+    const max = isFinite(state.maxTime) ? state.maxTime : 120;
+    el.innerHTML = `<b>Travel time</b><div class="legend-ramp" style="background:linear-gradient(90deg,${RAMP.join(',')})"></div>
+      <div class="legend-scale"><span>0</span><span>${Math.round(max/2)}</span><span>${max}${isFinite(state.maxTime) ? '' : '+'} min</span></div>`;
+  } else {
+    el.innerHTML = `<b>Rides needed</b>
+      <div class="legend-row"><span class="dot" style="background:var(--direct)"></span>Direct (1 ride)</div>
+      <div class="legend-row"><span class="dot" style="background:var(--transfer)"></span>One change (2 rides)</div>
+      <div class="legend-row"><span class="dot" style="background:var(--idle)"></span>Needs more</div>`;
+  }
+}
+
+/* ── ACTIONS ── */
+function refresh(){ styleDots(); renderPanel(); renderLegend(); }
+function recompute(){
+  if (origin !== null){
+    result = compute(origin);
+    if (selected !== null && !(result.rides[selected] && result.best[selected] <= state.maxTime)) selected = null;
+  }
+  drawOrigin(); drawRoute(); refresh();
+}
+function setOrigin(s){
+  origin = s; selected = null;
+  result = compute(s);
+  const [name, la, lo] = NET.stations[s];
+  $('searchInput').value = name;
+  try { history.replaceState(null, '', '#' + encodeURIComponent(name)); } catch (e) {}
+  drawOrigin(); drawRoute(); refresh();
+  // Fit to what's reachable within the time limit, but never absurdly wide.
+  const pts = [];
+  for (let x = 0; x < result.best.length; x++)
+    if (result.rides[x] && result.best[x] <= Math.min(state.maxTime, 60)) pts.push([NET.stations[x][1], NET.stations[x][2]]);
+  pts.push([la, lo]);
+  const bounds = L.latLngBounds(pts);
+  map.fitBounds(bounds, {padding: [30, 30], maxZoom: 14,
+    paddingTopLeft: window.innerWidth > 768 ? [360, 60] : [20, 60],
+    paddingBottomRight: window.innerWidth > 768 ? [20, 20] : [20, window.innerHeight * .46]});
+  setPanel('normal');
+}
+function selectDest(s){
+  selected = s; drawRoute(); styleDots();
+  $('routeBox').innerHTML = routeHtml(); bindControls();
+  if (window.innerWidth <= 768) setPanel('normal');
+  $('body').scrollTop = 0;
+}
+
+/* ── SEARCH ── */
+let srSel = -1, srItems = [];
+function search(q){
+  q = norm(q); if (q.length < 2) return [];
+  const words = q.split(' ');
+  const out = [];
+  for (let s = 0; s < NET.stations.length; s++){
+    const k = NET.searchKeys[s];
+    if (!words.every(w => k.includes(w))) continue;
+    const starts = k.split(' ').some(t => t.startsWith(words[0]));
+    out.push([s, NET.weight[s] * (starts ? 4 : 1) + (k === q ? 1e7 : 0)]);
+  }
+  out.sort((a, b) => b[1] - a[1]);
+  // Hide exact duplicates by name (same stop split into several IDs), keep the busiest.
+  const seen = new Set(), res = [];
+  for (const [s] of out){ const n = NET.stations[s][0]; if (seen.has(n)) continue; seen.add(n); res.push(s); if (res.length >= 12) break; }
+  return res;
+}
+function productsAt(s){
+  const set = new Set(); const a = NET.at[s];
+  for (let k = 0; k < a.length; k += 2) set.add(NET.patterns[a[k]].prod);
+  return Object.keys(PRODUCT_DEFS).filter(p => set.has(p));
+}
+function renderResults(){
+  const box = $('searchResults');
+  if (!srItems.length){ box.classList.remove('open'); return; }
+  box.innerHTML = srItems.map((s, n) => `<div class="sr-item ${n===srSel?'sel':''}" data-s="${s}">
+    <div class="sr-name">${esc(NET.stations[s][0])}</div>
+    <div class="sr-sub">${productsAt(s).map(p => `<span class="badge" style="background:${PRODUCT_DEFS[p].color};color:#fff">${PRODUCT_DEFS[p].label}</span>`).join('')}</div></div>`).join('');
+  box.classList.add('open');
+  box.querySelectorAll('.sr-item').forEach(el => el.addEventListener('mousedown', e => {
+    e.preventDefault(); pick(+el.dataset.s);
+  }));
+}
+function pick(s){ srItems = []; renderResults(); $('searchInput').blur(); setOrigin(s); }
+function initSearch(){
+  const inp = $('searchInput');
+  inp.addEventListener('input', () => { srItems = search(inp.value); srSel = srItems.length ? 0 : -1; renderResults(); });
+  inp.addEventListener('focus', () => { inp.select(); if (window.innerWidth <= 768) setPanel('expanded'); });
+  inp.addEventListener('blur', () => setTimeout(() => { srItems = []; renderResults(); }, 150));
+  inp.addEventListener('keydown', e => {
+    if (!srItems.length) return;
+    if (e.key === 'ArrowDown'){ srSel = (srSel + 1) % srItems.length; renderResults(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp'){ srSel = (srSel - 1 + srItems.length) % srItems.length; renderResults(); e.preventDefault(); }
+    else if (e.key === 'Enter' && srSel >= 0) pick(srItems[srSel]);
+    else if (e.key === 'Escape'){ srItems = []; renderResults(); }
+  });
+  $('locateBtn').addEventListener('click', () => {
+    if (!navigator.geolocation) return;
+    const btn = $('locateBtn'); btn.classList.add('busy');
+    navigator.geolocation.getCurrentPosition(pos => {
+      btn.classList.remove('busy');
+      const {latitude: la, longitude: lo} = pos.coords;
+      let bestS = -1, bestScore = Infinity;
+      NET.stations.forEach(([, sla, slo], s) => {
+        const d = Math.hypot((sla-la)*111320, (slo-lo)*111320*Math.cos(la*Math.PI/180));
+        // Prefer a well-served stop if it is only a little further away.
+        const score = d - Math.min(150, Math.log1p(NET.weight[s]) * 20);
+        if (score < bestScore){ bestScore = score; bestS = s; }
+      });
+      if (bestS >= 0) setOrigin(bestS);
+    }, () => btn.classList.remove('busy'), {enableHighAccuracy: true, timeout: 10000});
+  });
+}
+
+/* ── MOBILE PANEL ── */
+function setPanel(mode){
+  const p = $('panel');
+  p.classList.toggle('collapsed', mode === 'collapsed');
+  p.classList.toggle('expanded', mode === 'expanded');
+}
+$('panelHandle').addEventListener('click', () => {
+  const p = $('panel');
+  setPanel(p.classList.contains('expanded') ? 'collapsed' : p.classList.contains('collapsed') ? 'normal' : 'expanded');
+});
+
+/* ── THEME ── */
+$('themeBtn').addEventListener('click', () => {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+  tileLayer.setUrl(isDark ? TILES.dark : TILES.light);
+  $('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  drawOrigin(); drawRoute(); refresh();
+});
+
+/* ── INIT ── */
+initMap();
+fetch(DATA_URL).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(raw => {
+  NET = decode(raw);
+  buildDots();
+  map.on('zoomend', styleDots);
+  initSearch();
+  $('loading').remove();
+  let start = null;
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h){
+    let bw = -1;
+    NET.stations.forEach(([n], s) => { if (n === h && NET.weight[s] > bw){ bw = NET.weight[s]; start = s; } });
+  }
+  if (start !== null) setOrigin(start); else { renderPanel(); renderLegend(); styleDots(); }
+}).catch(err => {
+  $('loading').innerHTML = `Couldn't load the network data (${esc(err.message)}). Try reloading.`;
+});
+</script>
+</body>
+</html>
