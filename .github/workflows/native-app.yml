@@ -1,9 +1,10 @@
-name: Native app (Android APK + iOS build check)
+name: Native app (Android APK, iOS build check, Mac screensaver)
 
 on:
   push:
     paths:
       - 'native-app/**'
+      - 'mac-screensaver/**'
       - 'berlin-transit.html'
       - 'icon.png'
       - '.github/workflows/native-app.yml'
@@ -149,3 +150,32 @@ jobs:
       # Developer account: import a distribution certificate + provisioning
       # profile (e.g. from secrets), then `xcodebuild archive` and
       # `xcodebuild -exportArchive -exportOptionsPlist ...`. Out of scope for now.
+
+  macos-screensaver:
+    name: macOS screensaver (.saver)
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: native-app/package-lock.json
+
+      - run: xcrun swiftc --version
+
+      - name: Build BerlinTransit.saver
+        run: |
+          (cd native-app && npm ci)
+          ./mac-screensaver/build.sh
+
+      - name: Zip
+        run: ditto -c -k --keepParent mac-screensaver/build/BerlinTransit.saver "$RUNNER_TEMP/BerlinTransit-saver.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: berlin-transit-mac-screensaver
+          path: ${{ runner.temp }}/BerlinTransit-saver.zip
+          if-no-files-found: error
