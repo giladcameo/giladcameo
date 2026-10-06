@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מזג אוויר לדרך | תכנון רכיבה לפי תחזית</title>
+<meta name="description" content="תכנון מסלול לאופנוע עם תחזית מזג אוויר לפי השעה שבה תגיעו לכל נקודה">
+<meta name="theme-color" content="#14181b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Heebo:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // Apply saved theme and language before first paint to avoid a flash.
+  try {
+    var s = JSON.parse(localStorage.getItem('mwr.v1') || '{}');
+    var d = document.documentElement;
+    if (s.theme === 'light' || s.theme === 'dark') d.dataset.theme = s.theme;
+    if (s.lang === 'en') { d.lang = 'en'; d.dir = 'ltr'; }
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.content = d.dataset.theme === 'light' ? '#e6e9eb' : '#14181b';
+  } catch (e) {}
+</script>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- Risk signs. Shape carries the level so color is never the only cue:
+         circle = clear, triangle = caution, octagon = danger. -->
+    <symbol id="lv-ok" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10.5" fill="var(--lv)" stroke="var(--lv-edge)" stroke-width="1.5"/>
+      <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="var(--lv-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="lv-caution" viewBox="0 0 24 24">
+      <path d="M12 2.6L22.4 20.8H1.6z" fill="var(--lv)" stroke="var(--lv-edge)" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M12 9v5.2" fill="none" stroke="var(--lv-ink)" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="12" cy="17.4" r="1.4" fill="var(--lv-ink)"/>
+    </symbol>
+    <symbol id="lv-danger" viewBox="0 0 24 24">
+      <path d="M8.2 1.8h7.6l6.4 6.4v7.6l-6.4 6.4H8.2l-6.4-6.4V8.2z" fill="var(--lv)" stroke="var(--lv-edge)" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8.3 8.3l7.4 7.4M15.7 8.3l-7.4 7.4" fill="none" stroke="var(--lv-ink)" stroke-width="2.6" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- Weather icons, 24 grid, drawn with currentColor strokes. -->
+    <symbol id="wx-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>
+    </symbol>
+    <symbol id="wx-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z"/><path d="M17 3.5v3M15.5 5h3" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="wx-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 18.5h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 9.6a4.5 4.5 0 0 0 0 8.9z"/>
+    </symbol>
+    <symbol id="wx-partly" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="2.8"/><path d="M8 2v1.4M2 8h1.4M3.8 3.8l1 1M12.2 3.8l-1 1M3.8 12.2l1-1"/>
+      <path d="M9.5 20h8.2a3.6 3.6 0 0 0 .4-7.18A4.9 4.9 0 0 0 9 11.8 4.1 4.1 0 0 0 9.5 20z" fill="var(--wx-mask, var(--panel))"/>
+    </symbol>
+    <symbol id="wx-partly-night" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12.6 8.2A4.6 4.6 0 1 1 6.2 2.6a3.8 3.8 0 0 0 6.4 5.6z"/>
+      <path d="M9.5 20h8.2a3.6 3.6 0 0 0 .4-7.18A4.9 4.9 0 0 0 9 11.8 4.1 4.1 0 0 0 9.5 20z" fill="var(--wx-mask, var(--panel))"/>
+    </symbol>
+    <symbol id="wx-fog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 8h14M2.5 12h19M5 16h14M8.5 20h7"/>
+    </symbol>
+    <symbol id="wx-drizzle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14.5h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 5.6a4.5 4.5 0 0 0 0 8.9z"/><path d="M8 18l-.6 1.8M12 18.4l-.6 1.8M16 18l-.6 1.8"/>
+    </symbol>
+    <symbol id="wx-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 5.1 4.5 4.5 0 0 0 7 14z"/><path d="M8 17l-1.4 4M12.5 17l-1.4 4M17 17l-1.4 4"/>
+    </symbol>
+    <symbol id="wx-heavy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 13h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 4.1 4.5 4.5 0 0 0 7 13z" stroke-width="2"/><path d="M6.5 16l-1.8 5M10.5 16l-1.8 5M14.5 16l-1.8 5M18.5 16l-1.8 5"/>
+    </symbol>
+    <symbol id="wx-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 5.1 4.5 4.5 0 0 0 7 14z"/><circle cx="8" cy="18" r=".9" fill="currentColor"/><circle cx="12" cy="20.5" r=".9" fill="currentColor"/><circle cx="16" cy="18" r=".9" fill="currentColor"/>
+    </symbol>
+    <symbol id="wx-thunder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 5.1 4.5 4.5 0 0 0 7 14z"/><path d="M12.8 12.5l-3 4.3h3.4l-1.8 4.7"/>
+    </symbol>
+    <symbol id="wx-freezing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14h10.2a4 4 0 0 0 .5-7.96A5.6 5.6 0 0 0 7 5.1 4.5 4.5 0 0 0 7 14z"/><path d="M8 17l-1.4 4M16 17l-1.4 4"/><circle cx="12" cy="18" r=".9" fill="currentColor"/><circle cx="12" cy="21.2" r=".9" fill="currentColor"/>
+    </symbol>
+
+    <!-- Interface icons -->
+    <symbol id="i-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a3 3 0 1 0-3-3M3 12h14.5a3 3 0 1 1-3 3M3 16h6"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 4.8 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6.200 6-11z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M6 10l6-6 6 6"/></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.2"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V5M3 9l4-4 4 4M17 4v15M13 15l4 4 4-4"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/></symbol>
+    <symbol id="i-retry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></symbol>
+
+    <!-- Brand mark: a road running into the horizon -->
+    <symbol id="brand" viewBox="0 0 32 32">
+      <path d="M9 14a7 7 0 0 1 14 0z" fill="#ffb300"/>
+      <path d="M14.2 14h3.6L27 30H5z" fill="#fff"/>
+      <path d="M15.2 14h1.6l2.6 16h-6.8z" fill="#1d6be8"/>
+      <path d="M16 17v2.2M16 22v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="map" role="application" data-i18n-attr="aria-label:map.label"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" aria-hidden="true"><use href="#brand"/></svg>
+    <span class="brand-name" data-i18n="app.name">מזג אוויר לדרך</span>
+    <span id="demoBadge" class="demo" hidden data-i18n="demo.badge">מצב הדגמה</span>
+  </div>
+  <div class="top-actions">
+    <button id="langBtn" class="round" type="button" data-i18n-attr="aria-label:lang.toggle"><span id="langLabel" data-i18n="lang.short">EN</span></button>
+    <button id="themeBtn" class="round" type="button" data-i18n-attr="aria-label:theme.toggle"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
+  </div>
+</header>
+
+<section id="sheet" class="sheet" data-snap="mid">
+  <div class="sheet-head" id="sheetHead">
+    <button id="grip" class="grip" type="button" aria-expanded="true" aria-controls="sheetBody" data-i18n-attr="aria-label:sheet.grip"><span class="grip-bar"></span></button>
+    <button id="peek" class="peek" type="button" hidden></button>
+  </div>
+
+  <div class="sheet-body" id="sheetBody">
+    <button id="formSummary" class="form-summary" type="button" hidden></button>
+
+    <form id="form" class="form" novalidate autocomplete="off">
+      <div class="route-plate">
+        <div class="stops" aria-hidden="true"><i class="stop stop-a"></i><i class="stop-line"></i><i class="stop stop-b"></i></div>
+        <div class="fields">
+          <div class="field" data-field="from">
+            <label for="fromInput" data-i18n="form.from">מוצא</label>
+            <div class="field-row">
+              <input id="fromInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fromList" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" dir="auto" data-i18n-attr="placeholder:form.ph">
+              <button id="locBtn" class="icon-btn" type="button" data-i18n-attr="aria-label:form.useLocation;title:form.useLocation"><svg aria-hidden="true"><use href="#i-locate"/></svg></button>
+            </div>
+            <ul class="suggest" id="fromList" role="listbox" hidden data-i18n-attr="aria-label:form.suggestions"></ul>
+          </div>
+          <div class="field" data-field="to">
+            <label for="toInput" data-i18n="form.to">יעד</label>
+            <div class="field-row">
+              <input id="toInput" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="toList" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" dir="auto" data-i18n-attr="placeholder:form.ph">
+            </div>
+            <ul class="suggest" id="toList" role="listbox" hidden data-i18n-attr="aria-label:form.suggestions"></ul>
+          </div>
+        </div>
+        <button id="swapBtn" class="icon-btn swap" type="button" data-i18n-attr="aria-label:form.swap;title:form.swap"><svg aria-hidden="true"><use href="#i-swap"/></svg></button>
+      </div>
+
+      <div class="field depart">
+        <label for="departInput" data-i18n="form.depart">שעת יציאה</label>
+        <div class="field-row"><input id="departInput" type="datetime-local" step="900" aria-describedby="departHint" dir="ltr"></div>
+        <p class="hint" id="departHint"></p>
+      </div>
+
+      <button id="planBtn" class="primary" type="submit" data-i18n="form.plan">בדיקת מסלול</button>
+    </form>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <div id="results" class="results" hidden>
+      <div id="banner" aria-live="polite" aria-atomic="true"></div>
+      <div id="cluster"></div>
+      <div id="routes"></div>
+      <p class="hint tz-note" id="tzNote"></p>
+      <div id="timeline"></div>
+      <div id="suggestions"></div>
+    </div>
+
+    <p class="attr" data-i18n="footer.attr">מפה © תורמי OpenStreetMap.</p>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status" hidden><span id="toastText"></span><button id="toastBtn" type="button"></button></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
