@@ -1,4 +1,5 @@
 // Motorcycle weather risk scoring. Dependency-free ES module (browser and Node 18+).
+import { riderFeelsLikeC } from './comfort.js';
 
 const RANK = { ok: 0, caution: 1, danger: 2 };
 const LEVELS = ['ok', 'caution', 'danger'];
@@ -22,7 +23,7 @@ const inRange = (c, lo, hi) => c >= lo && c <= hi;
 
 const REASON_ORDER = [
   'thunder', 'snow', 'freezing_rain', 'ice_risk', 'rain_heavy', 'rain_light',
-  'strong_gusts', 'gusts', 'low_visibility', 'fog', 'cold', 'heat', 'dark',
+  'strong_gusts', 'gusts', 'low_visibility', 'fog', 'cold', 'wind_chill', 'heat', 'dark',
 ];
 
 // Component scores (0-100) before level banding.
@@ -30,14 +31,17 @@ const GUST_CURVE = [[20, 0], [45, 40], [65, 70], [100, 100]];
 const PRECIP_CURVE = [[0, 0], [0.3, 40], [2, 70], [8, 100]];
 const COLD_CURVE = [[-10, 100], [3, 70], [8, 39], [14, 0]];
 const HEAT_CURVE = [[28, 0], [35, 40], [42, 65]];
+const CHILL_CURVE = [[-25, 100], [-10, 70], [3, 40], [10, 0]];
 const VIS_CURVE = [[0, 100], [1000, 70], [3000, 40], [10000, 0]];
 
 /**
  * Score one weather sample for motorcycle riding.
  * Returns {level: 'ok'|'caution'|'danger', score: 0-100, reasons: string[]}.
+ * opts.ridingSpeedKmh (default 90) feeds the rider wind chill (reason 'wind_chill').
  */
-export function scoreRisk(w) {
+export function scoreRisk(w, opts) {
   w = w || {};
+  const ridingSpeedKmh = opts && isNum(opts.ridingSpeedKmh) ? opts.ridingSpeedKmh : 90;
   const levels = {}; // reason -> level
   const comps = []; // component scores
   const add = (reason, level, comp) => {
@@ -103,6 +107,13 @@ export function scoreRisk(w) {
     else comps.push(interp(w.tempC, COLD_CURVE), interp(w.tempC, HEAT_CURVE));
   }
 
+  // Wind chill for the rider (feels-like at riding speed)
+  const feels = riderFeelsLikeC(w, ridingSpeedKmh);
+  if (isNum(feels)) {
+    if (feels <= -10) add('wind_chill', 'danger', interp(feels, CHILL_CURVE));
+    else if (feels <= 3) add('wind_chill', 'caution', interp(feels, CHILL_CURVE));
+  }
+
   // Visibility
   if (isNum(w.visibilityM)) {
     const c = interp(w.visibilityM, VIS_CURVE);
@@ -139,11 +150,12 @@ export function scoreRisk(w) {
  * (aligned). Each segment between consecutive points takes the worse level of
  * its two ends; adjacent segments with the same level are merged.
  * Extra field `levels` (per-sample level) is provided for UI convenience.
+ * opts.ridingSpeedKmh is passed to scoreRisk (default 90).
  */
-export function summarizeRoute(points, samples) {
+export function summarizeRoute(points, samples, opts) {
   const n = Math.min((points || []).length, (samples || []).length);
   const risks = [];
-  for (let i = 0; i < n; i++) risks.push(scoreRisk(samples[i]));
+  for (let i = 0; i < n; i++) risks.push(scoreRisk(samples[i], opts));
   const levels = risks.map((r) => r.level);
 
   let worst = 'ok';
