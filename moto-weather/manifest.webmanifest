@@ -1,0 +1,21 @@
+{
+  "name": "מזג אוויר לדרך",
+  "short_name": "מזג אוויר לדרך",
+  "description": "תכנון מסלול לאופנוע לפי תחזית מזג האוויר בזמן שבו תגיעו לכל נקודה",
+  "lang": "he",
+  "dir": "rtl",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14181b",
+  "theme_color": "#14181b",
+  "categories": ["navigation", "weather", "travel"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
