@@ -12,6 +12,10 @@ const HOURLY = [
   'visibility',
   'is_day',
 ];
+// Order matters: weather code and is_day come from the first model that has a value.
+export const MODELS = ['icon_seamless', 'ecmwf_ifs025', 'gfs_seamless'];
+// 50 points keep the URL near 1.1 KB (about 16 chars per point plus a ~300 char fixed part): the model
+// list adds only ~40 chars because Open-Meteo suffixes the response keys, not the request.
 export const MAX_POINTS_PER_REQUEST = 50;
 const HOUR_MS = 3600 * 1000;
 const HORIZON_MS = 7 * 24 * HOUR_MS;
@@ -33,7 +37,7 @@ function buildUrl(batch) {
   const lon = batch.map((p) => Number(p.lon).toFixed(4)).join(',');
   return (
     `${ENDPOINT}?latitude=${lat}&longitude=${lon}` +
-    `&hourly=${HOURLY.join(',')}` +
+    `&hourly=${HOURLY.join(',')}&models=${MODELS.join(',')}` +
     `&wind_speed_unit=kmh&timeformat=unixtime&timezone=auto&forecast_days=7&past_hours=1`
   );
 }
@@ -66,6 +70,36 @@ async function fetchBatch(batch, fetchImpl) {
   return list;
 }
 
+function median(values) {
+  const v = values.filter((x) => x !== null && x !== undefined).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+// Wind direction is an angle: take the median relative to the first value so 350, 10, 20 does not give 20.
+function medianAngle(values) {
+  const v = values.filter((x) => x !== null && x !== undefined);
+  if (!v.length) return null;
+  const ref = v[0];
+  const rel = v.map((a) => ((((a - ref) % 360) + 540) % 360) - 180);
+  return (((ref + median(rel)) % 360) + 360) % 360;
+}
+
+const round2 = (v) => (v === null ? null : Math.round(v * 100) / 100);
+
+// Per-model hourly series for one variable. With several models Open-Meteo suffixes keys with _<model>;
+// with a single model they are unsuffixed. Accept both. Returns series in MODELS order.
+function seriesFor(hourly, key) {
+  const out = [];
+  for (const m of MODELS) {
+    const s = hourly[`${key}_${m}`];
+    if (Array.isArray(s)) out.push(s);
+  }
+  if (!out.length && Array.isArray(hourly[key])) out.push(hourly[key]);
+  return out;
+}
+
 function pickSample(item, targetMs) {
   const hourly = item.hourly;
   const times = hourly.time;
@@ -81,19 +115,33 @@ function pickSample(item, targetMs) {
   if (best < 0 || bestGap > MAX_SLOT_GAP_MS) {
     throw err('Requested time is outside the forecast range', 'OUT_OF_RANGE');
   }
-  const at = (key) => (Array.isArray(hourly[key]) ? hourly[key][best] : undefined);
-  const isDay = at('is_day');
+  const vals = (key) => seriesFor(hourly, key).map((s) => num(s[best]));
+  const med = (key) => round2(median(vals(key)));
+  const first = (key) => {
+    for (const v of vals(key)) if (v !== null) return v;
+    return null;
+  };
+  const temps = vals('temperature_2m').filter((x) => x !== null);
+  // Models that contributed at least one value at this slot (single-model responses count as 1).
+  let modelCount = MODELS.filter((m) =>
+    HOURLY.some((k) => Array.isArray(hourly[`${k}_${m}`]) && num(hourly[`${k}_${m}`][best]) !== null)
+  ).length;
+  if (!modelCount && HOURLY.some((k) => Array.isArray(hourly[k]) && num(hourly[k][best]) !== null)) modelCount = 1;
+  const dayVal = first('is_day');
   return {
     time: times[best] * 1000,
-    tempC: num(at('temperature_2m')),
-    precipMm: num(at('precipitation')),
-    precipProb: num(at('precipitation_probability')),
-    windKmh: num(at('wind_speed_10m')),
-    gustKmh: num(at('wind_gusts_10m')),
-    windDirDeg: num(at('wind_direction_10m')),
-    code: num(at('weather_code')),
-    visibilityM: num(at('visibility')),
-    isDay: isDay === null || isDay === undefined ? true : Boolean(isDay),
+    tempC: med('temperature_2m'),
+    tempMinC: temps.length ? Math.min(...temps) : null,
+    tempMaxC: temps.length ? Math.max(...temps) : null,
+    modelCount,
+    precipMm: med('precipitation'),
+    precipProb: med('precipitation_probability'),
+    windKmh: med('wind_speed_10m'),
+    gustKmh: med('wind_gusts_10m'),
+    windDirDeg: round2(medianAngle(vals('wind_direction_10m'))),
+    code: first('weather_code'),
+    visibilityM: med('visibility'),
+    isDay: dayVal === null ? true : Boolean(dayVal),
     // IANA zone of the point (timeformat=unixtime stays absolute, this is for display only).
     tz: typeof item.timezone === 'string' ? item.timezone : null,
   };
