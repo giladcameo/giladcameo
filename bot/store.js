@@ -6,7 +6,18 @@ const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
+// chatId and date end up in file paths, so only accept the expected shapes
+// (blocks ../ traversal out of DATA_DIR).
+function checkId(chatId) {
+  if (!/^-?\d{1,20}$/.test(String(chatId))) throw new Error('Invalid chat id');
+}
+
+function checkDate(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date))) throw new Error('Invalid date');
+}
+
 function userDir(chatId) {
+  checkId(chatId);
   const dir = path.join(DATA_DIR, String(chatId));
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return dir;
@@ -19,12 +30,14 @@ function emptyLog() {
 }
 
 function getLog(chatId, date) {
+  checkDate(date);
   const file = path.join(userDir(chatId), `${date}.json`);
   try { return JSON.parse(fs.readFileSync(file, 'utf-8')); }
   catch { return emptyLog(); }
 }
 
 function saveLog(chatId, date, log) {
+  checkDate(date);
   const file = path.join(userDir(chatId), `${date}.json`);
   fs.writeFileSync(file, JSON.stringify(log, null, 2));
 }

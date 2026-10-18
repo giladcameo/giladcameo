@@ -2,27 +2,47 @@ const express = require('express');
 const axios = require('axios');
 const Anthropic = require('@anthropic-ai/sdk');
 const cors = require('cors');
+const crypto = require('crypto');
 const store = require('./store');
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
 app.use(cors());
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const PORT = process.env.PORT || 3000;
-const WEBAPP_SECRET = process.env.WEBAPP_SECRET; // protects /api/* endpoints
+const WEBAPP_SECRET = process.env.WEBAPP_SECRET; // protects /api/* and /setup-webhook
+// Telegram echoes this in X-Telegram-Bot-Api-Secret-Token on every webhook call,
+// so forged updates (spoofed chat ids) are rejected.
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
+if (!WEBAPP_SECRET || !WEBHOOK_SECRET) {
+  console.error('WEBAPP_SECRET and WEBHOOK_SECRET must be set (see .env.example).');
+  process.exit(1);
+}
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-/* ---- Auth middleware for web app API ---- */
+/* ---- Auth ---- */
+function safeEqual(a, b) {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
 function requireSecret(req, res, next) {
-  if (!WEBAPP_SECRET) return next(); // skip if not configured (dev mode)
   const auth = req.headers['authorization'] || '';
-  if (auth !== `Bearer ${WEBAPP_SECRET}`) {
+  if (!safeEqual(auth, `Bearer ${WEBAPP_SECRET}`)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
 }
+
+const escHtml = s => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const CHAT_ID_RE = /^-?\d{1,20}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /* ---- Telegram helpers ---- */
 async function tgSend(chatId, text, extra = {}) {
@@ -111,7 +131,7 @@ function formatSummary(chatId, date) {
     totalCal += mc;
     const icon = { Breakfast: '🍳', Lunch: '🥗', Dinner: '🍽', Snacks: '🍎' }[m];
     lines += `\n${icon} <b>${m}</b> (${mc} kcal)\n`;
-    lines += foods.map(f => `  • ${f.name}${f.portion ? ' <i>('+f.portion+')</i>' : ''} — ${f.cal} kcal`).join('\n') + '\n';
+    lines += foods.map(f => `  • ${escHtml(f.name)}${f.portion ? ' <i>('+escHtml(f.portion)+')</i>' : ''} — ${f.cal} kcal`).join('\n') + '\n';
   });
 
   const tgt = profile ? profile.target : null;
@@ -129,12 +149,16 @@ function formatSummary(chatId, date) {
 
 /* ---- Webhook ---- */
 app.post('/webhook', async (req, res) => {
+  if (!safeEqual(req.headers['x-telegram-bot-api-secret-token'] || '', WEBHOOK_SECRET)) {
+    return res.sendStatus(401);
+  }
   res.sendStatus(200); // respond immediately
 
   const msg = req.body.message || req.body.edited_message;
   if (!msg) return;
 
-  const chatId = String(msg.chat.id);
+  const chatId = String(msg.chat && msg.chat.id);
+  if (!CHAT_ID_RE.test(chatId)) return;
   const text = (msg.text || '').trim();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -163,7 +187,7 @@ app.post('/webhook', async (req, res) => {
       const totalFat = Math.round(foods.reduce((s, f) => s + f.fat, 0));
 
       const itemLines = foods.map(f =>
-        `• <b>${f.name}</b>${f.portion ? ' <i>('+f.portion+')</i>' : ''}\n  ${f.cal} kcal · P${f.protein}g · C${f.carbs}g · F${f.fat}g`
+        `• <b>${escHtml(f.name)}</b>${f.portion ? ' <i>('+escHtml(f.portion)+')</i>' : ''}\n  ${f.cal} kcal · P${f.protein}g · C${f.carbs}g · F${f.fat}g`
       ).join('\n');
 
       await tgSend(chatId,
@@ -205,7 +229,7 @@ app.post('/webhook', async (req, res) => {
         }
       }
       await tgSend(chatId, removed
-        ? `↩️ Removed: <b>${removed.name}</b> (${removed.cal} kcal)`
+        ? `↩️ Removed: <b>${escHtml(removed.name)}</b> (${removed.cal} kcal)`
         : '❌ Nothing to undo today.'
       );
       return;
@@ -231,6 +255,7 @@ app.post('/webhook', async (req, res) => {
 app.post('/api/send', requireSecret, async (req, res) => {
   const { chat_id, text } = req.body;
   if (!chat_id || !text) return res.status(400).json({ error: 'Missing chat_id or text' });
+  if (!CHAT_ID_RE.test(String(chat_id))) return res.status(400).json({ error: 'Invalid chat_id' });
   try {
     const { data } = await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       chat_id: String(chat_id),
@@ -246,12 +271,16 @@ app.post('/api/send', requireSecret, async (req, res) => {
 app.get('/api/log', requireSecret, (req, res) => {
   const { chat_id, date } = req.query;
   if (!chat_id || !date) return res.status(400).json({ error: 'Missing chat_id or date' });
+  if (!CHAT_ID_RE.test(String(chat_id)) || !DATE_RE.test(String(date))) {
+    return res.status(400).json({ error: 'Invalid chat_id or date' });
+  }
   res.json(store.getLog(String(chat_id), date));
 });
 
 app.get('/api/log-week', requireSecret, (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'Missing chat_id' });
+  if (!CHAT_ID_RE.test(String(chat_id))) return res.status(400).json({ error: 'Invalid chat_id' });
   const logs = {};
   for (let i = 0; i < 7; i++) {
     const d = new Date();
@@ -262,12 +291,15 @@ app.get('/api/log-week', requireSecret, (req, res) => {
   res.json(logs);
 });
 
-/* ---- Register webhook (call once after deploy) ---- */
-app.get('/setup-webhook', async (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).json({ error: 'Provide ?url=https://your-app.railway.app/webhook' });
+/* ---- Register webhook (call once after deploy, with the WEBAPP_SECRET bearer token) ---- */
+app.post('/setup-webhook', requireSecret, async (req, res) => {
+  const url = req.body.url || req.query.url;
+  if (!url) return res.status(400).json({ error: 'Provide url=https://your-app.railway.app/webhook' });
   try {
-    const { data } = await axios.get(`https://api.telegram.org/bot${TOKEN}/setWebhook?url=${encodeURIComponent(url)}`);
+    const { data } = await axios.post(`https://api.telegram.org/bot${TOKEN}/setWebhook`, {
+      url,
+      secret_token: WEBHOOK_SECRET,
+    });
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
