@@ -308,4 +308,22 @@ app.post('/setup-webhook', requireSecret, async (req, res) => {
 
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'Nutrition Tracker Bot' }));
 
-app.listen(PORT, () => console.log(`Nutrition bot running on port ${PORT}`));
+/* ---- Auto-register the webhook on Railway (RAILWAY_PUBLIC_DOMAIN is set by Railway) ---- */
+async function registerWebhook() {
+  const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (!domain) return;
+  try {
+    const { data } = await axios.post(`https://api.telegram.org/bot${TOKEN}/setWebhook`, {
+      url: `https://${domain}/webhook`,
+      secret_token: WEBHOOK_SECRET,
+    });
+    console.log('Webhook registered:', data.description || data.ok);
+  } catch (e) {
+    console.error('Webhook registration failed:', e.response?.data?.description || e.message);
+  }
+}
+
+app.listen(PORT, () => {
+  console.log(`Nutrition bot running on port ${PORT}`);
+  registerWebhook();
+});
