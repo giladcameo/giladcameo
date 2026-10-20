@@ -1,0 +1,97 @@
+name: Moto Weather Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'moto-weather/**'
+      - 'moto-weather-android/**'
+      - '.github/workflows/moto-weather-android.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: moto-weather-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moto-weather-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: moto-weather-android/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Copy the web app into the Android project
+        run: npm run sync
+
+      - name: Build the APK
+        working-directory: moto-weather-android/android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set +e
+          ./gradlew --no-daemon assembleRelease --stacktrace > ../build.log 2>&1
+          code=$?
+          tail -n 40 ../build.log
+          if [ "$code" -ne 0 ]; then
+            # Surface the reason as an annotation, so it can be read without opening the full log.
+            MSG=$(grep -E -A14 "What went wrong|FAILED|error:" ../build.log | head -c 3000 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Gradle build failed::${MSG}"
+          fi
+          exit $code
+
+      - name: Check the APK
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          INFO=$(
+            "$BT/apksigner" verify --print-certs "$APK" | head -3
+            "$BT/aapt2" dump badging "$APK" | grep -E "^package|sdkVersion|uses-permission|application-label:|debuggable" || true
+            unzip -l "$APK" | grep -E "assets/public/(index.html|vendor/leaflet/leaflet.js|js/app.js)"
+            ls -l "$APK" | awk '{print "size bytes:", $5}'
+          )
+          echo "$INFO"
+          echo "::notice title=APK check::$(echo "$INFO" | sed ':a;N;$!ba;s/\n/%0A/g')"
+          mkdir -p ../dist
+          cp "$APK" ../dist/moto-weather.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moto-weather-apk
+          path: dist/moto-weather.apk
+          if-no-files-found: error
+
+      - name: Publish the latest build as a release
+        if: github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Latest build of the Moto Weather Route Android app. Build ${{ github.run_number }}, commit ${GITHUB_SHA::7}."
+          if gh release view moto-weather-android > /dev/null 2>&1; then
+            gh release edit moto-weather-android --notes "$NOTES"
+          else
+            gh release create moto-weather-android --prerelease --target "$GITHUB_SHA" --title "Moto Weather Android (latest build)" --notes "$NOTES"
+          fi
+          gh release upload moto-weather-android ../dist/moto-weather.apk --clobber

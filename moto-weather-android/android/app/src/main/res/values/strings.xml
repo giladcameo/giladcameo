@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">מזג אוויר לדרך</string>
+    <string name="title_activity_main">מזג אוויר לדרך</string>
+    <string name="package_name">com.gcameo.motoweather</string>
+    <string name="custom_url_scheme">com.gcameo.motoweather</string>
+</resources>

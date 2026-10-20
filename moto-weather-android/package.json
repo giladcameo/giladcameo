@@ -1,0 +1,20 @@
+{
+  "name": "moto-weather-android",
+  "version": "1.1.0",
+  "description": "Android wrapper (Capacitor) for the Moto Weather Route web app in ../moto-weather",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-www": "node scripts/prepare-www.mjs",
+    "sync": "npm run prepare-www && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/geolocation": "^8.2.4",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}

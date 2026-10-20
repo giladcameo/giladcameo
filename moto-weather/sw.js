@@ -2,7 +2,7 @@
 // are never intercepted, so a stale forecast or an error response can never be served from cache.
 // Bump VERSION on every release: it renames the cache, the old one is deleted on activate, and the
 // page shows an "update available" prompt (the new worker waits until the user accepts).
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.1.0';
 const SHELL_CACHE = `mwr-shell-${VERSION}`;
 
 const SHELL = [
@@ -14,6 +14,7 @@ const SHELL = [
   'js/geo.js',
   'js/weather.js',
   'js/risk.js',
+  'js/comfort.js',
   'js/planner.js',
   'manifest.webmanifest',
   'icons/icon.svg',
