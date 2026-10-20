@@ -945,7 +945,9 @@ function init() {
   });
   window.addEventListener('online', () => { if ($('#status .error')) clearStatus(); });
 
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  // The Android app bundles its files, so it needs no service worker.
+  const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if ('serviceWorker' in navigator && location.protocol !== 'file:' && !isNativeApp) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
         const offer = (w) => { UPDATE_READY = w; showUpdateToast(); };
