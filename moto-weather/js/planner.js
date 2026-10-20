@@ -7,17 +7,18 @@ import { summarizeRoute } from './risk.js';
  * Candidate: {date, offsetMin, summary, rank} with rank starting at 1.
  * Order: fewest danger km, then caution km, then total precip, then closest to baseDate.
  * Candidates whose weather fetch fails with OUT_OF_RANGE are skipped; any other
- * error is rethrown. If every candidate is out of range, OUT_OF_RANGE is thrown.
+ * error is rethrown. opts.ridingSpeedKmh is passed to the risk scoring (default 90). If every candidate is out of range, OUT_OF_RANGE is thrown.
  */
 export async function suggestDeparture(points, baseDate, opts = {}) {
-  const { offsetsMin = [-60, 0, 60, 120, 180], weatherFn = fetchWeather } = opts || {};
+  const { offsetsMin = [-60, 0, 60, 120, 180], weatherFn = fetchWeather, ridingSpeedKmh } = opts || {};
+  const riskOpts = ridingSpeedKmh === undefined ? undefined : { ridingSpeedKmh };
   const baseMs = baseDate instanceof Date ? baseDate.getTime() : Number(baseDate);
   const settled = await Promise.all(
     offsetsMin.map(async (offsetMin) => {
       const date = new Date(baseMs + offsetMin * 60000);
       try {
         const samples = await weatherFn(points, date);
-        return { ok: true, date, offsetMin, summary: summarizeRoute(points, samples) };
+        return { ok: true, date, offsetMin, summary: summarizeRoute(points, samples, riskOpts) };
       } catch (error) {
         return { ok: false, error };
       }
