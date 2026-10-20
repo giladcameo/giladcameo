@@ -1,6 +1,7 @@
 import { haversineKm, sampleRoute } from './geo.js';
 import { fetchWeather } from './weather.js';
 import { scoreRisk, summarizeRoute } from './risk.js';
+import { riderFeelsLikeC } from './comfort.js';
 import { suggestDeparture } from './planner.js';
 import { t, setLang, getLang, applyI18n, fmtTime, fmtDuration, fmtNum, deviceTz } from './i18n.js';
 
@@ -14,6 +15,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const abortError = () => new DOMException('Aborted', 'AbortError');
 const isAbort = (e) => !!e && e.name === 'AbortError';
 const LEVEL_RANK = { ok: 0, caution: 1, danger: 2 };
+const SPEEDS = [50, 70, 90, 110, 130];
+const DEFAULT_SPEED = 90;
+const SPREAD_MIN_C = 3; // show the model range when models differ by at least this much
 
 /* ---------------- storage ---------------- */
 function loadStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; } }
@@ -30,6 +34,7 @@ const state = {
   activeIdx: -1,
   sug: { status: 'idle', items: [] },
   busy: false,
+  speed: DEFAULT_SPEED,        // riding speed (km/h) used for feels-like and risk
   hasResults: false
 };
 let planId = 0;
@@ -86,8 +91,12 @@ function demoWeather(points, depart) {
     const gust = 24 + rain * 9 + 6 * Math.sin(p.lat * 40);
     let code = p.lat > 32.65 && rain < 0.05 ? 0 : 2;
     if (rain > 3) code = 95; else if (rain > 2) code = 65; else if (rain > 0.3) code = 61; else if (rain > 0.05) code = 51;
+    // Cooler towards the north so the feels-like line shows cold values; models disagree more in the rain zone.
+    const tempC = Math.round((19 - Math.max(0, p.lat - 32.08) * 14 - rain * 2 - (isDay ? 0 : 5)) * 10) / 10;
+    const spread = 1 + rain * 1.6;
     return {
-      time: when, tempC: 21 - rain * 2 - (isDay ? 0 : 5), precipMm: Math.round(rain * 10) / 10,
+      tempMinC: Math.round((tempC - spread * 0.4) * 10) / 10, tempMaxC: Math.round((tempC + spread * 0.6) * 10) / 10, modelCount: 3,
+      time: when, tempC, precipMm: Math.round(rain * 10) / 10,
       precipProb: rain > 0.05 ? 85 : 15, windKmh: Math.round(gust * 0.62), gustKmh: Math.round(gust),
       windDirDeg: (250 + p.lat * 10) % 360, code, visibilityM: rain > 1 ? 4200 - rain * 500 : 20000, isDay
     };
@@ -182,13 +191,44 @@ function cumulative(coords) {
 }
 
 // Returns a new route object, never mutates its input, so an aborted run cannot leave half-updated state.
+const riskOpts = () => ({ ridingSpeedKmh: state.speed });
+
+// Re-score the already fetched weather for the current riding speed (no network).
+function rescore() {
+  state.routes = state.routes.map((r) => ({
+    ...r,
+    scores: r.samples.map((w) => scoreRisk(w, riskOpts())),
+    summary: summarizeRoute(r.points, r.samples, riskOpts())
+  }));
+}
+
+function setSpeed(v) {
+  if (!SPEEDS.includes(v) || v === state.speed) return;
+  state.speed = v;
+  saveStore({ speed: v });
+  if (!state.hasResults) { renderSpeed(); return; }
+  rescore();
+  renderResults();
+  drawMap({ fit: false });
+  loadSuggestions();
+}
+
+function renderSpeed() {
+  const el = $('#speed');
+  el.innerHTML = `<h3 class="sec-title">${esc(t('speed.title'))}<small>${esc(t('unit.kmh'))}</small></h3>
+    <div class="speed-row" role="radiogroup" aria-label="${esc(t('speed.title') + ', ' + t('unit.kmh'))}">${
+      SPEEDS.map((v) => `<button type="button" class="speed-btn" role="radio" data-v="${v}" aria-checked="${v === state.speed}">${v}</button>`).join('')
+    }</div>`;
+  el.querySelectorAll('.speed-btn').forEach((b) => b.addEventListener('click', () => setSpeed(Number(b.dataset.v))));
+}
+
 async function analyze(route, depart, signal) {
   const { points, totalKm } = sampleRoute(route.coords, route.duration);
   const samples = await getWeather(points, depart, signal);
   return {
     ...route, points, totalKm, samples,
-    scores: samples.map((w) => scoreRisk(w)),
-    summary: summarizeRoute(points, samples),
+    scores: samples.map((w) => scoreRisk(w, riskOpts())),
+    summary: summarizeRoute(points, samples, riskOpts()),
     cum: route.cum || cumulative(route.coords)
   };
 }
@@ -466,12 +506,24 @@ function renderTimeline() {
     const eta = fmtTime(new Date(base + p.offsetSec * 1000), w.tz);
     const km = fmtNum(p.distKm);
     const reasons = (sc.reasons || []).slice(0, 2).map((k) => t('reason.' + k)).join(', ') || t('tl.noalerts');
-    const aria = t('tl.point', { km, time: eta, wx: t(info.key), temp: fmtNum(w.tempC), wind: fmtNum(w.windKmh), gust: fmtNum(w.gustKmh), level: t('level.' + sc.level) });
+    let aria = t('tl.point', { km, time: eta, wx: t(info.key), temp: fmtNum(w.tempC), wind: fmtNum(w.windKmh), gust: fmtNum(w.gustKmh), level: t('level.' + sc.level) });
+    const feels = riderFeelsLikeC(w, state.speed);
+    const hasFeels = Number.isFinite(feels);
+    const spreadOn = Number.isFinite(w.tempMinC) && Number.isFinite(w.tempMaxC) && w.tempMaxC - w.tempMinC >= SPREAD_MIN_C;
+    const feelCls = hasFeels && feels <= -10 ? ' cold2' : hasFeels && feels <= 3 ? ' cold' : '';
+    const feelRow = hasFeels
+      ? `<span class="tl-feel${feelCls}" title="${esc(t('tl.feels.title', { v: fmtNum(feels), speed: state.speed }))}"><small>${esc(t('tl.feels'))}</small><b>${fmtNum(feels)}°</b></span>` : '';
+    const rangeText = spreadOn ? `${fmtNum(w.tempMinC)}–${fmtNum(w.tempMaxC)}°` : '';
+    const rangeRow = spreadOn
+      ? `<span class="tl-range" title="${esc(t('tl.range.title', { min: fmtNum(w.tempMinC), max: fmtNum(w.tempMaxC) }))}"><small>${esc(t('tl.range'))}</small><b>${rangeText}</b></span>` : '';
+    if (hasFeels) aria += ', ' + t('tl.feels.aria', { v: fmtNum(feels) });
+    if (spreadOn) aria += ', ' + t('tl.range.title', { min: fmtNum(w.tempMinC), max: fmtNum(w.tempMaxC) });
     const edge = i === 0 ? t('tl.start') : i === last ? t('tl.end') : t('unit.km');
     return `<button type="button" class="tl-card lv-${sc.level}" data-i="${i}" aria-current="false" aria-label="${esc(aria)}">
       <span class="tl-top"><span class="kmpost">${km}<small>${esc(edge)}</small></span>${lvIcon(sc.level)}</span>
       <span class="tl-eta">${eta}</span>
       <span class="tl-wx">${wxIcon(info.icon)}<span class="tl-temp">${fmtNum(w.tempC)}°</span></span>
+      ${feelRow}${rangeRow}
       <span class="tl-rows">
         <span class="tl-row">${wxIcon('i-wind', '')}<b>${fmtNum(w.windKmh)}</b>/<b>${fmtNum(w.gustKmh)}</b>
           ${Number.isFinite(w.windDirDeg) ? `<svg aria-hidden="true" style="transform:rotate(${Math.round(w.windDirDeg + 180)}deg)"><use href="#i-arrow"/></svg>` : ''}</span>
@@ -481,7 +533,7 @@ function renderTimeline() {
     </button>`;
   }).join('');
   renderTzNote();
-  $('#timeline').innerHTML = `${renderReasons()}<h3 class="sec-title" style="margin-top:18px">${esc(t('tl.title'))}</h3><div class="timeline-scroll">${cards}</div>`;
+  $('#timeline').innerHTML = `${renderReasons()}<h3 class="sec-title" style="margin-top:18px">${esc(t('tl.title'))}</h3><p class="hint tl-note" dir="auto">${esc(t('tl.tempnote'))}</p><div class="timeline-scroll">${cards}</div>`;
   $('#timeline').querySelectorAll('.tl-card').forEach((c) => c.addEventListener('click', () => selectPoint(Number(c.dataset.i))));
   markActive();
 }
@@ -553,7 +605,7 @@ function renderFormSummary() {
 function renderResults() {
   if (!state.hasResults) return;
   $('#results').hidden = false;
-  renderBanner(); renderCluster(); renderRoutes(); renderTimeline(); renderSuggestions(); renderPeek(); renderFormSummary();
+  renderBanner(); renderCluster(); renderRoutes(); renderSpeed(); renderTimeline(); renderSuggestions(); renderPeek(); renderFormSummary();
 }
 
 function selectRoute(i) {
@@ -586,6 +638,21 @@ function showError(e) {
 }
 
 /* ---------------- suggestions ---------------- */
+// Changing the riding speed re-scores; the forecast for each candidate departure is fetched only once per route.
+const sugWeather = new WeakMap(); // points array -> Map(departure ms -> Promise<samples>)
+// The request is not tied to an abort signal: a newer run may share it, stale results are dropped by token.
+function cachedWeather(points, date) {
+  let m = sugWeather.get(points);
+  if (!m) sugWeather.set(points, (m = new Map()));
+  const key = date.getTime();
+  if (!m.has(key)) {
+    const pr = getWeather(points, date);
+    m.set(key, pr);
+    pr.catch(() => m.delete(key));
+  }
+  return m.get(key);
+}
+
 async function loadSuggestions() {
   const r = cur();
   if (!r) return;
@@ -598,7 +665,7 @@ async function loadSuggestions() {
   const base = state.depart.getTime(), now = Date.now(), max = maxDepartMs();
   const offsetsMin = [-60, 0, 60, 120, 180].filter((o) => o === 0 || (base + o * 60000 >= now - 10 * 60000 && base + o * 60000 <= max));
   try {
-    const items = await suggestDeparture(r.points, state.depart, { offsetsMin, weatherFn: (p, d) => getWeather(p, d, ctrl.signal) });
+    const items = await suggestDeparture(r.points, state.depart, { offsetsMin, ridingSpeedKmh: state.speed, weatherFn: (p, d) => cachedWeather(p, d) });
     if (token !== sugToken) return;
     state.sug = { status: 'ok', items: Array.isArray(items) ? items : [] };
   } catch (e) {
@@ -835,6 +902,7 @@ function init() {
   const store = loadStore();
   setLang(store.lang === 'en' ? 'en' : 'he');
   applyTheme(store.theme === 'light' ? 'light' : 'dark');
+  if (SPEEDS.includes(store.speed)) state.speed = store.speed;
   applyI18n();
   if (DEMO) $('#demoBadge').hidden = false;
 
