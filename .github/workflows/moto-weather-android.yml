@@ -66,9 +66,14 @@ jobs:
         run: |
           APK=android/app/build/outputs/apk/release/app-release.apk
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          "$BT/apksigner" verify --print-certs "$APK"
-          "$BT/aapt2" dump badging "$APK" | grep -E "^package|sdkVersion|uses-permission|application-label:|launchable-activity"
-          unzip -l "$APK" | grep -E "assets/public/(index.html|vendor/leaflet/leaflet.js|js/app.js)"
+          INFO=$(
+            "$BT/apksigner" verify --print-certs "$APK" | head -3
+            "$BT/aapt2" dump badging "$APK" | grep -E "^package|sdkVersion|uses-permission|application-label:|debuggable" || true
+            unzip -l "$APK" | grep -E "assets/public/(index.html|vendor/leaflet/leaflet.js|js/app.js)"
+            ls -l "$APK" | awk '{print "size bytes:", $5}'
+          )
+          echo "$INFO"
+          echo "::notice title=APK check::$(echo "$INFO" | sed ':a;N;$!ba;s/\n/%0A/g')"
           mkdir -p ../dist
           cp "$APK" ../dist/moto-weather.apk
 
