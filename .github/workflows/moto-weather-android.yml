@@ -50,7 +50,17 @@ jobs:
         working-directory: moto-weather-android/android
         env:
           VERSION_CODE: ${{ github.run_number }}
-        run: ./gradlew --no-daemon assembleRelease
+        run: |
+          set +e
+          ./gradlew --no-daemon assembleRelease --stacktrace > ../build.log 2>&1
+          code=$?
+          tail -n 40 ../build.log
+          if [ "$code" -ne 0 ]; then
+            # Surface the reason as an annotation, so it can be read without opening the full log.
+            MSG=$(grep -E -A14 "What went wrong|FAILED|error:" ../build.log | head -c 3000 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Gradle build failed::${MSG}"
+          fi
+          exit $code
 
       - name: Check the APK
         run: |
