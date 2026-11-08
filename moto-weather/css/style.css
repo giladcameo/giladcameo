@@ -411,3 +411,58 @@ input[type="datetime-local"] { font-family: var(--font-display); font-size: 22px
 /* The compact verdict row only shows when the sheet is collapsed, otherwise it duplicates the banner. */
 .sheet:not([data-snap="peek"]) .peek { display: none; }
 .peek-word { white-space: nowrap; }
+
+/* ---------- Live position ---------- */
+/* The toggle rides on the sheet's top edge (bottom: 100% of the sheet), on the inline-end side, so it follows
+   every snap and drag, and clears the zoom control, route plate and top bar. At full height it sits under the
+   top bar, so it hides there; the panel in the sheet has its own off button. */
+.live-btn {
+  position: absolute; z-index: 5; inset-inline-end: 12px; bottom: calc(100% + 12px);
+  display: flex; align-items: center; gap: 8px; min-width: 48px; min-height: 48px; padding: 0 16px 0 12px;
+  border-radius: 24px; background: var(--panel); color: var(--ink); border: 2px solid var(--line);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .35); font-weight: 800; font-size: 15px; white-space: nowrap;
+}
+:root[dir="rtl"] .live-btn { padding: 0 12px 0 16px; }
+.live-btn svg { width: 22px; height: 22px; flex: none; }
+.live-btn[aria-pressed="true"] { background: var(--sign); color: var(--sign-ink); border-color: #fff; box-shadow: 0 0 0 2px var(--sign), 0 3px 12px rgba(0, 0, 0, .35); }
+.live-btn[aria-pressed="true"] svg { fill: currentColor; }
+.live-btn:active { filter: brightness(.92); }
+.sheet[data-snap="full"] .live-btn, .sheet[data-snap="full"] .live-msg { visibility: hidden; }
+.live-msg {
+  position: absolute; z-index: 5; inset-inline-end: 12px; bottom: calc(100% + 72px);
+  max-width: min(320px, calc(100vw - 24px)); padding: 10px 14px; border-radius: var(--radius);
+  background: var(--panel); color: var(--ink); border: 2px solid var(--sign); box-shadow: 0 6px 20px rgba(0, 0, 0, .4);
+  font-size: 14px; font-weight: 500; line-height: 1.35;
+}
+.live-msg.error { border: 2px dashed var(--danger); }
+.live-panel { background: var(--panel-2); border: 2px solid var(--sign); border-radius: var(--radius); padding: 10px 14px 12px; display: grid; gap: 8px; }
+.live-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.live-head .sec-title { margin: 0; font-size: 18px; }
+.live-stop { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel); font-weight: 700; font-size: 14px; }
+.live-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--font-display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+.live-ahead { display: flex; align-items: center; gap: 10px; font-weight: 700; line-height: 1.3; }
+.live-ahead svg.lv { width: 28px; height: 28px; flex: none; }
+.live-ahead.wait { font-weight: 500; color: var(--ink-2); }
+.live-off { margin: 0; padding-inline-start: 10px; border-inline-start: 3px dashed var(--caution); color: var(--ink-2); font-size: 14px; }
+.live-off:empty { display: none; }
+.live-panel .hint { margin: 0; }
+.tl-card.live { outline: 3px solid var(--sign); outline-offset: 1px; background: var(--panel-3); }
+.tl-card.live::before { content: ""; display: block; height: 6px; margin-bottom: -2px; background: var(--sign); }
+.tl-card.sel { background: var(--panel-3); outline: 3px solid var(--ink); outline-offset: 1px; }
+.tl-card.live.sel { outline-color: var(--sign); }
+
+/* Position marker: a dot, plus a direction arrow ring only while heading is known and the rider is moving. */
+.leaflet-div-icon.live-wrap { background: none; border: 0; }
+.live-mk { position: relative; width: 44px; height: 44px; }
+.live-mk .live-dot {
+  position: absolute; inset: 11px; border-radius: 50%; background: var(--sign); border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(10, 14, 18, .8), 0 2px 8px rgba(0, 0, 0, .5);
+}
+.live-mk .live-arrow { position: absolute; inset: 0; width: 44px; height: 44px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+.live-mk.no-arrow .live-arrow { display: none; }
+.live-mk.off .live-dot { outline: 3px dashed var(--caution); outline-offset: 3px; }
+@media (min-width: 900px) {
+  .live-btn { position: fixed; inset-inline-end: 16px; bottom: 16px; }
+  .live-msg { position: fixed; inset-inline-end: 16px; bottom: 80px; }
+  .sheet[data-snap="full"] .live-btn, .sheet[data-snap="full"] .live-msg { visibility: visible; }
+}

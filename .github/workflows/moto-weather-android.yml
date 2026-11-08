@@ -2,6 +2,11 @@ name: Moto Weather Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_preview:
+        description: Publish this build as a preview release (for a branch that is not merged yet)
+        type: boolean
+        default: false
   push:
     paths:
       - 'moto-weather/**'
@@ -95,3 +100,17 @@ jobs:
             gh release create moto-weather-android --prerelease --target "$GITHUB_SHA" --title "Moto Weather Android (latest build)" --notes "$NOTES"
           fi
           gh release upload moto-weather-android ../dist/moto-weather.apk --clobber
+
+      - name: Publish a preview build (manual run, or a commit message with [preview])
+        if: github.ref_name != github.event.repository.default_branch && ((github.event_name == 'workflow_dispatch' && inputs.publish_preview) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[preview]')))
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Preview build from branch ${GITHUB_REF_NAME}, build ${{ github.run_number }}, commit ${GITHUB_SHA::7}. Not merged into the live site yet."
+          if gh release view moto-weather-android-preview > /dev/null 2>&1; then
+            gh release edit moto-weather-android-preview --notes "$NOTES"
+          else
+            gh release create moto-weather-android-preview --prerelease --target "$GITHUB_SHA" --title "Moto Weather Android (preview build)" --notes "$NOTES"
+          fi
+          cp ../dist/moto-weather.apk ../dist/moto-weather-preview.apk
+          gh release upload moto-weather-android-preview ../dist/moto-weather-preview.apk --clobber

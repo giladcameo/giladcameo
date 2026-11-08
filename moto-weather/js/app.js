@@ -1,4 +1,6 @@
-import { haversineKm, sampleRoute } from './geo.js';
+import { haversineKm, sampleRoute, snapToRoute } from './geo.js';
+import { aheadInfo } from './ahead.js';
+import { createPositionSource, showsArrow, showsAccuracy } from './position.js';
 import { fetchWeather } from './weather.js';
 import { scoreRisk, summarizeRoute } from './risk.js';
 import { riderFeelsLikeC } from './comfort.js';
@@ -35,13 +37,14 @@ const state = {
   sug: { status: 'idle', items: [] },
   busy: false,
   speed: DEFAULT_SPEED,        // riding speed (km/h) used for feels-like and risk
-  hasResults: false
+  hasResults: false,
+  live: { on: false, pos: null, snap: null, ahead: null }
 };
 let planId = 0;
 let sugToken = 0;
 let planCtrl = null, sugCtrl = null;
 let zoomCtl = null, attrCtl = null;
-let map, routeLayer, markerLayer, markers = [];
+let map, routeLayer, markerLayer, liveLayer, markers = [];
 
 class AppError extends Error {
   constructor(code, params) { super(code); this.code = code; this.params = params; }
@@ -300,6 +303,7 @@ function initMap() {
   placeControls();
   routeLayer = L.layerGroup().addTo(map);
   markerLayer = L.layerGroup().addTo(map);
+  liveLayer = L.layerGroup().addTo(map);
 }
 
 // Zoom (pointer devices only) and the OSM attribution sit on the side away from the wide-screen side panel.
@@ -407,7 +411,15 @@ function markActive() {
     if (inner) inner.classList.toggle('active', i === state.activeIdx);
     if (m.setZIndexOffset) m.setZIndexOffset(i === state.activeIdx ? 1000 : 0);
   });
-  document.querySelectorAll('.tl-card').forEach((c) => c.setAttribute('aria-current', String(Number(c.dataset.i) === state.activeIdx)));
+  // While live position is on, aria-current marks the card nearest ahead of the rider; the card the user picked
+  // keeps a visual state only (.sel). With live position off nothing changes: aria-current is the picked card.
+  const liveIdx = state.live.on && state.live.ahead ? state.live.ahead.cardIdx : -1;
+  document.querySelectorAll('.tl-card').forEach((c) => {
+    const i = Number(c.dataset.i);
+    c.classList.toggle('live', i === liveIdx);
+    c.classList.toggle('sel', liveIdx >= 0 && i === state.activeIdx);
+    c.setAttribute('aria-current', String(liveIdx >= 0 ? i === liveIdx : i === state.activeIdx));
+  });
 }
 
 function selectPoint(i, { scroll = false, expand = false } = {}) {
@@ -533,6 +545,7 @@ function renderTimeline() {
     </button>`;
   }).join('');
   renderTzNote();
+  liveScrolledIdx = -1;
   $('#timeline').innerHTML = `${renderReasons()}<h3 class="sec-title" style="margin-top:18px">${esc(t('tl.title'))}</h3><p class="hint tl-note" dir="auto">${esc(t('tl.tempnote'))}</p><div class="timeline-scroll">${cards}</div>`;
   $('#timeline').querySelectorAll('.tl-card').forEach((c) => c.addEventListener('click', () => selectPoint(Number(c.dataset.i))));
   markActive();
@@ -606,6 +619,7 @@ function renderResults() {
   if (!state.hasResults) return;
   $('#results').hidden = false;
   renderBanner(); renderCluster(); renderRoutes(); renderSpeed(); renderTimeline(); renderSuggestions(); renderPeek(); renderFormSummary();
+  updateLive();
 }
 
 function selectRoute(i) {
@@ -786,6 +800,202 @@ async function plan({ reuse = false } = {}) {
   }
 }
 
+/* ---------------- live position ----------------
+   Only while the app is open: no background tracking, no turn-by-turn, no rerouting. The position is used on
+   this device only (map marker, snapping to the route, the ahead panel); it is never sent anywhere or stored. */
+const OFF_ROUTE_KM = 0.3;
+let liveSource = null, liveStop = null, liveMarker = null, liveCircle = null, liveMsgTimer = null;
+let wakeLock = null, liveScrolledIdx = -1, lastUserTouch = 0;
+const USER_SCROLL_QUIET_MS = 8000;
+const demoLiveCoords = DEMO ? demoRoutes()[0].coords : null;
+
+function getLiveSource() {
+  if (!liveSource) {
+    liveSource = createPositionSource({
+      demo: DEMO, geolocation: navigator.geolocation,
+      getCoords: () => (cur() ? cur().coords : demoLiveCoords)
+    });
+  }
+  return liveSource;
+}
+
+function showLiveMsg(text, { error = false, ms = 7000 } = {}) {
+  const el = $('#liveMsg');
+  clearTimeout(liveMsgTimer);
+  el.textContent = text;
+  el.classList.toggle('error', error);
+  el.hidden = false;
+  liveMsgTimer = setTimeout(() => { el.hidden = true; }, ms);
+}
+function hideLiveMsg() { clearTimeout(liveMsgTimer); $('#liveMsg').hidden = true; }
+
+async function acquireWakeLock() {
+  try {
+    if (!navigator.wakeLock || wakeLock || !state.live.on || document.hidden) return;
+    const lock = await navigator.wakeLock.request('screen');
+    if (!state.live.on) { lock.release().catch(() => {}); return; }
+    wakeLock = lock;
+    lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+  } catch (e) { wakeLock = null; /* not available or refused: the screen may sleep, nothing else changes */ }
+}
+function releaseWakeLock() {
+  try { const l = wakeLock; wakeLock = null; if (l) l.release().catch(() => {}); } catch (e) { /* ignore */ }
+}
+
+function startLiveWatch() {
+  if (liveStop || !state.live.on) return;
+  const stop = getLiveSource().watch(onLivePos, onLiveError);
+  // A source may fail synchronously (live position already switched off by then): do not keep a stale stop.
+  if (state.live.on) liveStop = stop; else { try { stop(); } catch (e) { /* ignore */ } }
+}
+function stopLiveWatch() {
+  const stop = liveStop;
+  liveStop = null;
+  if (stop) { try { stop(); } catch (e) { /* ignore */ } }
+}
+
+function onLivePos(pos) {
+  if (!state.live.on || !Number.isFinite(pos.lat) || !Number.isFinite(pos.lon)) return;
+  const first = !state.live.pos;
+  state.live.pos = pos;
+  if (first) hideLiveMsg();
+  renderLiveMap(first);
+  updateLive();
+}
+function onLiveError(err) {
+  const code = err && err.code ? err.code : 'unavailable';
+  setLive(false);
+  showLiveMsg(t('live.err.' + code), { error: true, ms: 9000 });
+}
+
+function setLive(on) {
+  on = !!on;
+  const btn = $('#liveBtn');
+  btn.setAttribute('aria-pressed', String(on));
+  if (on === state.live.on) return;
+  state.live = { on, pos: null, snap: null, ahead: null };
+  if (on) {
+    showLiveMsg(t('live.privacy'));
+    acquireWakeLock();
+    startLiveWatch();
+  } else {
+    stopLiveWatch();
+    releaseWakeLock();
+    hideLiveMsg();
+    liveLayer.clearLayers();
+    liveMarker = liveCircle = null;
+    liveScrolledIdx = -1;
+  }
+  updateLive();
+}
+
+function renderLiveMap(first) {
+  const pos = state.live.pos;
+  if (!pos || !map) return;
+  const ll = [pos.lat, pos.lon];
+  if (!liveMarker) {
+    const icon = L.divIcon({
+      className: 'live-wrap', iconSize: [44, 44], iconAnchor: [22, 22],
+      html: '<div class="live-mk no-arrow" role="img"><svg class="live-arrow" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 2l8 11H14z" fill="var(--sign)" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><i class="live-dot"></i></div>'
+    });
+    liveMarker = L.marker(ll, { icon, interactive: false, keyboard: false, zIndexOffset: 5000 }).addTo(liveLayer);
+  }
+  liveMarker.setLatLng(ll);
+  const el = liveMarker.getElement();
+  const mk = el && el.firstElementChild;
+  if (mk) {
+    const arrow = showsArrow(pos);
+    mk.classList.toggle('no-arrow', !arrow);
+    mk.classList.toggle('off', !!(state.live.snap && state.live.snap.offRouteKm > OFF_ROUTE_KM));
+    mk.setAttribute('aria-label', t('live.marker'));
+    const a = mk.querySelector('.live-arrow');
+    if (a) a.style.transform = `rotate(${Math.round(arrow ? pos.heading : 0)}deg)`;
+  }
+  const sign = cssVar('--sign');
+  if (showsAccuracy(pos)) {
+    if (!liveCircle) liveCircle = L.circle(ll, { radius: pos.accuracy, interactive: false, weight: 2, dashArray: '4 6', fillOpacity: 0.12 }).addTo(liveLayer);
+    liveCircle.setLatLng(ll); liveCircle.setRadius(pos.accuracy);
+    liveCircle.setStyle({ color: sign, fillColor: sign });
+  } else if (liveCircle) { liveLayer.removeLayer(liveCircle); liveCircle = null; }
+  if (first && !map.getBounds().contains(ll)) map.panTo(ll, { animate: !REDUCED });
+}
+
+// Recompute snap + ahead for the current position and route, then refresh panel, timeline and marker state.
+function updateLive() {
+  const L_ = state.live;
+  const r = state.hasResults ? cur() : null;
+  if (L_.on && L_.pos && r) {
+    L_.snap = snapToRoute(r.coords, L_.pos, r.cum);
+    L_.ahead = L_.snap ? aheadInfo(r.points, r.scores, L_.snap.distAlongKm) : null;
+  } else { L_.snap = null; L_.ahead = null; }
+  renderLivePanel();
+  markActive();
+  if (liveMarker) renderLiveMap(false);
+  scrollToLiveCard();
+}
+
+function aheadText(r, a) {
+  const n = a.next, w = r.samples[n.idx], sc = r.scores[n.idx];
+  const wx = t(wxInfo(w.code, w.isDay).key);
+  const reason = (sc.reasons || []).map((k) => t('reason.' + k))[0];
+  const what = !reason ? wx : reason.includes(wx) ? reason : `${wx}, ${reason}`; // 'Heavy rain, slick road' already names the weather
+  return t('live.ahead', { km: kmText(n.inKm), what });
+}
+
+function renderLivePanel() {
+  const el = $('#live');
+  const L_ = state.live;
+  const r = state.hasResults ? cur() : null;
+  if (!L_.on || !r) { el.innerHTML = ''; return; }
+  let body;
+  if (!L_.snap) {
+    body = `<div class="live-ahead wait"><span class="spin" aria-hidden="true"></span><span>${esc(t('live.searching'))}</span></div>`;
+  } else {
+    const total = r.cum[r.cum.length - 1];
+    const done = clamp(L_.snap.distAlongKm, 0, total), left = Math.max(0, total - done);
+    const a = L_.ahead;
+    let ahead;
+    if (left < 0.1) ahead = `${lvIcon('ok')}<span>${esc(t('live.end'))}</span>`;
+    else if (a && a.next) ahead = `${lvIcon(a.next.level)}<span>${esc(aheadText(r, a))}</span>`;
+    else ahead = `${lvIcon('ok')}<span>${esc(t('live.clear'))}</span>`;
+    const off = L_.snap.offRouteKm > OFF_ROUTE_KM ? t('live.off', { km: kmText(L_.snap.offRouteKm) }) : '';
+    body = `<div class="live-stats"><span>${esc(t('live.travelled', { km: kmText(done) }))}</span><span>${esc(t('live.remaining', { km: kmText(left) }))}</span></div>
+      <div class="live-ahead">${ahead}</div>
+      <p class="live-off" role="status">${esc(off)}</p>`;
+  }
+  el.innerHTML = `<section class="live-panel" aria-label="${esc(t('live.title'))}">
+    <div class="live-head"><h3 class="sec-title">${esc(t('live.title'))}</h3><button type="button" class="live-stop" id="liveStop">${esc(t('live.stop'))}</button></div>
+    ${body}<p class="hint">${esc(t('live.privacy'))}</p></section>`;
+  $('#liveStop').addEventListener('click', () => setLive(false));
+}
+
+// Scroll the timeline to the card ahead of the rider only when that card changes, and never within 8 s of the
+// user's own scrolling or touching.
+function scrollToLiveCard() {
+  const a = state.live.on && state.live.ahead;
+  if (!a || a.cardIdx === liveScrolledIdx) return;
+  if (Date.now() - lastUserTouch < USER_SCROLL_QUIET_MS) return;
+  const card = document.querySelector(`.tl-card[data-i="${a.cardIdx}"]`);
+  const sc = card && card.closest('.timeline-scroll');
+  if (!sc) return;
+  const cr = card.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+  sc.scrollBy({ left: cr.left + cr.width / 2 - (sr.left + sr.width / 2), behavior: REDUCED ? 'auto' : 'smooth' });
+  liveScrolledIdx = a.cardIdx;
+}
+
+function initLive() {
+  const btn = $('#liveBtn');
+  btn.addEventListener('click', () => setLive(!state.live.on));
+  const touch = () => { lastUserTouch = Date.now(); };
+  ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown'].forEach((ev) => $('#sheetBody').addEventListener(ev, touch, { passive: true, capture: true }));
+  // Pause while hidden (the browser stops giving positions in the background anyway), resume when visible again.
+  document.addEventListener('visibilitychange', () => {
+    if (!state.live.on) return;
+    if (document.hidden) stopLiveWatch();
+    else { startLiveWatch(); acquireWakeLock(); }
+  });
+}
+
 /* ---------------- address fields ----------------
    No search-as-you-type (Nominatim forbids client-side autocomplete). Enter runs one search and shows the
    candidates; planning without choosing one uses the best match. */
@@ -927,6 +1137,7 @@ function init() {
 
   $('#form').addEventListener('submit', (e) => { e.preventDefault(); plan(); });
   $('#locBtn').addEventListener('click', useMyLocation);
+  initLive();
   $('#swapBtn').addEventListener('click', swapPlaces);
   $('#formSummary').addEventListener('click', () => {
     $('#form').hidden = false; $('#formSummary').hidden = true;
@@ -937,6 +1148,7 @@ function init() {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     applyTheme(next); saveStore({ theme: next });
     if (state.hasResults) drawMap({ fit: false });
+    if (state.live.on && state.live.pos) renderLiveMap(false);
   });
   $('#langBtn').addEventListener('click', () => {
     const next = getLang() === 'he' ? 'en' : 'he';
