@@ -1,0 +1,14 @@
+{
+  "appId": "com.gcameo.motoweather",
+  "appName": "מזג אוויר לדרך",
+  "webDir": "www",
+  "backgroundColor": "#14181b",
+  "android": {
+    "appendUserAgent": "MotoWeatherRoute/1.1 (+https://gcameo.com/moto-weather/)"
+  },
+  "plugins": {
+    "SystemBars": {
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}
