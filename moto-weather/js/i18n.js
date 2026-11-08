@@ -59,6 +59,13 @@ const DICT = {
     'tl.point': 'נקודה בק״מ {km}, הגעה בשעה {time}, {wx}, {temp} מעלות, רוח {wind} משבים {gust} קמ״ש, {level}',
     'tl.wind': 'רוח וגשם',
     'tl.noalerts': 'ללא התראות',
+    'tl.feels': 'ברכיבה',
+    'tl.feels.title': 'מרגיש כמו {v}° במהירות רכיבה של {speed} קמ״ש (כולל רוח)',
+    'tl.feels.aria': 'מרגיש ברכיבה {v} מעלות',
+    'tl.range': 'דגמים',
+    'tl.range.title': 'דגמי התחזית חלוקים: בין {min}° ל-{max}°',
+    'tl.tempnote': 'טמפרטורת אוויר בגובה 2 מ׳, חציון של כמה דגמי תחזית. "ברכיבה" היא תחושת הקור ברוח של מהירות הרכיבה.',
+    'speed.title': 'מהירות רכיבה',
 
     'suggest.title': 'מתי כדאי לצאת',
     'suggest.best': 'הכי טוב',
@@ -99,6 +106,7 @@ const DICT = {
     'reason.strong_gusts': 'משבים מסוכנים לאופנוע',
     'reason.fog': 'ערפל',
     'reason.low_visibility': 'ראות נמוכה',
+    'reason.wind_chill': 'קור חזק ברוח הרכיבה',
     'reason.dark': 'חושך',
     'reasons.title': 'מה מעלה את הסיכון',
 
@@ -183,6 +191,13 @@ const DICT = {
     'tl.point': 'Point at km {km}, arriving {time}, {wx}, {temp} degrees, wind {wind} gusts {gust} km/h, {level}',
     'tl.wind': 'Wind and rain',
     'tl.noalerts': 'No alerts',
+    'tl.feels': 'riding',
+    'tl.feels.title': 'Feels like {v}° at a riding speed of {speed} km/h (wind chill)',
+    'tl.feels.aria': 'feels like {v} degrees while riding',
+    'tl.range': 'models',
+    'tl.range.title': 'Forecast models disagree: {min}° to {max}°',
+    'tl.tempnote': 'Air temperature at 2 m, the median of several forecast models. "Riding" is the wind chill at your riding speed.',
+    'speed.title': 'Riding speed',
 
     'suggest.title': 'Best time to leave',
     'suggest.best': 'Best',
@@ -223,6 +238,7 @@ const DICT = {
     'reason.strong_gusts': 'Gusts dangerous for a bike',
     'reason.fog': 'Fog',
     'reason.low_visibility': 'Low visibility',
+    'reason.wind_chill': 'Wind chill at riding speed',
     'reason.dark': 'Darkness',
     'reasons.title': 'What raises the risk',
 
