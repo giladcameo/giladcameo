@@ -119,7 +119,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 @media (max-width:1020px){.span-7,.span-5,.span-6,.span-4,.span-8{grid-column:span 12}}
 .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
 .chart{width:100%;height:auto;display:block;overflow:visible}
-.chart text{fill:var(--ink-2);font:11px var(--mono)}
+.chart text{fill:var(--ink-2);font:12px var(--mono)}
 .chart .tick line{stroke:var(--rule)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -136,9 +136,9 @@ input[type=range]{accent-color:var(--accent);width:100%}
 #map .sea-bg{fill:color-mix(in srgb,var(--sea-light) 45%,var(--panel))}
 #map .gauge{cursor:pointer}
 #map .gauge circle.dot{stroke:var(--panel);stroke-width:2}
-#map .gauge text{font:600 12px var(--body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+#map .gauge text{font:600 var(--fs,12px) var(--body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:var(--sw,3px)}
 #map .gauge.sel circle.ring{stroke:var(--ink);stroke-width:2;fill:none}
-#map .sea-label{font:600 italic 16px var(--display);letter-spacing:.3em;fill:var(--sea-deep);opacity:.7;text-transform:uppercase}
+#map .sea-label{font:600 italic var(--fs2,16px) var(--display);letter-spacing:.3em;fill:var(--sea-deep);opacity:.7;text-transform:uppercase}
 .bars{display:flex;flex-direction:column;gap:10px}
 .bar-row{display:grid;grid-template-columns:120px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
 .bar-track{height:14px;background:color-mix(in srgb,var(--rule) 60%,transparent);border-radius:3px;overflow:hidden}
@@ -160,7 +160,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 footer{border-top:1px solid var(--rule);padding-block:18px 28px;color:var(--ink-2);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 
 /* tour overlay */
-.tour-card{position:absolute;left:14px;bottom:14px;max-width:min(460px,calc(100% - 28px));background:color-mix(in srgb,var(--panel) 94%,transparent);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:6px}
+.tour-card{position:absolute;left:14px;top:14px;max-width:min(460px,calc(100% - 28px));background:color-mix(in srgb,var(--panel) 94%,transparent);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:6px}
 .tour-card[hidden]{display:none}
 .tour-card h3{font-size:22px}
 .tour-progress{height:3px;background:var(--rule);border-radius:2px;overflow:hidden}
@@ -203,7 +203,7 @@ body.kiosk header.top .brand p{display:none}
       <canvas id="scene" aria-label="Animated cross-section of the coast: sea, protective structure, mudflat, dike and hinterland"></canvas>
       <div class="status-pill" id="statusPill" data-s="ok"><i></i><span id="statusText">Dike safe</span></div>
       <div class="tour-card" id="tourCard" hidden>
-        <div class="eyebrow" id="tourStep">1 / 8</div>
+        <div class="eyebrow" id="tourStep"></div>
         <h3 id="tourTitle"></h3>
         <p id="tourText" class="note" style="color:var(--ink);font-size:14px"></p>
         <div class="tour-progress"><i id="tourBar"></i></div>
@@ -393,7 +393,7 @@ const T = {
   baltOyster:'Oysters cannot form reefs at this location: the Baltic is not salty enough. Treat this as hypothetical, or think of a mussel bed.',
   crestFixed:'Crest follows the natural growth zone',
   events:{calm:'Normal high tide', storm:'Storm surge', severe:'Severe storm surge', extreme:'Record surge'},
-  stat_hNo:'Wave height at dike, no structure', stat_hYes:'Wave height at dike, with ', stat_qNo:'Overtopping, no structure', stat_qYes:'Overtopping, with structure', stat_red:'Wave height removed',
+  stat_hNo:'Wave height at dike, no structure', stat_hYes:'Wave height at dike, with structure', stat_qNo:'Overtopping, no structure', stat_qYes:'Overtopping, with structure', stat_red:'Wave height removed',
   ls:'l/(s·m)', overflow:'overflow', none:'—',
   expEye:s=>'What the dikes hold back · '+(s==='north'?'North Sea coast':'Baltic coast'),
   expArea:'Land area', expPop:'Residents',
@@ -446,7 +446,7 @@ const T = {
   baltOyster:'Austern können hier keine Riffe bilden: Die Ostsee ist zu salzarm. Als hypothetisch betrachten oder an eine Muschelbank denken.',
   crestFixed:'Krone folgt der natürlichen Wachstumszone',
   events:{calm:'Normales Hochwasser', storm:'Sturmflut', severe:'Schwere Sturmflut', extreme:'Rekord-Sturmflut'},
-  stat_hNo:'Wellenhöhe am Deich, ohne Bauwerk', stat_hYes:'Wellenhöhe am Deich, mit ', stat_qNo:'Überlauf, ohne Bauwerk', stat_qYes:'Überlauf, mit Bauwerk', stat_red:'Abgebaute Wellenhöhe',
+  stat_hNo:'Wellenhöhe am Deich, ohne Bauwerk', stat_hYes:'Wellenhöhe am Deich, mit Bauwerk', stat_qNo:'Überlauf, ohne Bauwerk', stat_qYes:'Überlauf, mit Bauwerk', stat_red:'Abgebaute Wellenhöhe',
   ls:'l/(s·m)', overflow:'Überströmung', none:'—',
   expEye:s=>'Was die Deiche zurückhalten · '+(s==='north'?'Nordseeküste':'Ostseeküste'),
   expArea:'Fläche', expPop:'Einwohner',
@@ -552,7 +552,7 @@ function evalCoast(stKey,scen,evKey,type,y,cfg){
   }
   let Ht=Hin*Kt;
   // toe depth limit (marsh raises the foreland)
-  const toe=(type==='marsh'&&crest!==null)?crest:st.toe;
+  const toe=(type==='marsh'&&crest!==null)?Math.max(crest,st.toe):st.toe;
   const dToe=swl-toe;
   const HtoeNoLimit=Ht;
   let Htoe=dToe>0?Math.min(Ht,0.5*dToe):0;
@@ -585,9 +585,12 @@ const cfgFor=type=>({build:S.build,crest:S.crest!=null&&STRUCTS[type].engineered
    ================================================================ */
 const $=id=>document.getElementById(id);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-function fmtQ(q){if(q===Infinity)return t('overflow');if(q<0.01)return '<0.01 '+t('ls');if(q<10)return q.toFixed(q<1?2:1)+' '+t('ls');return Math.round(q)+' '+t('ls')}
-const fmtM=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2)+' m';
-const fmtCm=v=>(v>=0?'+':'−')+Math.abs(Math.round(v*100))+' cm';
+function fmtQ(q){if(q===Infinity)return t('overflow');if(q<0.01)return '<'+dec('0.01')+' '+t('ls');if(q<10)return dec(q.toFixed(q<1?2:1))+' '+t('ls');return Math.round(q)+' '+t('ls')}
+const dec=s=>LANG==='de'?String(s).replace('.',','):String(s);
+const fx=(v,n)=>dec(Math.abs(v)<0.5*Math.pow(10,-n)?(0).toFixed(n):v.toFixed(n)).replace('-','−');
+const fmtM=v=>{const r=+v.toFixed(2);return (r>0?'+':r<0?'−':'±')+dec(Math.abs(r).toFixed(2))+' m'};
+const fmtCm=v=>{const c=Math.round(v*100);return (c>0?'+':c<0?'−':'±')+Math.abs(c)+' cm'};
+const scenLabel=k=>k==='high'?(LANG==='de'?'Extremfall':'High-end'):SCEN_LABEL[k];
 const nf=()=>new Intl.NumberFormat(LANG==='de'?'de-DE':'en-GB');
 
 function buildControls(){
@@ -598,7 +601,7 @@ function buildControls(){
     sel.appendChild(og)}
   sel.value=S.station;
   const mk=(box,items,cur,cb,cls)=>{box.innerHTML='';for(const [k,l] of items){const b=document.createElement('button');b.type='button';b.className='chip'+(cls&&cls(k)?' hypo':'');b.textContent=l;b.setAttribute('aria-pressed',k===cur);b.onclick=()=>cb(k);box.appendChild(b)}};
-  mk($('scenarioChips'),SCEN_ORDER.map(k=>[k,SCEN_LABEL[k]]),S.scen,k=>{S.scen=k;stopAuto();update()});
+  mk($('scenarioChips'),SCEN_ORDER.map(k=>[k,scenLabel(k)]),S.scen,k=>{S.scen=k;stopAuto();update()});
   mk($('eventChips'),Object.keys(EVENTS.north).map(k=>[k,t('events')[k]]),S.event,k=>{S.event=k;stopAuto();update()});
   mk($('structChips'),Object.keys(STRUCTS).map(k=>[k,t('s_'+k)]),S.struct,k=>{S.struct=k;S.crest=null;stopAuto();update()},k=>STRUCTS[k].hypo);
 }
@@ -646,28 +649,34 @@ function update(){
   $('yearBig').textContent=S.year;
   $('kvMsl').textContent=fmtCm(R.msl);
   $('kvSwl').textContent=fmtM(R.swl);
-  $('kvH').textContent=R.Htoe.toFixed(2)+' m';
-  $('kvFb').textContent=(R.fb>=0?'':'−')+Math.abs(R.fb).toFixed(2)+' m';
+  $('kvH').textContent=fx(R.Htoe,2)+' m';
+  $('kvFb').textContent=fx(R.fb,2)+' m';
+  $('build').value=S.build;$('raise').checked=S.raise;
   const s=status(R);$('statusPill').dataset.s=s==='dry'?'ok':s;$('statusText').textContent=t('st_'+s);
   $('tlTitle').textContent=t('tlTitle')(st.name);
   drawTimeline();drawMap();drawPerf();drawCompare();drawExposure();writeTakeaway();
   saveState();
 }
 function writeTakeaway(){
-  const st=STATIONS[S.station],ev=t('events')[S.event];
-  const red=Rnone.Htoe>0.02?Math.round((1-R.Htoe/Rnone.Htoe)*100):0;
-  const scen=SCEN_LABEL[S.scen];
+  const st=STATIONS[S.station];
+  const red=Rnone.Htoe>0.02?clamp(Math.round((1-R.Htoe/Rnone.Htoe)*100),0,100):0;
+  const scen=scenLabel(S.scen),c=Math.round(R.msl*100);
+  const built=S.struct!=='none'&&S.year>=S.build;
   let txt;
   if(LANG==='de'){
-    txt=`<strong>${S.year}, ${st.name}, ${scen}:</strong> Der mittlere Meeresspiegel liegt ${fmtCm(R.msl)} über 1995–2014. Eine ${ev.toLowerCase()} bringt das Wasser auf ${fmtM(R.swl)}, ${R.fb>0?R.fb.toFixed(2)+' m unter der Deichkrone':'über die Deichkrone'}.`;
-    if(S.struct!=='none'&&S.year>=S.build)txt+=` ${t('s_'+S.struct)} senkt die Wellenhöhe am Deich um ${red} %`+(Rnone.q<0.01?'. Wellenüberlauf ist in beiden Fällen vernachlässigbar.':` und den Überlauf von ${fmtQ(Rnone.q)} auf ${fmtQ(R.q)}.`);
+    const ev={calm:'Ein normales Hochwasser',storm:'Eine Sturmflut',severe:'Eine schwere Sturmflut',extreme:'Eine Rekord-Sturmflut'}[S.event];
+    const sub={breakwater:['Der Steinwellenbrecher','senkt'],modules:['Die künstlichen Riffmodule','senken'],oyster:['Das Austernriff','senkt'],marsh:['Das Salzwiesen-Vorland','senkt'],coral:['Das (hypothetische) Korallenriff','senkt']}[S.struct];
+    txt=`<strong>${S.year}, ${st.name}, ${scen}:</strong> Der mittlere Meeresspiegel liegt ${Math.abs(c)} cm ${c>=0?'über':'unter'} dem Mittel 1995–2014. ${ev} bringt das Wasser auf ${fmtM(R.swl)}, ${R.fb>0?fx(R.fb,2)+' m unter der Deichkrone':'über die Deichkrone'}.`;
+    if(built)txt+=` ${sub[0]} ${sub[1]} die Wellenhöhe am Deich um ${red} %`+(Rnone.q<0.01?'. Wellenüberlauf ist in beiden Fällen vernachlässigbar.':` und den Überlauf von ${fmtQ(Rnone.q)} auf ${fmtQ(R.q)}.`);
     else if(S.struct!=='none')txt+=` Das Bauwerk entsteht erst ${S.build}.`;
-    txt+=` Der Wasserstand selbst sinkt dadurch nicht.`;
+    txt+=S.struct!=='none'?` Den Wasserstand selbst senkt das nicht.`:` Ohne Bauwerk vor dem Deich trifft der volle Seegang auf die Böschung.`;
   }else{
-    txt=`<strong>${S.year}, ${st.name}, ${scen}:</strong> Mean sea level is ${fmtCm(R.msl)} above 1995–2014. A ${ev.toLowerCase()} lifts the water to ${fmtM(R.swl)}, ${R.fb>0?R.fb.toFixed(2)+' m below the dike crest':'above the dike crest'}.`;
-    if(S.struct!=='none'&&S.year>=S.build)txt+=` The ${t('s_'+S.struct).toLowerCase().replace(' (hypothetical)','')} cuts wave height at the dike by ${red}%`+(Rnone.q<0.01?'. Overtopping is negligible either way.':` and overtopping from ${fmtQ(Rnone.q)} to ${fmtQ(R.q)}.`);
-    else if(S.struct!=='none')txt+=` The structure is only built in ${S.build}.`;
-    txt+=` It does not lower the water level itself.`;
+    const ev={calm:'A normal high tide',storm:'A storm surge',severe:'A severe storm surge',extreme:'A record surge'}[S.event];
+    const sub={breakwater:['The rock breakwater','cuts'],modules:['The artificial reef modules','cut'],oyster:['The oyster reef','cuts'],marsh:['The salt marsh foreland','cuts'],coral:['The (hypothetical) coral reef','cuts']}[S.struct];
+    txt=`<strong>${S.year}, ${st.name}, ${scen}:</strong> Mean sea level is ${Math.abs(c)} cm ${c>=0?'above':'below'} the 1995–2014 average. ${ev} lifts the water to ${fmtM(R.swl)}, ${R.fb>0?fx(R.fb,2)+' m below the dike crest':'above the dike crest'}.`;
+    if(built)txt+=` ${sub[0]} ${sub[1]} wave height at the dike by ${red}%`+(Rnone.q<0.01?'. Overtopping is negligible either way.':` and overtopping from ${fmtQ(Rnone.q)} to ${fmtQ(R.q)}.`);
+    else if(S.struct!=='none')txt+=` The structure will only be built in ${S.build}.`;
+    txt+=S.struct!=='none'?` This does not lower the water level itself.`:` With nothing in front of the dike, the full waves hit its slope.`;
   }
   $('takeaway').innerHTML=txt;
 }
@@ -677,10 +686,11 @@ function writeTakeaway(){
    ================================================================ */
 const NS='http://www.w3.org/2000/svg';
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
-const TL={W:720,H:320,l:52,r:14,t:14,b:30,x0:1900,x1:2150};
+const TL={W:720,H:320,l:48,r:74,t:14,b:30,x0:1900,x1:2150};
+const chartW=svg=>Math.round(clamp(svg.getBoundingClientRect().width||720,320,1100));
 function drawTimeline(){
   const svg=$('timeline');svg.innerHTML='';
-  const {W,H,l,r,t:tp,b,x0,x1}=TL;
+  const {H,l,r,t:tp,b,x0,x1}=TL;const W=chartW(svg);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const curves=SCEN_ORDER.map(k=>seaCurve(S.station,k));
   const sel=seaCurve(S.station,S.scen);
   const yMax=Math.max(1.0,Math.ceil(sel.hi(2150)*4+0.5)/4);
@@ -691,7 +701,7 @@ function drawTimeline(){
   const step=yMax>2?0.5:0.25;
   for(let v=Math.ceil(yMin/step)*step;v<=yMax+1e-9;v+=step){
     el('line',{x1:l,x2:W-r,y1:Y(v),y2:Y(v),stroke:css('--rule'),'stroke-width':Math.abs(v)<1e-9?1.2:.6},grid);
-    const tx=el('text',{x:l-6,y:Y(v)+4,'text-anchor':'end'},grid);tx.textContent=(v>0?'+':'')+(v*100).toFixed(0);
+    const tx=el('text',{x:l-6,y:Y(v)+4,'text-anchor':'end'},grid);const cv=Math.round(v*100);tx.textContent=(cv>0?'+':cv<0?'−':'')+Math.abs(cv);
   }
   const ul=el('text',{x:l+4,y:tp+10},grid);ul.textContent='cm';
   const cp=el('clipPath',{id:'tlclip'},el('defs',{},svg));el('rect',{x:l,y:0,width:W-l-r,height:H-b},cp);
@@ -708,14 +718,14 @@ function drawTimeline(){
   // other scenario medians
   SCEN_ORDER.forEach((k,i)=>{if(k===S.scen)return;let p='';for(let yr=x2;yr<=x1;yr+=2)p+=(p?'L':'M')+X(yr)+','+Y(curves[i].mid(yr));
     el('path',{d:p,fill:'none',stroke:css('--ink-2'),'stroke-width':1,'stroke-dasharray':'4 3',opacity:.55,'clip-path':'url(#tlclip)'},svg);
-    const vy=curves[i].mid(2150);if(vy<=yMax){const lb=el('text',{x:X(2150)-2,y:Y(vy)-4,'text-anchor':'end'},svg);lb.textContent=SCEN_LABEL[k]}});
+    const vy=curves[i].mid(2150);const lb=el('text',{x:X(2150)+5,y:vy<=yMax?Y(vy)+4:tp+4},svg);lb.textContent=scenLabel(k)+(vy>yMax?' ↑':'')});
   // observed
   let p='';for(const [yr,v] of st.hist)p+=(p?'L':'M')+X(yr)+','+Y(v/100);
   el('path',{d:p,fill:'none',stroke:css('--ink'),'stroke-width':2},svg);
   // selected median
   p='';for(let yr=x2;yr<=x1;yr+=1)p+=(p?'L':'M')+X(yr)+','+Y(sel.mid(yr));
   el('path',{d:p,fill:'none',stroke:css('--sea-deep'),'stroke-width':2.6},svg);
-  const lb=el('text',{x:X(2150)-2,y:Y(sel.mid(2150))-6,'text-anchor':'end',style:'fill:var(--sea-deep);font-weight:600'},svg);lb.textContent=SCEN_LABEL[S.scen];
+  const lb=el('text',{x:X(2150)+5,y:Y(sel.mid(2150))+4,style:'fill:var(--sea-deep);font-weight:600'},svg);lb.textContent=scenLabel(S.scen);
   // cursor
   const cy=Math.min(S.year,2150),vv=sel.mid(cy);
   el('line',{x1:X(cy),x2:X(cy),y1:tp,y2:H-b,stroke:css('--accent'),'stroke-width':1.5},svg);
@@ -723,10 +733,10 @@ function drawTimeline(){
   const lab=el('text',{x:X(cy)+(cy>2110?-8:8),y:Y(vv)-10,'text-anchor':cy>2110?'end':'start',style:'fill:var(--ink);font-weight:600;font-size:13px'},svg);lab.textContent=fmtCm(vv);
   // hit area
   const hit=el('rect',{x:l,y:tp,width:W-l-r,height:H-tp-b,fill:'transparent',style:'cursor:ew-resize'},svg);
-  const setFromEvt=e=>{const rc=svg.getBoundingClientRect();const px=(e.clientX-rc.left)/rc.width*W;S.year=Math.round(clamp(x0+(px-l)/(W-l-r)*(x1-x0),1900,2150));stopAuto();update()};
+  const setFromEvt=e=>{const rc=svg.getBoundingClientRect();const px=(e.clientX-rc.left)/rc.width*W;S.year=Math.round(clamp(x0+(px-l)/(W-l-r)*(x1-x0),1900,2150));stopAuto();endTour();update()};
   hit.addEventListener('pointerdown',e=>{hit.setPointerCapture(e.pointerId);setFromEvt(e);hit.onpointermove=setFromEvt});
   hit.addEventListener('pointerup',()=>hit.onpointermove=null);
-  $('tlLegend').innerHTML=`<span><i style="background:var(--ink)"></i>${t('observed')}</span><span><i style="background:var(--sea-deep)"></i>${t('median')} ${SCEN_LABEL[S.scen]}</span><span><i style="background:var(--sea);opacity:.35;height:10px"></i>${t('likely')}</span><span><i style="background:var(--ink-2);opacity:.6"></i>${t('otherScen')}</span>`;
+  $('tlLegend').innerHTML=`<span><i style="background:var(--ink)"></i>${t('observed')}</span><span><i style="background:var(--sea-deep)"></i>${t('median')} ${scenLabel(S.scen)}</span><span><i style="background:var(--sea);opacity:.35;height:10px"></i>${t('likely')}</span><span><i style="background:var(--ink-2);opacity:.6"></i>${t('otherScen')}</span>`;
 }
 
 /* ================================================================
@@ -734,14 +744,15 @@ function drawTimeline(){
    ================================================================ */
 function drawPerf(){
   const svg=$('perf');svg.innerHTML='';
-  const W=720,H=300,l=44,r=110,tp=14,b=30,x0=2025,x1=2150;
+  const W=chartW(svg),H=300,l=44,r=W<520?118:170,tp=14,b=30,x0=2025,x1=2150;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const shortName=k=>({en:{modules:'Reef modules',marsh:'Salt marsh',breakwater:'Breakwater',coral:'Coral reef',oyster:'Oyster reef'},de:{modules:'Riffmodule',marsh:'Salzwiese',breakwater:'Wellenbrecher',coral:'Korallenriff',oyster:'Austernriff'}})[LANG][k];
   const X=v=>l+(v-x0)/(x1-x0)*(W-l-r),Y=v=>tp+(1-v/100)*(H-tp-b);
   for(let v=0;v<=100;v+=25){el('line',{x1:l,x2:W-r,y1:Y(v),y2:Y(v),stroke:css('--rule'),'stroke-width':.6},svg);const tx=el('text',{x:l-6,y:Y(v)+4,'text-anchor':'end'},svg);tx.textContent=v+'%'}
-  for(let yr=2025;yr<=2150;yr+=25){const tx=el('text',{x:X(yr),y:H-b+16,'text-anchor':'middle'},svg);tx.textContent=yr}
+  for(let yr=2025;yr<=2150;yr+=(W<520?50:25)){const tx=el('text',{x:X(yr),y:H-b+16,'text-anchor':'middle'},svg);tx.textContent=yr}
   const types=Object.keys(STRUCTS).filter(k=>k!=='none');
   const labels=[];
   for(const k of types){
-    const cfg=cfgFor(k);cfg.build=Math.min(S.build,2025)===S.build?S.build:S.build;
+    const cfg=cfgFor(k);
     let p='',last=null;
     for(let yr=Math.max(x0,S.build);yr<=x1;yr+=1){
       const a=evalCoast(S.station,S.scen,S.event,k,yr,cfg),n=evalCoast(S.station,S.scen,S.event,'none',yr,cfg);
@@ -753,13 +764,14 @@ function drawPerf(){
     labels.push({k,y:Y(last),sel:selk});
   }
   // label de-overlap
-  labels.sort((a,b)=>a.y-b.y);for(let i=1;i<labels.length;i++)if(labels[i].y-labels[i-1].y<13)labels[i].y=labels[i-1].y+13;
-  for(const lb of labels){const tx=el('text',{x:W-r+6,y:lb.y+4,style:`fill:${css(STRUCTS[lb.k].color)};font-weight:${lb.sel?700:500}`},svg);tx.textContent=t('s_'+lb.k).replace(' (hypothetical)','').replace(' (hypothetisch)','')}
+  labels.sort((a,b)=>a.y-b.y);for(let i=1;i<labels.length;i++)if(labels[i].y-labels[i-1].y<14)labels[i].y=labels[i-1].y+14;
+  const maxY=H-b-6;if(labels.length&&labels[labels.length-1].y>maxY){labels[labels.length-1].y=maxY;for(let i=labels.length-2;i>=0;i--)if(labels[i+1].y-labels[i].y<14)labels[i].y=labels[i+1].y-14}
+  for(const lb of labels){const tx=el('text',{x:W-r+6,y:lb.y+4,style:`fill:${css(STRUCTS[lb.k].color)};font-weight:${lb.sel?700:500}`},svg);tx.textContent=shortName(lb.k)}
   // cursor
   if(S.year>=x0){el('line',{x1:X(S.year),x2:X(S.year),y1:tp,y2:H-b,stroke:css('--accent'),'stroke-width':1.2,'stroke-dasharray':'3 3'},svg)}
   el('line',{x1:X(S.build),x2:X(S.build),y1:H-b,y2:H-b-8,stroke:css('--ink'),'stroke-width':2},svg);
   const bt=el('text',{x:X(S.build)+4,y:H-b-10},svg);bt.textContent=t('yearsBuilt')+' '+S.build;
-  $('perfLegend').innerHTML=`<span class="mono">${STATIONS[S.station].name} · ${t('events')[S.event]} · ${SCEN_LABEL[S.scen]}</span>`;
+  $('perfLegend').innerHTML=`<span class="mono">${STATIONS[S.station].name} · ${t('events')[S.event]} · ${scenLabel(S.scen)}</span>`;
 }
 
 /* ================================================================
@@ -767,11 +779,10 @@ function drawPerf(){
    ================================================================ */
 function drawCompare(){
   const built=S.struct!=='none'&&S.year>=S.build;
-  const red=Rnone.Htoe>0.02&&built?Math.round((1-R.Htoe/Rnone.Htoe)*100):0;
-  const name=t('s_'+S.struct).toLowerCase();
+  const red=Rnone.Htoe>0.02&&built?clamp(Math.round((1-R.Htoe/Rnone.Htoe)*100),0,100):0;
   $('cmpStats').innerHTML=`
-   <div class="stat"><b>${Rnone.Htoe.toFixed(2)} m</b><small>${t('stat_hNo')}</small></div>
-   <div class="stat hl"><b>${R.Htoe.toFixed(2)} m</b><small>${t('stat_hYes')}${S.struct==='none'?t('s_none').toLowerCase():name}</small></div>
+   <div class="stat"><b>${fx(Rnone.Htoe,2)} m</b><small>${t('stat_hNo')}</small></div>
+   <div class="stat hl"><b>${fx(R.Htoe,2)} m</b><small>${t('stat_hYes')}</small></div>
    <div class="stat"><b>${fmtQ(Rnone.q)}</b><small>${t('stat_qNo')}</small></div>
    <div class="stat hl"><b>${fmtQ(R.q)}</b><small>${t('stat_qYes')}</small></div>
    <div class="stat hl"><b>${red} %</b><small>${t('stat_red')}</small></div>`;
@@ -797,6 +808,7 @@ function drawMap(){
   const svg=$('map');svg.innerHTML='';
   const vbX=60,vbY=20,vbW=840,vbH=420;
   svg.setAttribute('viewBox',`${vbX} ${vbY} ${vbW} ${vbH}`);
+  const sc=vbW/Math.max(280,svg.getBoundingClientRect().width||vbW);svg.style.setProperty('--fs',(13*sc).toFixed(1)+'px');svg.style.setProperty('--fs2',(16*sc).toFixed(1)+'px');svg.style.setProperty('--sw',(3*sc).toFixed(1)+'px');svg.style.setProperty('--r',sc);
   el('rect',{x:vbX,y:vbY,width:vbW,height:vbH,class:'sea-bg'},svg);
   for(const [n,d] of Object.entries(MAP.countries))el('path',{d,class:'land'+(n==='Germany'?' de':'')},svg);
   const s1=el('text',{x:150,y:150,class:'sea-label'},svg);s1.textContent=LANG==='de'?'Nordsee':'North Sea';
@@ -807,9 +819,9 @@ function drawMap(){
     const s=status(r);
     const col=s==='ok'||s==='dry'?css('--ok'):s==='warn'?css('--warn'):css('--bad');
     const gg=el('g',{class:'gauge'+(k===S.station?' sel':''),tabindex:0,role:'button','aria-label':st.name},svg);
-    if(k===S.station)el('circle',{cx:x,cy:y,r:12,class:'ring'},gg);
-    el('circle',{cx:x,cy:y,r:7,fill:col,class:'dot'},gg);
-    const lx=x+(st.lab?st.lab[0]:12),ly=y+(st.lab?st.lab[1]:4);
+    const rs=Math.max(1,sc*0.8);if(k===S.station)el('circle',{cx:x,cy:y,r:12*rs,class:'ring'},gg);
+    el('circle',{cx:x,cy:y,r:7*rs,fill:col,class:'dot'},gg);
+    const lx=x+(st.lab?st.lab[0]:12)*rs,ly=y+(st.lab?st.lab[1]:4)*rs;
     const tx=el('text',{x:lx,y:ly,'text-anchor':st.lab&&st.lab[0]<0?'end':'start'},gg);tx.textContent=st.name;
     const pick=()=>{S.station=k;S.crest=null;stopAuto();update()};
     gg.addEventListener('click',pick);gg.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}});
@@ -830,7 +842,7 @@ function buildStructTable(){
   }[LANG];
   let h=`<thead><tr><th>${t('thStruct')}</th><th>${t('thHow')}</th><th>${t('thGrow')}</th><th>${t('thCost')}</th><th>${t('thNote')}</th></tr></thead><tbody>`;
   for(const k of ['breakwater','modules','oyster','marsh','coral']){const r=rows[k];
-    h+=`<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(${STRUCTS[k].color});margin-right:6px"></span>${t('s_'+k)}</td><td>${r[0]}</td><td>${r[1]}</td><td class="n">${STRUCTS[k].costPerM}</td><td>${r[2]}</td></tr>`}
+    h+=`<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(${STRUCTS[k].color});margin-right:6px"></span>${t('s_'+k)}</td><td>${r[0]}</td><td>${r[1]}</td><td class="n">${LANG==='de'?STRUCTS[k].costPerM.replace(/€([\d.–]+)k/,(m,a)=>a.replace(/\./g,',')+' Tsd. €'):STRUCTS[k].costPerM}</td><td>${r[2]}</td></tr>`}
   $('structTable').innerHTML=h+'</tbody>';
   $('costNote').textContent=LANG==='de'?'* Schätzung. Wellenbrecher und Korallenriff: Medianwerte nach Ferrario et al. (2014), überwiegend tropische Projekte, in Euro umgerechnet. Deichverstärkung in Deutschland kostet etwa 4–10 Mio. € pro km (Schätzung).':'* Estimate. Breakwater and coral reef: median values from Ferrario et al. (2014), mostly tropical projects, converted to euros. Dike reinforcement in Germany costs about €4–10 million per km (estimate).';
 }
@@ -845,7 +857,7 @@ function buildMethod(){
 const cv=$('scene'),cx=cv.getContext('2d');
 let CW=0,CH=0,DPR=1;
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=cv.getBoundingClientRect();CW=r.width;CH=r.height;cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR)}
-window.addEventListener('resize',resize);
+let rzT;window.addEventListener('resize',()=>{resize();clearTimeout(rzT);rzT=setTimeout(()=>{if(R)update()},150)});
 const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let palette={};
 function readPalette(){for(const k of ['--ink','--ink-2','--rule','--sea','--sea-deep','--sea-light','--sand','--mud','--grass','--grass-dark','--accent','--ok','--warn','--bad','--sky-top','--sky-bot','--panel','--paper'])palette[k]=css(k)}
@@ -868,12 +880,14 @@ function drawScene(dt){
   // vertical range
   const zMin=st.bed-2.2, zMax=Math.max(st.dike+1.6, R.swl+R.Hin*0.6+1);
   const padL=narrow?40:54, padB=8;
-  const Y=z=>H-padB-(z-zMin)/(zMax-zMin)*(H-padB-10);
+  const padT=narrow?44:40;const Y=z=>H-padB-(z-zMin)/(zMax-zMin)*(H-padB-padT);
   // x layout (fractions)
   const xs={sea:0,structC:0.34,structW:0.09,flatEnd:0.62,toe:0.66,crestA:0.79,crestB:0.83,landEnd:0.88};
   const X=f=>padL+f*(W-padL);
   // bed profile function
-  const bedAt=f=>{
+  const marshOn=S.struct==='marsh'&&R.crest!==null;
+  const bedAt=f=>{const b0=bedBase(f);return marshOn&&f>=xs.flatEnd-0.09&&f<=xs.toe?Math.max(b0,R.crest):b0};
+  const bedBase=f=>{
     if(f<0.18)return lerp(st.bed-1.8,st.bed,f/0.18);
     if(f<xs.flatEnd)return lerp(st.bed,st.bed+0.6,(f-0.18)/(xs.flatEnd-0.18));
     if(f<xs.toe)return lerp(st.bed+0.6,R.toe,(f-xs.flatEnd)/(xs.toe-xs.flatEnd));
@@ -887,13 +901,13 @@ function drawScene(dt){
   ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
   // storm clouds tint for big events
   const stormy={calm:0,storm:.25,severe:.45,extreme:.6}[S.event];
-  if(stormy>0){ctx.fillStyle=P['--ink-2'];ctx.globalAlpha=stormy*0.18;ctx.fillRect(0,0,W,H*0.5);ctx.globalAlpha=1}
+  if(stormy>0){const sg=ctx.createLinearGradient(0,0,0,H*0.6);sg.addColorStop(0,P['--ink-2']);sg.addColorStop(1,P['--sky-bot']);ctx.fillStyle=sg;ctx.globalAlpha=stormy*0.25;ctx.fillRect(0,0,W,H*0.6);ctx.globalAlpha=1}
 
   // axis grid
   ctx.font=`${narrow?10:11}px ${getComputedStyle(document.body).getPropertyValue('--mono')||'monospace'}`;
   ctx.fillStyle=P['--ink-2'];ctx.strokeStyle=P['--rule'];ctx.lineWidth=1;ctx.textAlign='right';
   const stepZ=(zMax-zMin)>10?2:1;
-  for(let z=Math.ceil(zMin/stepZ)*stepZ;z<=zMax;z+=stepZ){const y=Y(z);ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W,y);ctx.stroke();ctx.globalAlpha=1;ctx.fillText((z>0?'+':'')+z+' m',padL-6,y+4)}
+  for(let z=Math.ceil(zMin/stepZ)*stepZ;z<=zMax;z+=stepZ){const y=Y(z);ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W,y);ctx.stroke();ctx.globalAlpha=1;ctx.fillText((z>0?'+':z<0?'−':'')+Math.abs(z)+' m',padL-6,y+4)}
 
   // hinterland houses (behind terrain)
   const landY=Y(st.land);
@@ -964,7 +978,7 @@ function drawScene(dt){
     // spray when overtopping
     const overflow=R.fb<=0;
     const rate=overflow?60:clamp(Math.log10(Math.max(R.q,0.001))+2,0,5)*6;
-    if(R.swl+R.Ru>st.dike||overflow){for(let i=0;i<rate*dt*3;i++)spray.push({x:X(xs.crestA)+Math.random()*8,y:Y(st.dike)-Math.random()*6,vx:30+Math.random()*60,vy:-30-Math.random()*50,life:1})}
+    if((R.swl+R.Ru>st.dike&&R.q>0.5)||overflow){for(let i=0;i<rate*dt*3;i++)spray.push({x:X(xs.crestA)+Math.random()*8,y:Y(st.dike)-Math.random()*6,vx:30+Math.random()*60,vy:-30-Math.random()*50,life:1})}
     puddle=lerp(puddle,overflow?1:clamp(R.q/30,0,1),0.02);
   }else puddle=lerp(puddle,R.fb<=0?1:0,0.02);
   ctx.fillStyle=P['--sea'];
@@ -977,17 +991,17 @@ function drawScene(dt){
   ctx.setLineDash([2,4]);ctx.strokeStyle=P['--ink'];ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,Y(0));ctx.lineTo(X(xs.toe),Y(0));ctx.stroke();ctx.setLineDash([]);
   ctx.textAlign='left';ctx.fillStyle=P['--ink'];
   ctx.font=`500 ${narrow?10:12}px ${'IBM Plex Sans, sans-serif'}`;
-  const lbl=(txt,x,y,col)=>{ctx.fillStyle=P['--panel'];const m=ctx.measureText(txt);ctx.globalAlpha=.8;ctx.fillRect(x-3,y-11,m.width+6,15);ctx.globalAlpha=1;ctx.fillStyle=col||P['--ink'];ctx.fillText(txt,x,y)};
+  const lbl=(txt,x,y,col,right)=>{const m=ctx.measureText(txt);if(right)x-=m.width;x=clamp(x,padL+3,W-m.width-6);y=Math.max(y,14);ctx.fillStyle=P['--panel'];ctx.globalAlpha=.8;ctx.fillRect(x-3,y-11,m.width+6,15);ctx.globalAlpha=1;ctx.fillStyle=col||P['--ink'];ctx.fillText(txt,x,y)};
   lbl((LANG==='de'?'Mittel 1995–2014':'Mean 1995–2014'),padL+6,Y(0)+14,P['--ink-2']);
   lbl((LANG==='de'?'Wasserstand ':'Water level ')+fmtM(R.swl),X(xs.flatEnd-0.1),swlY-8-Math.max(ampT,ampToe)*((H)/(zMax-zMin)));
-  lbl((LANG==='de'?'Deichkrone ':'Dike crest ')+fmtM(st.dike),X(xs.crestA)-(narrow?40:70),Y(st.dike)-10);
-  if(S.struct!=='none'&&crestNow!==null&&!narrow)lbl(t('s_'+S.struct).replace(' (hypothetical)','').replace(' (hypothetisch)','')+' '+fmtM(crestNow),X(S.struct==='marsh'?xs.flatEnd-0.08:sx0),Y(Math.min(crestNow,R.swl))-(S.struct==='marsh'?28:amp0*((H)/(zMax-zMin))+26),P['--ink']);
+  lbl((LANG==='de'?'Deichkrone ':'Dike crest ')+fmtM(st.dike),X(xs.crestA)-6,Y(st.dike)-10,P['--ink'],true);
+  if(S.struct!=='none'&&crestNow!==null&&!narrow){const sl=t('s_'+S.struct).replace(' (hypothetical)','').replace(' (hypothetisch)','')+' '+fmtM(crestNow);if(S.struct==='marsh')lbl(sl,X(xs.flatEnd-0.09),Y(crestNow)+18,P['--ink']);else lbl(sl,X(xs.structC),Y(bedAt(xs.structC))+18,P['--ink'],false)}
   if(S.struct!=='none'&&S.year<S.build&&!narrow)lbl((LANG==='de'?'Bau geplant ':'Planned for ')+S.build,X(sx0),Y(st.bed)-8,P['--ink-2']);
-  if(st.land<R.swl&&!narrow)lbl((LANG==='de'?'Land unter dem Wasserstand':'Land below water level'),X(xs.landEnd)+4,Y(R.swl)-6,P['--bad']);
+  if(st.land<R.swl&&!narrow)lbl((LANG==='de'?'Land unter dem Wasserstand':'Land below water level'),W-8,Y(R.swl)-6,P['--bad'],true);
   // wave height callouts
   if(!narrow){ctx.font=`600 12px IBM Plex Mono, monospace`;
-    lbl('H '+R.Hin.toFixed(2)+' m',X(0.06),Y(R.swl+amp0)-10,P['--ink']);
-    if(S.struct!=='none'&&crestNow!==null)lbl('H '+R.Ht.toFixed(2)+' m',X(sx1+0.04),Y(R.swl+ampT)-10,P['--ink']);
+    lbl('H '+fx(R.Hin,2)+' m',X(0.06),Y(R.swl+amp0)-10,P['--ink']);
+    if(S.struct!=='none'&&crestNow!==null)lbl('H '+fx(R.Ht,2)+' m',X(sx1+0.04),Y(R.swl+ampT)-10,P['--ink']);
   }
 }
 function drawStructure(ctx,type,x0,x1,yc,yb,P,narrow){
@@ -996,7 +1010,7 @@ function drawStructure(ctx,type,x0,x1,yc,yb,P,narrow){
     ctx.beginPath();ctx.moveTo(x0,yb);ctx.lineTo(x0+w*0.3,yc);ctx.lineTo(x1-w*0.3,yc);ctx.lineTo(x1,yb);ctx.closePath();
     ctx.fillStyle=P['--ink-2'];ctx.fill();
     ctx.fillStyle=P['--ink'];
-    for(let i=0;i<40;i++){const fx=(i*0.618)%1,fy=(i*0.382)%1;const yy=lerp(yc,yb,fy);const half=lerp(w*0.2,w*0.5,fy);const xx=x0+w/2+(fx-0.5)*2*half*0.9;ctx.globalAlpha*=1;ctx.beginPath();ctx.arc(xx,yy,narrow?2:3.2,0,7);ctx.fill()}
+    for(let i=0;i<40;i++){const fx=(i*0.618)%1,fy=(i*0.7549)%1;const yy=lerp(yc,yb,fy);const half=lerp(w*0.2,w*0.5,fy);const xx=x0+w/2+(fx-0.5)*2*half*0.9;ctx.globalAlpha*=1;ctx.beginPath();ctx.arc(xx,yy,narrow?2:3.2,0,7);ctx.fill()}
   }else if(type==='modules'){
     const n=4;for(let i=0;i<n;i++){const cxm=x0+w*(i+0.5)/n,r=Math.min(w/n*0.48,(yb-yc));ctx.beginPath();ctx.arc(cxm,yb,Math.max(4,yb-yc),Math.PI,0);ctx.fillStyle=P['--ink-2'];ctx.fill();
       ctx.fillStyle=P['--sea-light'];for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(cxm+(j-1)*(yb-yc)*0.45,yb-(yb-yc)*0.45,Math.max(1.5,(yb-yc)*0.13),0,7);ctx.fill()}}
@@ -1028,8 +1042,8 @@ $('playBtn').onclick=()=>{if(tour.on)endTour();auto?stopAuto():startAuto()};
 
 const TOUR={
  en:[
-  {t:'The tide gauge in Cuxhaven',x:'Since 1900 the sea at Cuxhaven has risen about 25 cm. This is measured, not modelled. Watch the black line on the chart below.',s:{station:'cuxhaven',scen:'ssp245',event:'calm',struct:'none',year:1900},to:2020},
-  {t:'16 February 1962',x:'The surge reached 4.95 m at Cuxhaven and 5.70 m in Hamburg. Dikes broke and 315 people died in Hamburg alone. Germany then raised its dikes to about 8 to 9 m.',s:{event:'extreme',struct:'none',year:1962}},
+  {t:'The tide gauge in Cuxhaven',x:'Since 1900 the sea at Cuxhaven has risen about 25 cm. This is measured, not modelled. Watch the solid line on the chart below.',s:{station:'cuxhaven',scen:'ssp245',event:'calm',struct:'none',year:1900},to:2020},
+  {t:'16 February 1962',x:'The surge reached 4.95 m at Cuxhaven and 5.70 m in Hamburg. Dikes broke and 315 people died in Hamburg alone. The dike drawn here is today\'s, raised to about 8.5 m after 1962.',s:{event:'extreme',struct:'none',year:1962}},
   {t:'Into the future',x:'Under a middle emissions path (SSP2-4.5), the IPCC expects about 55 cm more by 2100. The same storm now starts from a higher sea.',s:{scen:'ssp245',event:'severe',struct:'none',year:2025},to:2100},
   {t:'If emissions stay high',x:'Under SSP5-8.5 with the ice sheet collapse the IPCC cannot rule out, the sea could be 2 m higher by 2150. A 1976-class surge would then pour over the dike in waves.',s:{scen:'high',event:'extreme',struct:'none',year:2100},to:2150},
   {t:'A rock breakwater',x:'Built in 2030 on the mudflat with its crest at +2 m. It breaks waves well at first. But it does not grow, so as the sea rises, more water stands above it and its effect fades.',s:{scen:'ssp585',event:'storm',struct:'breakwater',build:2030,year:2035},to:2150},
@@ -1039,8 +1053,8 @@ const TOUR={
   {t:'The bottom line',x:'No reef stops the sea from rising. Breakwaters and living reefs buy time against waves. The dike, and how fast we cut emissions, decide the water level.',s:{station:'cuxhaven',scen:'ssp126',event:'severe',struct:'oyster',build:2030,year:2100}}
  ],
  de:[
-  {t:'Der Pegel Cuxhaven',x:'Seit 1900 ist das Meer in Cuxhaven um etwa 25 cm gestiegen. Das ist gemessen, nicht modelliert. Die schwarze Linie im Diagramm unten zeigt es.',s:{station:'cuxhaven',scen:'ssp245',event:'calm',struct:'none',year:1900},to:2020},
-  {t:'16. Februar 1962',x:'Die Flut erreichte 4,95 m in Cuxhaven und 5,70 m in Hamburg. Deiche brachen, allein in Hamburg starben 315 Menschen. Danach wurden die Deiche auf rund 8 bis 9 m erhöht.',s:{event:'extreme',struct:'none',year:1962}},
+  {t:'Der Pegel Cuxhaven',x:'Seit 1900 ist das Meer in Cuxhaven um etwa 25 cm gestiegen. Das ist gemessen, nicht modelliert. Die durchgezogene Linie im Diagramm unten zeigt es.',s:{station:'cuxhaven',scen:'ssp245',event:'calm',struct:'none',year:1900},to:2020},
+  {t:'16. Februar 1962',x:'Die Flut erreichte 4,95 m in Cuxhaven und 5,70 m in Hamburg. Deiche brachen, allein in Hamburg starben 315 Menschen. Der gezeigte Deich ist der heutige, nach 1962 auf rund 8,5 m erhöht.',s:{event:'extreme',struct:'none',year:1962}},
   {t:'Der Blick nach vorn',x:'Bei mittleren Emissionen (SSP2-4.5) erwartet der IPCC bis 2100 rund 55 cm mehr. Dieselbe Sturmflut beginnt dann auf einem höheren Meer.',s:{scen:'ssp245',event:'severe',struct:'none',year:2025},to:2100},
   {t:'Wenn die Emissionen hoch bleiben',x:'Mit SSP5-8.5 und dem Eisschildzerfall, den der IPCC nicht ausschließen kann, läge das Meer 2150 rund 2 m höher. Eine Flut wie 1976 würde dann in Wellen über den Deich schlagen.',s:{scen:'high',event:'extreme',struct:'none',year:2100},to:2150},
   {t:'Ein Steinwellenbrecher',x:'2030 im Watt gebaut, Krone auf +2 m. Anfangs bricht er die Wellen gut. Aber er wächst nicht mit, und mit steigendem Meer lässt seine Wirkung nach.',s:{scen:'ssp585',event:'storm',struct:'breakwater',build:2030,year:2035},to:2150},
@@ -1054,7 +1068,7 @@ const tour={on:false,i:0,el:0,dur:11};
 function showTourStep(i,keepTime){
   const steps=TOUR[LANG];tour.i=(i+steps.length)%steps.length;if(!keepTime)tour.el=0;
   const st=steps[tour.i];
-  if(!keepTime){Object.assign(S,st.s);S.crest=null;if(st.s.station&&!st.s.build)S.build=S.build}
+  if(!keepTime){Object.assign(S,st.s);S.crest=null;S.raise=false;S.build=st.s.build??2030}
   $('tourStep').textContent=(tour.i+1)+' / '+steps.length;$('tourTitle').textContent=st.t;$('tourText').textContent=st.x;
   if(!keepTime)update();
 }
@@ -1077,15 +1091,15 @@ document.addEventListener('fullscreenchange',()=>document.body.classList.toggle(
    EVENTS + PERSISTENCE
    ================================================================ */
 $('station').onchange=e=>{S.station=e.target.value;S.crest=null;stopAuto();endTour();update()};
-$('year').oninput=e=>{S.year=+e.target.value;stopAuto();update()};
-$('crest').oninput=e=>{S.crest=+e.target.value;update()};
-$('build').oninput=e=>{S.build=+e.target.value;update()};
-$('raise').onchange=e=>{S.raise=e.target.checked;update()};
+$('year').oninput=e=>{S.year=+e.target.value;stopAuto();endTour();update()};
+$('crest').oninput=e=>{S.crest=+e.target.value;endTour();update()};
+$('build').oninput=e=>{S.build=+e.target.value;endTour();update()};
+$('raise').onchange=e=>{S.raise=e.target.checked;endTour();update()};
 $('lang-en').onclick=()=>{LANG='en';applyLang()};
 $('lang-de').onclick=()=>{LANG='de';applyLang()};
 document.querySelectorAll('.chips').forEach(c=>c.addEventListener('click',()=>{if(tour.on)endTour()}));
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
-  if(e.key==='ArrowRight'){S.year=Math.min(2150,S.year+1);update()}else if(e.key==='ArrowLeft'){S.year=Math.max(1900,S.year-1);update()}
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){stopAuto();endTour();S.year=clamp(S.year+(e.key==='ArrowRight'?1:-1),1900,2150);update()}
   else if(e.key===' '&&e.target===document.body){e.preventDefault();auto?stopAuto():startAuto()}});
 function saveState(){try{localStorage.setItem('deichlinie',JSON.stringify({...S,LANG}))}catch(e){}}
 function loadState(){try{const v=JSON.parse(localStorage.getItem('deichlinie')||'null');if(v&&STATIONS[v.station]){Object.assign(S,v);if(v.LANG)LANG=v.LANG}}catch(e){}}
@@ -1093,7 +1107,8 @@ function loadState(){try{const v=JSON.parse(localStorage.getItem('deichlinie')||
 /* ================================================================
    BOOT
    ================================================================ */
-loadState();
+const KIOSK=new URLSearchParams(location.search).has('kiosk');
+if(!KIOSK)loadState();
 if(navigator.language&&navigator.language.startsWith('de')&&!localStorage.getItem?.('deichlinie'))LANG='de';
 resize();readPalette();applyLang();
 $('raise').checked=S.raise;$('build').value=S.build;
