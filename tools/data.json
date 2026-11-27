@@ -1,0 +1,781 @@
+{
+ "PROJ": {
+  "north": {
+   "ssp126": {
+    "2030": [
+     8,
+     9,
+     12
+    ],
+    "2050": [
+     16,
+     19,
+     25
+    ],
+    "2070": [
+     23,
+     30,
+     40
+    ],
+    "2100": [
+     32,
+     44,
+     62
+    ],
+    "2150": [
+     46,
+     68,
+     99
+    ]
+   },
+   "ssp245": {
+    "2030": [
+     8,
+     9,
+     12
+    ],
+    "2050": [
+     17,
+     20,
+     26
+    ],
+    "2070": [
+     26,
+     33,
+     44
+    ],
+    "2100": [
+     44,
+     56,
+     76
+    ],
+    "2150": [
+     66,
+     92,
+     133
+    ]
+   },
+   "ssp585": {
+    "2030": [
+     9,
+     10,
+     12
+    ],
+    "2050": [
+     20,
+     23,
+     29
+    ],
+    "2070": [
+     33,
+     40,
+     52
+    ],
+    "2100": [
+     63,
+     77,
+     101
+    ],
+    "2150": [
+     98,
+     132,
+     188
+    ]
+   },
+   "high": {
+    "2030": [
+     9,
+     10,
+     13
+    ],
+    "2050": [
+     20,
+     26,
+     34
+    ],
+    "2070": [
+     36,
+     52,
+     72
+    ],
+    "2100": [
+     63,
+     105,
+     160
+    ],
+    "2150": [
+     100,
+     210,
+     400
+    ]
+   }
+  },
+  "baltic": {
+   "ssp126": {
+    "2030": [
+     8,
+     9,
+     11
+    ],
+    "2050": [
+     15,
+     18,
+     24
+    ],
+    "2070": [
+     22,
+     29,
+     38
+    ],
+    "2100": [
+     30,
+     42,
+     59
+    ],
+    "2150": [
+     44,
+     65,
+     94
+    ]
+   },
+   "ssp245": {
+    "2030": [
+     8,
+     9,
+     11
+    ],
+    "2050": [
+     16,
+     19,
+     25
+    ],
+    "2070": [
+     25,
+     31,
+     42
+    ],
+    "2100": [
+     42,
+     53,
+     72
+    ],
+    "2150": [
+     63,
+     87,
+     126
+    ]
+   },
+   "ssp585": {
+    "2030": [
+     9,
+     10,
+     11
+    ],
+    "2050": [
+     19,
+     22,
+     28
+    ],
+    "2070": [
+     31,
+     38,
+     49
+    ],
+    "2100": [
+     60,
+     73,
+     96
+    ],
+    "2150": [
+     93,
+     125,
+     179
+    ]
+   },
+   "high": {
+    "2030": [
+     9,
+     10,
+     12
+    ],
+    "2050": [
+     19,
+     25,
+     32
+    ],
+    "2070": [
+     34,
+     49,
+     68
+    ],
+    "2100": [
+     60,
+     100,
+     152
+    ],
+    "2150": [
+     95,
+     200,
+     380
+    ]
+   }
+  }
+ },
+ "STATIONS": {
+  "norderney": {
+   "name": "Norderney",
+   "sea": "north",
+   "pt": "Norderney",
+   "hist": [
+    [
+     1900,
+     -18
+    ],
+    [
+     1925,
+     -14
+    ],
+    [
+     1950,
+     -10
+    ],
+    [
+     1975,
+     -6
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     3
+    ]
+   ],
+   "vlm": 0,
+   "bed": -1.5,
+   "toe": 0.5,
+   "marshZ": 1.8,
+   "dike": 7.5,
+   "slope": 0.167,
+   "land": 0.5,
+   "tide": 2.4,
+   "lab": [
+    -12,
+    4
+   ],
+   "note": {
+    "en": "East Frisian island. Mean tidal range about 2.4 m. Trend about 1.7 mm per year.",
+    "de": "Ostfriesische Insel. Mittlerer Tidenhub rund 2,4 m. Trend etwa 1,7 mm pro Jahr."
+   }
+  },
+  "cuxhaven": {
+   "name": "Cuxhaven",
+   "sea": "north",
+   "pt": "Cuxhaven",
+   "hist": [
+    [
+     1900,
+     -22
+    ],
+    [
+     1925,
+     -17
+    ],
+    [
+     1950,
+     -12
+    ],
+    [
+     1975,
+     -7
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     4
+    ]
+   ],
+   "vlm": 0,
+   "bed": -1.5,
+   "toe": 0.5,
+   "marshZ": 1.8,
+   "dike": 8.5,
+   "slope": 0.167,
+   "land": -0.5,
+   "tide": 3.0,
+   "lab": [
+    12,
+    14
+   ],
+   "note": {
+    "en": "Elbe mouth, one of the longest German records (since 1843). Trend about 2 mm per year, more than 25 cm since 1900.",
+    "de": "Elbmündung, eine der längsten deutschen Messreihen (seit 1843). Trend etwa 2 mm pro Jahr, über 25 cm seit 1900."
+   }
+  },
+  "list": {
+   "name": "List/Sylt",
+   "sea": "north",
+   "pt": "List/Sylt",
+   "hist": [
+    [
+     1900,
+     -17
+    ],
+    [
+     1925,
+     -13
+    ],
+    [
+     1950,
+     -9
+    ],
+    [
+     1975,
+     -5
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     3
+    ]
+   ],
+   "vlm": 0,
+   "bed": -1.5,
+   "toe": 0.5,
+   "marshZ": 1.8,
+   "dike": 7.0,
+   "slope": 0.167,
+   "land": 0.5,
+   "tide": 1.8,
+   "lab": [
+    12,
+    4
+   ],
+   "note": {
+    "en": "Northern Wadden Sea near the Danish border. Trend about 1.6 mm per year.",
+    "de": "Nördliches Wattenmeer an der dänischen Grenze. Trend etwa 1,6 mm pro Jahr."
+   }
+  },
+  "kiel": {
+   "name": "Kiel",
+   "sea": "baltic",
+   "pt": "Kiel",
+   "hist": [
+    [
+     1900,
+     -16
+    ],
+    [
+     1925,
+     -12
+    ],
+    [
+     1950,
+     -9
+    ],
+    [
+     1975,
+     -5
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     3
+    ]
+   ],
+   "vlm": 0,
+   "bed": -2.5,
+   "toe": 1.0,
+   "marshZ": 0.6,
+   "dike": 5.0,
+   "slope": 0.167,
+   "land": 1.0,
+   "tide": 0.1,
+   "lab": [
+    -12,
+    -8
+   ],
+   "note": {
+    "en": "Western Baltic, almost no tide. 1872 surge reached 3.17 m. Trend about 1.5 mm per year.",
+    "de": "Westliche Ostsee, kaum Tide. Die Flut von 1872 erreichte 3,17 m. Trend etwa 1,5 mm pro Jahr."
+   }
+  },
+  "travemuende": {
+   "name": "Travemünde",
+   "sea": "baltic",
+   "pt": "Travemünde",
+   "hist": [
+    [
+     1900,
+     -18
+    ],
+    [
+     1925,
+     -14
+    ],
+    [
+     1950,
+     -10
+    ],
+    [
+     1975,
+     -6
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     3
+    ]
+   ],
+   "vlm": 0,
+   "bed": -2.5,
+   "toe": 1.0,
+   "marshZ": 0.6,
+   "dike": 5.0,
+   "slope": 0.167,
+   "land": 0.5,
+   "tide": 0.1,
+   "lab": [
+    -12,
+    16
+   ],
+   "note": {
+    "en": "Bay of Lübeck. Highest known Baltic surge: 3.30 m in November 1872. About 17 cm rise per century.",
+    "de": "Lübecker Bucht. Höchste bekannte Ostseesturmflut: 3,30 m im November 1872. Rund 17 cm Anstieg pro Jahrhundert."
+   }
+  },
+  "warnemuende": {
+   "name": "Warnemünde",
+   "sea": "baltic",
+   "pt": "Warnemünde",
+   "hist": [
+    [
+     1900,
+     -17
+    ],
+    [
+     1925,
+     -13
+    ],
+    [
+     1950,
+     -9
+    ],
+    [
+     1975,
+     -5
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     3
+    ]
+   ],
+   "vlm": 0,
+   "bed": -2.5,
+   "toe": 1.0,
+   "marshZ": 0.6,
+   "dike": 5.0,
+   "slope": 0.167,
+   "land": 1.0,
+   "tide": 0.1,
+   "lab": [
+    8,
+    18
+   ],
+   "note": {
+    "en": "Rostock coast, open to the Baltic. About 15–20 cm rise since 1900. Nearby Nienhagen has an artificial reef from 2003.",
+    "de": "Rostocker Küste, offen zur Ostsee. Rund 15–20 cm Anstieg seit 1900. Bei Nienhagen liegt seit 2003 ein künstliches Riff."
+   }
+  },
+  "sassnitz": {
+   "name": "Sassnitz",
+   "sea": "baltic",
+   "pt": "Sassnitz",
+   "hist": [
+    [
+     1900,
+     -7
+    ],
+    [
+     1925,
+     -6
+    ],
+    [
+     1950,
+     -4
+    ],
+    [
+     1975,
+     -3
+    ],
+    [
+     2000,
+     -1
+    ],
+    [
+     2020,
+     1
+    ]
+   ],
+   "vlm": -0.9,
+   "bed": -2.5,
+   "toe": 1.0,
+   "marshZ": 0.6,
+   "dike": 4.5,
+   "slope": 0.167,
+   "land": 1.5,
+   "tide": 0.1,
+   "lab": [
+    -12,
+    18
+   ],
+   "note": {
+    "en": "Rügen. The land here rises slowly after the last ice age, so relative sea level rose only about 0.65 mm per year.",
+    "de": "Rügen. Das Land hebt sich hier seit der Eiszeit langsam, daher stieg der relative Meeresspiegel nur etwa 0,65 mm pro Jahr."
+   }
+  }
+ },
+ "EVENTS": {
+  "north": {
+   "calm": {
+    "level": 1.5,
+    "Hs": 0.6,
+    "Tp": 5,
+    "ref": {
+     "en": "Mean high water, about 1.5 m above mean sea level",
+     "de": "Mittleres Hochwasser, rund 1,5 m über Mittelwasser"
+    }
+   },
+   "storm": {
+    "level": 3.0,
+    "Hs": 1.5,
+    "Tp": 7,
+    "ref": {
+     "en": "Storm surge: 1.5 m above mean high water (BSH definition)",
+     "de": "Sturmflut: 1,5 m über MHW (BSH-Definition)"
+    }
+   },
+   "severe": {
+    "level": 4.0,
+    "Hs": 2.0,
+    "Tp": 8,
+    "ref": {
+     "en": "Severe storm surge: 2.5 m above mean high water",
+     "de": "Schwere Sturmflut: 2,5 m über MHW"
+    }
+   },
+   "extreme": {
+    "level": 5.1,
+    "Hs": 2.5,
+    "Tp": 8,
+    "ref": {
+     "en": "1976-class surge: Cuxhaven peaked at 5.10 m NHN (1962: 4.95 m)",
+     "de": "Flut wie 1976: Cuxhaven erreichte 5,10 m NHN (1962: 4,95 m)"
+    }
+   }
+  },
+  "baltic": {
+   "calm": {
+    "level": 0.3,
+    "Hs": 0.5,
+    "Tp": 4,
+    "ref": {
+     "en": "Normal windy day",
+     "de": "Normaler windiger Tag"
+    }
+   },
+   "storm": {
+    "level": 1.2,
+    "Hs": 1.5,
+    "Tp": 6,
+    "ref": {
+     "en": "Storm surge: more than 1 m above mean water",
+     "de": "Sturmflut: über 1 m über Mittelwasser"
+    }
+   },
+   "severe": {
+    "level": 2.2,
+    "Hs": 2.0,
+    "Tp": 7,
+    "ref": {
+     "en": "October 2023: Flensburg 2.27 m",
+     "de": "Oktober 2023: Flensburg 2,27 m"
+    }
+   },
+   "extreme": {
+    "level": 3.3,
+    "Hs": 2.5,
+    "Tp": 8,
+    "ref": {
+     "en": "November 1872: Travemünde 3.30 m",
+     "de": "November 1872: Travemünde 3,30 m"
+    }
+   }
+  }
+ },
+ "EXPOSURE": {
+  "north": {
+   "area": [
+    [
+     1,
+     2000
+    ],
+    [
+     2,
+     4900
+    ],
+    [
+     3,
+     7300
+    ],
+    [
+     5,
+     11020
+    ]
+   ],
+   "pop": [
+    [
+     1,
+     350000
+    ],
+    [
+     2,
+     900000
+    ],
+    [
+     3,
+     1500000
+    ],
+    [
+     5,
+     2600000
+    ]
+   ]
+  },
+  "baltic": {
+   "area": [
+    [
+     1,
+     500
+    ],
+    [
+     2,
+     1100
+    ],
+    [
+     3,
+     1700
+    ],
+    [
+     5,
+     2560
+    ]
+   ],
+   "pop": [
+    [
+     1,
+     40000
+    ],
+    [
+     2,
+     120000
+    ],
+    [
+     3,
+     230000
+    ],
+    [
+     5,
+     400000
+    ]
+   ]
+  }
+ },
+ "SOURCES": [
+  {
+   "t": "IPCC AR6 WG1 (2021), Chapter 9 and SPM: sea level projections relative to 1995–2014, including the low-likelihood, high-impact storyline.",
+   "u": "https://www.ipcc.ch/report/ar6/wg1/chapter/chapter-9/"
+  },
+  {
+   "t": "NASA/IPCC Sea Level Projection Tool and earth.gov sea level portal.",
+   "u": "https://earth.gov/sealevel/about-sea-level-change/future-sea-level/"
+  },
+  {
+   "t": "Regional North Sea and Baltic adjustment to AR6 (State of the Planet, 2024).",
+   "u": "https://sp.copernicus.org/articles/3-slre1/4/2024/"
+  },
+  {
+   "t": "Wahl et al. (2011/2013): mean sea level in the German Bight, about 1.6–2.1 mm/yr.",
+   "u": "https://link.springer.com/doi/10.1007/s10236-013-0598-0"
+  },
+  {
+   "t": "BSH (Federal Maritime and Hydrographic Agency): gauge trends for Baltic stations, storm surge classes.",
+   "u": "https://digitale-bibliothek.bsh.bund.de/viewer/fulltext/139470/14/"
+  },
+  {
+   "t": "Umweltbundesamt, climate adaptation indicator KM-I-2, mean sea level at German gauges.",
+   "u": "https://www.umweltbundesamt.de/monitoring-zur-das/handlungsfelder/kuesten-meeresschutz/km-i-2/indikator"
+  },
+  {
+   "t": "Hamburg BUKEA: storm surges of 1962 and 1976, design water levels.",
+   "u": "https://www.hamburg.de/politik-und-verwaltung/behoerden/bukea/themen/wasser/hochwasser/hochwasserschutz-176712"
+  },
+  {
+   "t": "Schleswig-Holstein: storm surge information, Baltic 1872 and 2023.",
+   "u": "https://www.schleswig-holstein.de/DE/landesregierung/themen/kueste-wasser-meer/wasserstarkSH/sturmflut/sturmflut_node.html"
+  },
+  {
+   "t": "Sterr (2008), Journal of Coastal Research: about 13,580 km² of German coastal lowland below +5 m. Values for lower elevation bands and population splits in this app are estimates.",
+   "u": "https://bioone.org/journals/Journal-of-Coastal-Research/volume-2008/issue-242/07A-0011.1/"
+  },
+  {
+   "t": "Correctiv (2019): about 3 million people live in areas at risk on the German coast.",
+   "u": "https://correctiv.org/aktuelles/steigende-meere/2019/06/03/land-unter-das-meer-bedroht-drei-millionen-menschen-an-deutschen-kuesten"
+  },
+  {
+   "t": "d'Angremond, van der Meer and de Jong (1996); van der Meer et al. (2005): wave transmission at low-crested structures.",
+   "u": "https://data-ww3.ifremer.fr/BIB/vanderMeer_etal_CE2005.pdf"
+  },
+  {
+   "t": "Buccino et al. (2013): wave transmission past Reef Ball submerged breakwaters (Kt about 0.6–0.7).",
+   "u": "https://complete.bioone.org/journals/journal-of-coastal-research/volume-65/issue-sp1/SI65-030.1/Predicting-wave-transmission-past-Reef-Ball-submerged-breakwaters/10.2112/SI65-030.1.full"
+  },
+  {
+   "t": "EurOtop (2018): manual on wave overtopping of sea defences, run-up and mean overtopping formulas.",
+   "u": "https://www.overtopping-manual.com/"
+  },
+  {
+   "t": "Möller et al. (2014), Nature Geoscience: salt marsh wave attenuation in the Hannover large wave flume with marsh from NW Germany.",
+   "u": "https://doi.org/10.1038/ngeo2251"
+  },
+  {
+   "t": "Ferrario et al. (2014), Nature Communications: coral reefs reduce wave energy by 97% (crest alone 86%); restoration about US$1,290/m vs. breakwaters US$19,791/m.",
+   "u": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4354160"
+  },
+  {
+   "t": "Narayan et al. (2016), PLoS ONE: effectiveness and cost of nature-based coastal defences.",
+   "u": "https://doi.org/10.1371/journal.pone.0154735"
+  },
+  {
+   "t": "Alfred Wegener Institute: RESTORE and PROCEED native oyster restoration in the German North Sea.",
+   "u": "https://www.awi.de/en/science/biosciences/shelf-sea-system-ecology/main-research-focus/european-oyster/restore.html"
+  }
+ ]
+}
